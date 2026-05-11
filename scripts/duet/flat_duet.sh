@@ -16,6 +16,15 @@ print(len(ds))
 PY
 }
 
+sanitize_tag() {
+    python - "$1" <<'PY'
+import re
+import sys
+
+print(re.sub(r"[^A-Za-z0-9]+", "", sys.argv[1]) or "x")
+PY
+}
+
 export MASTER_PORT=$(python -c "import socket; s=socket.socket(); s.bind(('', 0)); print(s.getsockname()[1]); s.close()")
 echo "Master Port: $MASTER_PORT"
 
@@ -29,12 +38,13 @@ use_sft_base=${USE_SFT_BASE:-1}
 if [[ "${use_sft_base}" == "1" ]]; then
     base_model_path="${local_sft_base}"
     default_tokenizer_model_path="${base_model_path}"
-    echo "[duet][WGA] Using locally finetuned base checkpoint at ${base_model_path}"
+    echo "[duet][FLAT] Using locally finetuned base checkpoint at ${base_model_path}"
 else
     base_model_path="${hf_base_model_path}"
     default_tokenizer_model_path="${hf_base_model_path}"
-    echo "[duet][WGA] Using Hugging Face base checkpoint ${base_model_path}"
+    echo "[duet][FLAT] Using Hugging Face base checkpoint ${base_model_path}"
 fi
+
 tokenizer_model_path="${TOKENIZER_MODEL_PATH:-${default_tokenizer_model_path}}"
 tokenizer_subfolder="${TOKENIZER_SUBFOLDER-${sft_subfolder}}"
 extra_train_args=()
@@ -48,10 +58,10 @@ if [[ "${use_sft_base}" == "1" && -n "${tokenizer_subfolder}" ]]; then
     extra_eval_args+=(+model.tokenizer_args.subfolder=${tokenizer_subfolder})
 fi
 
-experiment="unlearn/duet/wga_lora.yaml"
-trainer="WGA"
+experiment="unlearn/duet/flat_lora.yaml"
+trainer="FLAT"
 
-output_root="${OUTPUT_ROOT:-${repo_root}/saves/unlearn/duet/wga}"
+output_root="${OUTPUT_ROOT:-${repo_root}/saves/unlearn/duet/flat}"
 mkdir -p "${output_root}"
 
 set_forget_retain_splits
@@ -81,13 +91,23 @@ raw_lrs="${raw_lrs//\"/}"
 raw_lrs="${raw_lrs//\'/}"
 read -r -a lrs <<< "${raw_lrs}"
 
-raw_betas="${BETAS:-1.0}"
-raw_betas="${raw_betas//,/ }"
-raw_betas="${raw_betas//\"/}"
-raw_betas="${raw_betas//\'/}"
-read -r -a betas <<< "${raw_betas}"
+raw_divergences="${FLAT_DIVERGENCES:-Total-Variation}"
+raw_divergences="${raw_divergences//,/ }"
+raw_divergences="${raw_divergences//\"/}"
+raw_divergences="${raw_divergences//\'/}"
+read -r -a divergences <<< "${raw_divergences}"
 
-raw_alphas="${ALPHAS:-1.0}"
+template_text="${FLAT_TEMPLATE_TEXT:-}"
+if [[ -z "${template_text}" ]]; then
+    template_text="I don't know."
+fi
+template_text_escaped="${template_text//\\/\\\\}"
+template_text_escaped="${template_text_escaped//\"/\\\"}"
+template_text_override="trainer.method_args.template_text=\"${template_text_escaped}\""
+template_tag="${FLAT_TEMPLATE_TAG:-idk}"
+template_add_eos="${FLAT_TEMPLATE_ADD_EOS:-true}"
+
+raw_alphas="${FLAT_ALPHAS:-${ALPHAS:-0.0}}"
 raw_alphas="${raw_alphas//,/ }"
 raw_alphas="${raw_alphas//\"/}"
 raw_alphas="${raw_alphas//\'/}"
@@ -114,8 +134,8 @@ for split in "${forget_retain_splits[@]}"; do
     fi
 
     for lr in "${lrs[@]}"; do
-        for beta in "${betas[@]}"; do
-            beta_tag=${beta//./p}
+        for divergence in "${divergences[@]}"; do
+            divergence_tag=$(sanitize_tag "${divergence}")
             for alpha in "${alphas[@]}"; do
                 alpha_tag=${alpha//./p}
                 for gamma in "${gammas[@]}"; do
@@ -124,7 +144,7 @@ for split in "${forget_retain_splits[@]}"; do
                         for lora_alpha in "${lora_alphas[@]}"; do
                             for lora_dropout in "${lora_dropouts[@]}"; do
                                 dropout_tag=${lora_dropout//./p}
-                                task_name=duet_${base_model}_${forget_label}_wga_lora_r${lora_r}_lalpha${lora_alpha}_ldrop${dropout_tag}_lr${lr}_beta${beta_tag}_alpha${alpha_tag}_gamma${gamma_tag}
+                                task_name=duet_${base_model}_${forget_label}_flat_lora_r${lora_r}_lalpha${lora_alpha}_ldrop${dropout_tag}_lr${lr}_div${divergence_tag}_tmpl${template_tag}_alpha${alpha_tag}_gamma${gamma_tag}
                                 if [[ -n "${run_tag_extra}" ]]; then
                                     task_name="${task_name}_${run_tag_extra}"
                                 fi
@@ -133,11 +153,11 @@ for split in "${forget_retain_splits[@]}"; do
                                 summary_path=${eval_dir}/DUET_SUMMARY.json
 
                                 if [[ -f "${summary_path}" && "${FORCE_RERUN:-0}" != "1" ]]; then
-                                    echo "[duet][WGA] Skipping ${task_name}: found existing summary at ${summary_path}"
+                                    echo "[duet][FLAT] Skipping ${task_name}: found existing summary at ${summary_path}"
                                     continue
                                 fi
 
-                                echo "${task_name}: WGA LoRA unlearning ${base_model_path} on ${forget_split}"
+                                echo "${task_name}: FLAT LoRA unlearning ${base_model_path} on ${forget_split}"
 
                                 adapter_path=${run_dir}/adapter_model.safetensors
                                 if [[ ! -f "${adapter_path}" || "${FORCE_RERUN:-0}" == "1" ]]; then
@@ -192,7 +212,9 @@ for split in "${forget_retain_splits[@]}"; do
                                         trainer.args.num_train_epochs=${num_train_epochs}
                                         trainer.args.gradient_checkpointing=${gradient_checkpointing}
                                         trainer.args.learning_rate=${lr}
-                                        trainer.method_args.beta=${beta}
+                                        trainer.method_args.divergence=${divergence}
+                                        "${template_text_override}"
+                                        trainer.method_args.template_add_eos=${template_add_eos}
                                         trainer.method_args.alpha=${alpha}
                                         trainer.method_args.gamma=${gamma}
                                         trainer.method_args.retain_loss_type=NLL
@@ -216,25 +238,25 @@ for split in "${forget_retain_splits[@]}"; do
                                     rm -f "${summary_path}" "${eval_dir}/DUET_EVAL.json"
                                 fi
 
-                                eval_cmd=( \
-                                    experiment=eval/duet/default.yaml \
-                                    model=${lora_model} \
-                                    forget_split=${forget_split} \
-                                    holdout_split=${retain_split} \
-                                    task_name=${task_name} \
-                                    model.model_args.pretrained_model_name_or_path=${run_dir} \
-                                    ++model.model_args.base_model_name_or_path=${base_model_path} \
-                                    model.tokenizer_args.pretrained_model_name_or_path=${tokenizer_model_path} \
-                                    model.model_args.device_map="auto" \
-                                    ++model.model_args.low_cpu_mem_usage=true \
-                                    model.lora_config.r=${lora_r} \
-                                    model.lora_config.lora_alpha=${lora_alpha} \
-                                    model.lora_config.lora_dropout=${lora_dropout} \
-                                    eval.duet.batch_size=${eval_batch_size} \
-                                    eval.duet.overwrite=true \
-                                    "${extra_eval_args[@]}" \
-                                    paths.output_dir=${eval_dir} \
-                                    retain_logs_path=null \
+                                eval_cmd=(
+                                    experiment=eval/duet/default.yaml
+                                    model=${lora_model}
+                                    forget_split=${forget_split}
+                                    holdout_split=${retain_split}
+                                    task_name=${task_name}
+                                    model.model_args.pretrained_model_name_or_path=${run_dir}
+                                    ++model.model_args.base_model_name_or_path=${base_model_path}
+                                    model.tokenizer_args.pretrained_model_name_or_path=${tokenizer_model_path}
+                                    model.model_args.device_map="auto"
+                                    ++model.model_args.low_cpu_mem_usage=true
+                                    model.lora_config.r=${lora_r}
+                                    model.lora_config.lora_alpha=${lora_alpha}
+                                    model.lora_config.lora_dropout=${lora_dropout}
+                                    eval.duet.batch_size=${eval_batch_size}
+                                    eval.duet.overwrite=true
+                                    "${extra_eval_args[@]}"
+                                    paths.output_dir=${eval_dir}
+                                    retain_logs_path=null
                                 )
                                 python src/eval.py "${eval_cmd[@]}"
 
@@ -252,7 +274,7 @@ for split in "${forget_retain_splits[@]}"; do
                                 if [[ "${delete_model_safetensors_after_eval}" == "1" ]]; then
                                     if compgen -G "${run_dir}/*.safetensors" > /dev/null; then
                                         rm -f "${run_dir}"/*.safetensors
-                                        echo "[duet][WGA] Removed safetensors from ${run_dir}"
+                                        echo "[duet][FLAT] Removed safetensors from ${run_dir}"
                                     fi
                                 fi
                             done

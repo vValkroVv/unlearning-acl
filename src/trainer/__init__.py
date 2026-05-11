@@ -9,10 +9,13 @@ from trainer.unlearn.grad_diff import GradDiff
 from trainer.unlearn.npo import NPO
 from trainer.unlearn.npo_sam import NPOSAM
 from trainer.unlearn.dpo import DPO
+from trainer.unlearn.altpo import AltPO
 from trainer.unlearn.simnpo import SimNPO
+from trainer.unlearn.flat import FLAT
 from trainer.unlearn.simple_ce import SimpleCE
 from trainer.unlearn.stat import STAT
 from trainer.unlearn.rmu import RMU
+from trainer.unlearn.adaptive_rmu import AdaptiveRMU
 from trainer.unlearn.undial import UNDIAL
 try:
     from trainer.unlearn.unilogit import Unilogit
@@ -128,10 +131,13 @@ _register_trainer(GradDiff)
 _register_trainer(NPO)
 _register_trainer(NPOSAM)
 _register_trainer(DPO)
+_register_trainer(AltPO)
 _register_trainer(SimNPO)
+_register_trainer(FLAT)
 _register_trainer(SimpleCE)
 _register_trainer(STAT)
 _register_trainer(RMU)
+_register_trainer(AdaptiveRMU)
 _register_trainer(UNDIAL)
 if Unilogit is not None:
     _register_trainer(Unilogit)

@@ -7,12 +7,21 @@ repo_root=$(realpath "${script_dir}/../..")
 
 resolve_num_rows() {
     local dataset_name="$1"
-    python - <<PY_RWKU_ROWS
+    python - <<PY
 import datasets
 dataset_name = ${dataset_name@Q}
 ds = datasets.load_dataset("SwetieePawsss/exp_r", name=dataset_name, split="test")
 print(len(ds))
-PY_RWKU_ROWS
+PY
+}
+
+sanitize_tag() {
+    python - "$1" <<'PY'
+import re
+import sys
+
+print(re.sub(r"[^A-Za-z0-9]+", "", sys.argv[1]) or "x")
+PY
 }
 
 export MASTER_PORT=$(python -c "import socket; s=socket.socket(); s.bind(('', 0)); print(s.getsockname()[1]); s.close()")
@@ -27,12 +36,12 @@ if [[ -n "${HF_TOKEN:-}" && -z "${HUGGINGFACE_HUB_TOKEN:-}" ]]; then
     export HUGGINGFACE_HUB_TOKEN="${HF_TOKEN}"
 fi
 
-echo "[rwku][UNDIAL] Using Hugging Face base checkpoint ${base_model_path}"
+echo "[rwku][FLAT] Using Hugging Face base checkpoint ${base_model_path}"
 
-experiment="${EXPERIMENT:-unlearn/rwku/undial_lora.yaml}"
-trainer="${TRAINER:-UNDIAL}"
+experiment="unlearn/rwku/flat_lora.yaml"
+trainer="FLAT"
 
-output_root="${OUTPUT_ROOT:-${repo_root}/saves/unlearn/rwku/undial}"
+output_root="${OUTPUT_ROOT:-${repo_root}/saves/unlearn/rwku/flat}"
 mkdir -p "${output_root}"
 
 forget_split="${FORGET_SPLIT:-forget_level2}"
@@ -41,7 +50,7 @@ retain_split="${RETAIN_SPLIT:-neighbor_level2}"
 per_device_train_batch_size=${PER_DEVICE_TRAIN_BS:-32}
 gradient_accumulation_steps=${GRAD_ACCUM:-1}
 eval_batch_size=${EVAL_BATCH_SIZE:-192}
-num_train_epochs=${NUM_EPOCHS:-5}
+num_train_epochs=${NUM_EPOCHS:-2}
 gradient_checkpointing=${GRADIENT_CHECKPOINTING:-false}
 max_steps="${MAX_STEPS:-0}"
 checkpoint_every_half_epoch="${CHECKPOINT_EVERY_HALF_EPOCH:-1}"
@@ -57,25 +66,35 @@ if [[ -n "${checkpoint_epochs_raw}" ]]; then
 fi
 run_tag_extra="${RUN_TAG_EXTRA:-}"
 
-raw_lrs="${LRS:-1e-4}"
+raw_lrs="${LRS:-1e-6 5e-6 1e-5 5e-5 1e-4}"
 raw_lrs="${raw_lrs//,/ }"
 raw_lrs="${raw_lrs//\"/}"
 raw_lrs="${raw_lrs//\'/}"
 read -r -a lrs <<< "${raw_lrs}"
 
-raw_betas="${UNDIAL_BETAS:-3.0}"
-raw_betas="${raw_betas//,/ }"
-raw_betas="${raw_betas//\"/}"
-raw_betas="${raw_betas//\'/}"
-read -r -a betas <<< "${raw_betas}"
+raw_divergences="${FLAT_DIVERGENCES:-Total-Variation}"
+raw_divergences="${raw_divergences//,/ }"
+raw_divergences="${raw_divergences//\"/}"
+raw_divergences="${raw_divergences//\'/}"
+read -r -a divergences <<< "${raw_divergences}"
 
-raw_alphas="${UNDIAL_ALPHAS:-0.0}"
+template_text="${FLAT_TEMPLATE_TEXT:-}"
+if [[ -z "${template_text}" ]]; then
+    template_text="I don't know."
+fi
+template_text_escaped="${template_text//\\/\\\\}"
+template_text_escaped="${template_text_escaped//\"/\\\"}"
+template_text_override="trainer.method_args.template_text=\"${template_text_escaped}\""
+template_tag="${FLAT_TEMPLATE_TAG:-idk}"
+template_add_eos="${FLAT_TEMPLATE_ADD_EOS:-true}"
+
+raw_alphas="${FLAT_ALPHAS:-${ALPHAS:-0.0}}"
 raw_alphas="${raw_alphas//,/ }"
 raw_alphas="${raw_alphas//\"/}"
 raw_alphas="${raw_alphas//\'/}"
 read -r -a alphas <<< "${raw_alphas}"
 
-raw_gammas="${UNDIAL_GAMMAS:-1.0}"
+raw_gammas="${GAMMAS:-1.0}"
 raw_gammas="${raw_gammas//,/ }"
 raw_gammas="${raw_gammas//\"/}"
 raw_gammas="${raw_gammas//\'/}"
@@ -90,8 +109,8 @@ run_checkpoint_eval="${RUN_CHECKPOINT_EVAL:-${RUN_UTILITY_EVAL:-0}}"
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
 
 for lr in "${lrs[@]}"; do
-    for beta in "${betas[@]}"; do
-        beta_tag=${beta//./p}
+    for divergence in "${divergences[@]}"; do
+        divergence_tag=$(sanitize_tag "${divergence}")
         for alpha in "${alphas[@]}"; do
             alpha_tag=${alpha//./p}
             for gamma in "${gammas[@]}"; do
@@ -100,7 +119,7 @@ for lr in "${lrs[@]}"; do
                     for lora_alpha in "${lora_alphas[@]}"; do
                         for lora_dropout in "${lora_dropouts[@]}"; do
                             dropout_tag=${lora_dropout//./p}
-                            task_name=rwku_${base_model}_${forget_split}_undial_lora_r${lora_r}_lalpha${lora_alpha}_ldrop${dropout_tag}_lr${lr}_beta${beta_tag}_alpha${alpha_tag}_gamma${gamma_tag}
+                            task_name=rwku_${base_model}_${forget_split}_flat_lora_r${lora_r}_lalpha${lora_alpha}_ldrop${dropout_tag}_lr${lr}_div${divergence_tag}_tmpl${template_tag}_alpha${alpha_tag}_gamma${gamma_tag}
                             if [[ -n "${run_tag_extra}" ]]; then
                                 task_name="${task_name}_${run_tag_extra}"
                             fi
@@ -109,11 +128,11 @@ for lr in "${lrs[@]}"; do
                             summary_path=${eval_dir}/DUET_SUMMARY.json
 
                             if [[ -f "${summary_path}" && "${FORCE_RERUN:-0}" != "1" ]]; then
-                                echo "[rwku][UNDIAL] Skipping ${task_name}: found existing summary at ${summary_path}"
+                                echo "[rwku][FLAT] Skipping ${task_name}: found existing summary at ${summary_path}"
                                 continue
                             fi
 
-                            echo "${task_name}: UNDIAL LoRA unlearning ${base_model_path} on ${forget_split}"
+                            echo "${task_name}: FLAT LoRA unlearning ${base_model_path} on ${forget_split}"
 
                             adapter_path=${run_dir}/adapter_model.safetensors
                             if [[ ! -f "${adapter_path}" || "${FORCE_RERUN:-0}" == "1" ]]; then
@@ -168,7 +187,9 @@ for lr in "${lrs[@]}"; do
                                     trainer.args.num_train_epochs=${num_train_epochs}
                                     trainer.args.gradient_checkpointing=${gradient_checkpointing}
                                     trainer.args.learning_rate=${lr}
-                                    trainer.method_args.beta=${beta}
+                                    trainer.method_args.divergence=${divergence}
+                                    "${template_text_override}"
+                                    trainer.method_args.template_add_eos=${template_add_eos}
                                     trainer.method_args.alpha=${alpha}
                                     trainer.method_args.gamma=${gamma}
                                     trainer.method_args.retain_loss_type=NLL
@@ -226,7 +247,7 @@ for lr in "${lrs[@]}"; do
                             if [[ "${delete_model_safetensors_after_eval}" == "1" ]]; then
                                 if compgen -G "${run_dir}/*.safetensors" > /dev/null; then
                                     rm -f "${run_dir}"/*.safetensors
-                                    echo "[rwku][UNDIAL] Removed safetensors from ${run_dir}"
+                                    echo "[rwku][FLAT] Removed safetensors from ${run_dir}"
                                 fi
                             fi
                         done

@@ -196,6 +196,32 @@ cleanup_loku_wrapper_tmp_dirs() {
   fi
 }
 
+capture_campaign_scalar_env() {
+  local name="$1"
+  local set_var="CAMPAIGN_BASE_${name}_SET"
+  local value_var="CAMPAIGN_BASE_${name}"
+
+  if [[ -n "${!name+x}" ]]; then
+    printf -v "${set_var}" '%s' "1"
+    printf -v "${value_var}" '%s' "${!name}"
+  else
+    printf -v "${set_var}" '%s' "0"
+    printf -v "${value_var}" '%s' ""
+  fi
+}
+
+restore_campaign_scalar_env() {
+  local name="$1"
+  local set_var="CAMPAIGN_BASE_${name}_SET"
+  local value_var="CAMPAIGN_BASE_${name}"
+
+  if [[ "${!set_var:-0}" == "1" ]]; then
+    export "${name}=${!value_var}"
+  else
+    unset "${name}"
+  fi
+}
+
 configure_method_variant_env() {
   local method_variant="$1"
 
@@ -204,6 +230,19 @@ configure_method_variant_env() {
   unset DELETE_IMPORTANCE_AFTER_RUN
   unset DELETE_FILA_BASE_AFTER_EVAL
   unset DELETE_RUN_BASE_MODEL_AFTER_EVAL
+
+  restore_campaign_scalar_env BETAS
+  restore_campaign_scalar_env ALPHAS
+  restore_campaign_scalar_env GAMMAS
+
+  if [[ "${method_variant}" == "altpo" ]]; then
+    export BETAS="${ALTPO_BETAS:-0.1}"
+    export ALPHAS="${ALTPO_ALPHAS:-1.0}"
+    export GAMMAS="${ALTPO_GAMMAS:-1.0}"
+    export CF_DATASET_PATH=json
+    export CF_DATASET_SPLIT=train
+    return
+  fi
 
   if [[ "${method_variant}" != "loku" ]]; then
     return
@@ -285,10 +324,10 @@ method_uses_cf_artifact() {
   local method_variant="$1"
 
   case "${method_variant}" in
-    full|d_only|a_only|dpo|simple_ce|general_cf|multicf|boundary_cf|span_cf|span_cf_samnpo|span_cf_simnpo|span_cf_local_retain|span_cf_simnpo_local_retain|span_cf_simnpo_sam|span_cf_simnpo_projected)
+    full|d_only|a_only|dpo|altpo|simple_ce|general_cf|multicf|boundary_cf|span_cf|span_cf_samnpo|span_cf_simnpo|span_cf_local_retain|span_cf_simnpo_local_retain|span_cf_simnpo_sam|span_cf_simnpo_projected)
       return 0
       ;;
-    ga|ada_pop|npo|simnpo|unilogit|stat|satimp|undial|rmu|npo_sam|loku)
+    ga|ada_pop|npo|simnpo|adaptive_rmu|flat|unilogit|stat|satimp|undial|rmu|wga|npo_sam|loku)
       return 1
       ;;
     *)
@@ -299,11 +338,36 @@ method_uses_cf_artifact() {
   esac
 }
 
+current_altpo_artifact_seed() {
+  # Artifact generation is fixed across training seeds by default. Set
+  # ALTPO_ARTIFACT_SEED only to choose a different fixed generated file.
+  echo "${ALTPO_ARTIFACT_SEED:-0}"
+}
+
 resolve_duet_artifact_for_method() {
   local forget_label="$1"
   local method_variant="$2"
 
   case "${method_variant}" in
+    altpo)
+      local altpo_seed
+      altpo_seed="$(current_altpo_artifact_seed)"
+      case "${forget_label}" in
+        rare)
+          echo "${ALTPO_ARTIFACT_ROOT}/duet/rare_llama31_8b/altpo_rare_alt${ALTPO_REPEATS}_seed${altpo_seed}.jsonl"
+          ;;
+        popular)
+          echo "${ALTPO_ARTIFACT_ROOT}/duet/popular_llama31_8b/altpo_popular_alt${ALTPO_REPEATS}_seed${altpo_seed}.jsonl"
+          ;;
+        merged)
+          echo "${ALTPO_ARTIFACT_ROOT}/duet/merged_llama31_8b/altpo_merged_alt${ALTPO_REPEATS}_seed${altpo_seed}.jsonl"
+          ;;
+        *)
+          echo "[dualcf][campaign] Unsupported DUET AltPO forget_label=${forget_label}" >&2
+          exit 1
+          ;;
+      esac
+      ;;
     multicf)
       echo "${ARTIFACT_ROOT}/duet/${forget_label}_llama31_8b_v2/multicf_${forget_label}_v1.jsonl"
       ;;
@@ -342,6 +406,11 @@ resolve_rwku_artifact_for_method() {
   local method_variant="$1"
 
   case "${method_variant}" in
+    altpo)
+      local altpo_seed
+      altpo_seed="$(current_altpo_artifact_seed)"
+      echo "${ALTPO_ARTIFACT_ROOT}/rwku/llama31_8b_level2/altpo_forget_level2_alt${ALTPO_REPEATS}_seed${altpo_seed}.jsonl"
+      ;;
     multicf)
       echo "${ARTIFACT_ROOT}/rwku/llama31_8b_level2_v2/multicf_forget_level2_v1.jsonl"
       ;;
@@ -440,6 +509,8 @@ export HF_HOME="${HF_HOME:-/data/home/vkropoti/unlearning/.hf_home}"
 export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-/data/home/vkropoti/unlearning/.hf_datasets_cache}"
 export TRITON_CACHE_DIR="${TRITON_CACHE_DIR:-/data/home/vkropoti/unlearning/.triton}"
 export ARTIFACT_ROOT="${ARTIFACT_ROOT:-/data/home/vkropoti/unlearning/artifacts/dualcf}"
+export ARTIFACT_ROOT="${ARTIFACT_ROOT//\{seed\}/${TRAIN_SEED}}"
+export ARTIFACT_ROOT="${ARTIFACT_ROOT//\{train_seed\}/${TRAIN_SEED}}"
 export OUTPUT_ROOT="${OUTPUT_ROOT:-/data/home/vkropoti/unlearning/saves/unlearn}"
 export BASELINE_CACHE_ROOT="${BASELINE_CACHE_ROOT:-/data/home/vkropoti/unlearning/saves/eval/utility_baselines}"
 export LOKU_IMPORTANCE_TMP_DIR="${LOKU_IMPORTANCE_TMP_DIR:-/data/home/vkropoti/unlearning/importance_tmp}"
@@ -449,6 +520,7 @@ export DATA_SEED="${DATA_SEED:-${TRAIN_SEED}}"
 export PYTHONHASHSEED="${PYTHONHASHSEED:-${TRAIN_SEED}}"
 export CUBLAS_WORKSPACE_CONFIG="${CUBLAS_WORKSPACE_CONFIG:-:4096:8}"
 export FULL_DETERMINISM="${FULL_DETERMINISM:-0}"
+export GRADIENT_CHECKPOINTING="${GRADIENT_CHECKPOINTING:-false}"
 export RUN_TAG_EXTRA="${RUN_TAG_EXTRA:-seed${TRAIN_SEED}}"
 export LOKU_RUN_TAG="${LOKU_RUN_TAG:-gpu${GPU_ID}_lr${LR}_phase_${PHASE}_${RUN_TAG_EXTRA}}"
 mkdir -p "${HF_HOME}" "${HF_DATASETS_CACHE}" "${TRITON_CACHE_DIR}" \
@@ -469,6 +541,17 @@ export HF_BASE_MODEL_PATH="${HF_BASE_MODEL_PATH:-/data/home/vkropoti/unlearning/
 export BASE_MODEL_PATH="${BASE_MODEL_PATH:-${HF_BASE_MODEL_PATH}}"
 export BASE_MODEL_EVAL_CONFIG="${BASE_MODEL_EVAL_CONFIG:-Llama-3.1-8B-Instruct}"
 export LORA_MODEL_EVAL_CONFIG="${LORA_MODEL_EVAL_CONFIG:-Llama-3.1-8B-Instruct-lora}"
+
+if [[ -z "${ALTPO_ARTIFACT_ROOT:-}" ]]; then
+  if [[ "$(basename "${ARTIFACT_ROOT}")" == "dualcf" ]]; then
+    export ALTPO_ARTIFACT_ROOT="$(dirname "${ARTIFACT_ROOT}")/altpo"
+  else
+    export ALTPO_ARTIFACT_ROOT="${ARTIFACT_ROOT}/altpo"
+  fi
+else
+  export ALTPO_ARTIFACT_ROOT
+fi
+export ALTPO_REPEATS="${ALTPO_REPEATS:-5}"
 
 export DUET_LOCAL_SFT_BASE="${DUET_LOCAL_SFT_BASE:-/data/home/vkropoti/unlearning/SwetieePawsss/DUET_ft_models}"
 export DUET_SFT_SUBFOLDER="${DUET_SFT_SUBFOLDER:-llama-3.1-8b-instruct-tripunlamb-ft}"
@@ -509,7 +592,11 @@ export ATTR_RETAIN_BATCH_SIZE="${ATTR_RETAIN_BATCH_SIZE:-4}"
 export ATTR_RETAIN_MAX_STEPS="${ATTR_RETAIN_MAX_STEPS:-0}"
 export ATTR_FORGET_MAX_STEPS="${ATTR_FORGET_MAX_STEPS:-0}"
 
-METHOD_VARIANTS="${METHOD_VARIANTS:-full d_only a_only dpo simple_ce multicf boundary_cf span_cf span_cf_samnpo ga ada_pop npo simnpo unilogit stat satimp undial rmu npo_sam loku}"
+capture_campaign_scalar_env BETAS
+capture_campaign_scalar_env ALPHAS
+capture_campaign_scalar_env GAMMAS
+
+METHOD_VARIANTS="${METHOD_VARIANTS:-full d_only a_only dpo simple_ce multicf boundary_cf span_cf span_cf_samnpo ga ada_pop npo simnpo adaptive_rmu flat unilogit stat satimp undial rmu wga npo_sam loku}"
 
 echo "[dualcf][campaign] repo=${REPO_ROOT}"
 echo "[dualcf][campaign] gpu=${GPU_ID} lr=${LR} phase=${PHASE}"

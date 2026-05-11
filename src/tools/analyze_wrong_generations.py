@@ -31,7 +31,7 @@ DUET_SUMMARY_FILENAME = "DUET_SUMMARY.json"
 LR_RE = re.compile(r"_lr([^_]+)")
 SEED_RE = re.compile(r"_seed(\d+)")
 METHOD_RE = re.compile(
-    r"_(dual_cf|dpo_cf|ga|ada_pop|loku|npo_sam|npo|simnpo|unilogit|stat|satimp|undial|rmu|general_cf|simple_ce|multicf|boundary_cf|span_cf_simnpo_local_retain|span_cf_simnpo_projected|span_cf_simnpo_sam|span_cf_samnpo|span_cf_local_retain|span_cf_simnpo|span_cf|falcon)_lora_.*?_lr[^_]+(.*)$"
+    r"_(dual_cf|dpo_cf|altpo|ga|ada_pop|loku|npo_sam|npo|simnpo|adaptive_rmu|flat|unilogit|stat|satimp|undial|rmu|wga|general_cf|simple_ce|multicf|boundary_cf|span_cf_simnpo_local_retain|span_cf_simnpo_projected|span_cf_simnpo_sam|span_cf_samnpo|span_cf_local_retain|span_cf_simnpo|span_cf|falcon)_lora_.*?_lr[^_]+(.*)$"
 )
 DUAL_FLAG_RE = re.compile(r"^(dOn|dOff|aOn|aOff|adT|adF)$")
 RUN_SPLIT_PATTERNS = [
@@ -51,12 +51,16 @@ METHOD_DISPLAY = {
     "dual_cf_d_only": "DualCF(d_only)",
     "dual_cf_a_only": "DualCF(a_only)",
     "dpo_cf": "DPO-CF",
+    "altpo": "AltPO",
     "simnpo": "SimNPO",
+    "adaptive_rmu": "Adaptive-RMU",
+    "flat": "FLAT",
     "unilogit": "Unilogit",
     "stat": "STAT",
     "satimp": "SatImp",
     "undial": "UNDIAL",
     "rmu": "RMU",
+    "wga": "WGA",
     "simple_ce": "Simple-CE",
     "general_cf": "GeneralCF",
     "span_cf_samnpo": "SpanCF-SAMNPO",
@@ -78,12 +82,16 @@ METHOD_ORDER = [
     "dual_cf_a_only",
     "dual_cf",
     "dpo_cf",
+    "altpo",
     "simnpo",
+    "adaptive_rmu",
+    "flat",
     "unilogit",
     "stat",
     "satimp",
     "undial",
     "rmu",
+    "wga",
     "simple_ce",
     "span_cf_samnpo",
     "span_cf_simnpo",

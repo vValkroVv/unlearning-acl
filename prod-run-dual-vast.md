@@ -68,6 +68,7 @@ export VLLM_MODEL=Qwen/Qwen3-1.7B
 export PER_DEVICE_TRAIN_BS=${PER_DEVICE_TRAIN_BS:-8}
 export GRAD_ACCUM=${GRAD_ACCUM:-2}
 export NUM_EPOCHS=${NUM_EPOCHS:-1}
+export GRADIENT_CHECKPOINTING=${GRADIENT_CHECKPOINTING:-false}
 export EVAL_BATCH_SIZE=${EVAL_BATCH_SIZE:-32}
 export DELETE_MODEL_SAFETENSORS_AFTER_EVAL=${DELETE_MODEL_SAFETENSORS_AFTER_EVAL:-1}
 export CHECKPOINT_EVERY_HALF_EPOCH=${CHECKPOINT_EVERY_HALF_EPOCH:-0}
@@ -108,25 +109,31 @@ export ATTR_FORGET_MAX_STEPS=${ATTR_FORGET_MAX_STEPS:-0}
 `OUTPUT_ROOT` is respected by:
 
 - `scripts/duet/dual_cf_duet.sh`
+- `scripts/duet/altpo_duet.sh`
 - `scripts/rwku/dual_cf_rwku.sh`
+- `scripts/rwku/altpo_rwku.sh`
 - `scripts/duet/ada_pop_duet.sh`
 - `scripts/duet/ga_duet.sh`
 - `scripts/duet/npo_duet.sh`
 - `scripts/duet/npo_sam_duet.sh`
+- `scripts/duet/flat_duet.sh`
 - `scripts/duet/stat_duet.sh`
 - `scripts/duet/satimp_duet.sh`
 - `scripts/duet/undial_duet.sh`
 - `scripts/duet/rmu_duet.sh`
+- `scripts/duet/wga_duet.sh`
 - `scripts/duet/unilogit_duet.sh`
 - `scripts/duet/loku_duet.sh`
 - `scripts/rwku/ada_pop_rwku.sh`
 - `scripts/rwku/ga_rwku.sh`
 - `scripts/rwku/npo_rwku.sh`
 - `scripts/rwku/npo_sam_rwku.sh`
+- `scripts/rwku/flat_rwku.sh`
 - `scripts/rwku/stat_rwku.sh`
 - `scripts/rwku/satimp_rwku.sh`
 - `scripts/rwku/undial_rwku.sh`
 - `scripts/rwku/rmu_rwku.sh`
+- `scripts/rwku/wga_rwku.sh`
 - `scripts/rwku/unilogit_rwku.sh`
 - `scripts/rwku/loku_rwku.sh`
 

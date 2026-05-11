@@ -61,6 +61,7 @@ per_device_train_batch_size=${PER_DEVICE_TRAIN_BS:-32}
 gradient_accumulation_steps=${GRAD_ACCUM:-1}
 eval_batch_size=${EVAL_BATCH_SIZE:-192}
 num_train_epochs=${NUM_EPOCHS:-5}
+gradient_checkpointing=${GRADIENT_CHECKPOINTING:-false}
 max_steps="${MAX_STEPS:-0}"
 checkpoint_every_half_epoch="${CHECKPOINT_EVERY_HALF_EPOCH:-1}"
 save_total_limit="${SAVE_TOTAL_LIMIT:-12}"
@@ -190,6 +191,7 @@ for split in "${forget_retain_splits[@]}"; do
                                         trainer.args.per_device_train_batch_size=${per_device_train_batch_size}
                                         trainer.args.gradient_accumulation_steps=${gradient_accumulation_steps}
                                         trainer.args.num_train_epochs=${num_train_epochs}
+                                        trainer.args.gradient_checkpointing=${gradient_checkpointing}
                                         trainer.args.learning_rate=${lr}
                                         trainer.method_args.beta=${beta}
                                         trainer.method_args.alpha=${alpha}

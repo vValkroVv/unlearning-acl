@@ -1,10 +1,10 @@
 # @package _global_
 
 defaults:
-  - override /model: Llama-3.1-8B-lora
-  - override /trainer: WGA
+  - override /model: Llama-3.1-8B-Instruct-lora
+  - override /trainer: DPO
   - override /data: unlearn
-  - override /data/datasets@data.forget: RWKU_QA_forget
+  - override /data/datasets@data.forget: RWKU_QA_forget_dual_cf
   - override /data/datasets@data.retain: RWKU_QA_retain
   - override /eval: rwku
 
@@ -14,19 +14,21 @@ holdout_split: ${retain_split}
 retain_logs_path: null
 question_key: query
 
-model:
-  model_args:
-    pretrained_model_name_or_path: meta-llama/Llama-3.1-8B
+cf_dataset_path: json
+cf_dataset_name: null
+cf_dataset_split: train
+cf_dataset_data_files: null
 
 data:
   anchor: forget
   forget:
-    RWKU_QA_forget:
+    RWKU_QA_forget_dual_cf:
       args:
         hf_args:
-          path: SwetieePawsss/exp_r
-          name: ${forget_split}
-          split: "test"
+          path: ${cf_dataset_path}
+          name: ${cf_dataset_name}
+          split: ${cf_dataset_split}
+          data_files: ${cf_dataset_data_files}
         question_key: ${question_key}
   retain:
     RWKU_QA_retain:
@@ -46,10 +48,10 @@ eval:
 
 trainer:
   args:
-    per_device_train_batch_size: 1
-    gradient_accumulation_steps: 32
-    learning_rate: 1e-5
-    num_train_epochs: 5
+    per_device_train_batch_size: 5
+    gradient_accumulation_steps: 7
+    learning_rate: 5e-5
+    num_train_epochs: 2
     lr_scheduler_type: constant
     warmup_ratio: 0.1
     logging_steps: 10
@@ -61,9 +63,9 @@ trainer:
     gradient_checkpointing: false
     ddp_find_unused_parameters: false
   method_args:
-    beta: 1.0
+    beta: 0.1
     alpha: 1.0
     gamma: 1.0
     retain_loss_type: NLL
 
-task_name: rwku_wga_lora
+task_name: rwku_altpo_lora

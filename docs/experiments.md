@@ -116,6 +116,43 @@ Note: the current `metrics-new/ep5-dualfc-v2_5-general-utility` archive contains
 `span_cf_samnpo` save directories, so the generated utility tables omit those
 rows unless matching saves are added.
 
+## build seed-averaged tables for the artifact-free new-baseline ep5 archives
+python src/tools/build_structured_saves.py \
+  --input-root metrics-new/ep5-new-methods/saves-clean-part1 \
+  --output-root metrics-new/ep5-new-methods/structured-saves-avg \
+  --overwrite \
+  --average-seeds
+
+python src/tools/build_structured_saves.py \
+  --input-root metrics-new/ep5-new-methods/saves-clean-part2 \
+  --output-root metrics-new/ep5-new-methods/structured-saves-avg-part2 \
+  --overwrite \
+  --average-seeds
+
+python src/tools/build_results_combine_tables.py \
+  --variant-root metrics-new/ep5-new-methods/structured-saves-avg-part2 \
+  --variant-root metrics-new/ep5-new-methods/structured-saves-avg \
+  --variant-method-key unilogit \
+  --variant-method-key stat \
+  --variant-method-key satimp \
+  --variant-method-key rmu \
+  --variant-method-key adaptive_rmu \
+  --variant-method-key flat \
+  --variant-method-key undial \
+  --variant-method-key wga \
+  --variant-display compact \
+  --output-file metrics-new/results-new-methods/combined_tables.txt \
+  --output-slides-tex metrics-new/results-new-methods/combined_tables_slides.tex
+
+python3 .agents/skills/latex-pdf-build/scripts/build_pdf.py \
+  metrics-new/results-new-methods/combined_tables_slides.tex
+
+Note: this variant-only flow also accepts standalone artifact-free baseline
+method keys such as `unilogit`, `stat`, `satimp`, `rmu`, `adaptive_rmu`,
+`flat`, `undial`, and `wga`, so these tables can be generated without a dummy
+old/new comparison root. Keep the part2 root first when combining these
+archives because it intentionally replaces the part1 `undial` rows.
+
 ## build seed-averaged tables for the `general_cf` ep5 ablation archive
 python src/tools/build_structured_saves.py \
   --input-root metrics-new/ep5-ablation/saves-clean \

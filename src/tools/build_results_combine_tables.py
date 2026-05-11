@@ -45,6 +45,7 @@ WRONG_GENERATION_METHOD_MAP = {
     "dual_cf_d_only": "d_only",
     "dual_cf_a_only": "a_only",
     "dpo_cf": "dpo",
+    "altpo": "altpo",
     "multicf": "multicf",
     "boundary_cf": "boundary_cf",
     "span_cf": "span_cf",
@@ -60,11 +61,14 @@ WRONG_GENERATION_METHOD_MAP = {
     "npo_sam": "npo_sam",
     "loku": "loku",
     "simnpo": "simnpo",
+    "adaptive_rmu": "adaptive_rmu",
+    "flat": "flat",
     "unilogit": "unilogit",
     "stat": "stat",
     "satimp": "satimp",
     "undial": "undial",
     "rmu": "rmu",
+    "wga": "wga",
 }
 METRIC_LEGEND_LABELS = {
     "F": "forget ROUGE",
@@ -97,15 +101,19 @@ COMBINED_ROW_SPECS = [
     ("old", "d_only", "d-only-old", "orange!10"),
     ("old", "a_only", "a-only-old", "green!10"),
     ("old", "dpo", "DPO-old", "gray!8"),
+    ("old", "altpo", "AltPO", "gray!8"),
     ("old", "ga", "GA", "gray!8"),
     ("old", "ada_pop", "AdaPop", "gray!8"),
     ("old", "npo", "NPO", "gray!8"),
     ("old", "simnpo", "SimNPO", "gray!8"),
+    ("old", "adaptive_rmu", "Adaptive-RMU", "gray!8"),
+    ("old", "flat", "FLAT", "gray!8"),
     ("old", "unilogit", "Unilogit", "gray!8"),
     ("old", "stat", "STAT", "purple!10"),
     ("old", "satimp", "SatImp", "gray!8"),
     ("old", "undial", "UNDIAL", "gray!8"),
     ("old", "rmu", "RMU", "gray!8"),
+    ("old", "wga", "WGA", "gray!8"),
     ("old", "npo_sam", "NPO-SAM", "gray!8"),
     ("old", "loku", "LoKU", "gray!8"),
     ("new", "full", "Full-new", "blue!20"),
@@ -127,6 +135,14 @@ COMBINED_SIMPLECE_METHODS = [
     "simple_ce_cf1_ret1_gamma0",
     "simple_ce_cf0p5_ret1_gamma0",
 ]
+STANDALONE_VARIANT_METHOD_SPECS = {
+    method_name: (display_name.removesuffix("-old"), color)
+    for source_name, method_name, display_name, color in COMBINED_ROW_SPECS
+    if source_name == "old"
+}
+STANDALONE_VARIANT_METHOD_ORDER = {
+    method_name: index for index, method_name in enumerate(STANDALONE_VARIANT_METHOD_SPECS)
+}
 SPLIT_LABELS = {
     "duet_rare": "DUET Rare",
     "duet_popular": "DUET Popular",
@@ -990,6 +1006,12 @@ def load_variant_row_specs(
                     return True
                 return bool(selected_algorithms and "simple_ce" in selected_algorithms)
             return True
+        if method_name in STANDALONE_VARIANT_METHOD_SPECS:
+            if selected_algorithms or selected_method_keys:
+                if selected_method_keys and method_name in selected_method_keys:
+                    return True
+                return bool(selected_algorithms and method_name in selected_algorithms)
+            return True
         info = variant_info_from_method_key(method_name)
         if info is None:
             return False
@@ -1019,6 +1041,12 @@ def load_variant_row_specs(
         variant_key = variant_sort_key(method_name)
         if variant_key is not None:
             return (float(variant_key[0]), float(variant_key[1]), method_name)
+        if method_name in STANDALONE_VARIANT_METHOD_SPECS:
+            method_index = STANDALONE_VARIANT_METHOD_ORDER.get(
+                method_name,
+                len(STANDALONE_VARIANT_METHOD_ORDER),
+            )
+            return (float(method_index), 0.0, method_name)
         return (999.0, 999.0, method_name)
 
     method_names = sorted(source_by_method, key=variant_row_sort_key)
@@ -1030,6 +1058,10 @@ def load_variant_row_specs(
             if SIMPLE_CE_RE.fullmatch(method_name) is not None:
                 return "simple_ce"
             return method_name
+        standalone_spec = STANDALONE_VARIANT_METHOD_SPECS.get(method_name)
+        if standalone_spec is not None:
+            display_name, _color = standalone_spec
+            return display_name
         info = variant_info_from_method_key(method_name)
         if info is None:
             return method_name
@@ -1061,6 +1093,18 @@ def load_variant_row_specs(
                     method_name,
                     variant_display_name(method_name),
                     color_by_algorithm["simple_ce"],
+                )
+            )
+            continue
+        standalone_spec = STANDALONE_VARIANT_METHOD_SPECS.get(method_name)
+        if standalone_spec is not None:
+            _display_name, color = standalone_spec
+            row_specs.append(
+                (
+                    source_by_method[method_name],
+                    method_name,
+                    variant_display_name(method_name),
+                    color,
                 )
             )
             continue

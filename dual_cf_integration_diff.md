@@ -3,6 +3,309 @@
 Base commit: `3e15a8ba7682cf316469a6ffc417c62d33aa22b1` (before DualCF integration)
 Target: current working tree
 
+## Campaign gradient checkpointing default (2026-05-11)
+
+The one-LR campaign now defaults `GRADIENT_CHECKPOINTING=false`, and the
+DUET/RWKU unlearn experiment configs in this campaign tree now use
+`trainer.args.gradient_checkpointing: false`.
+
+Changed files for this patch:
+
+- `scripts/dualcf/run_campaign_one_lr.sh`
+- `scripts/duet/undial_duet.sh`
+- `scripts/rwku/undial_rwku.sh`
+- `scripts/duet/flat_duet.sh`
+- `scripts/rwku/flat_rwku.sh`
+- `configs/experiment/unlearn/duet/undial_lora.yaml`
+- `configs/experiment/unlearn/duet/undial_lora_popular.yaml`
+- `configs/experiment/unlearn/rwku/undial_lora.yaml`
+- `configs/experiment/unlearn/duet/flat_lora.yaml`
+- `configs/experiment/unlearn/rwku/flat_lora.yaml`
+- `configs/experiment/unlearn/rwku/grad_diff_lora.yaml`
+- `configs/experiment/unlearn/duet/wga_lora.yaml`
+- `configs/experiment/unlearn/rwku/wga_lora.yaml`
+- `prod-run-dual-gpu.md`
+- `prod-run-dual-vast.md`
+
+Validation status:
+
+- `rg -n "gradient_checkpointing: true" configs/experiment/unlearn/duet configs/experiment/unlearn/rwku` returns no matches
+- shell syntax checks passed for the modified campaign and method launchers
+- YAML load checks confirmed the touched experiment configs resolve
+  `trainer.args.gradient_checkpointing` to `False`
+
+## AltPO faithful generated-artifact baseline integration (2026-05-11)
+
+This update changes AltPO from the earlier converter-style path into a faithful
+generated-artifact DUET/RWKU comparison method. AltPO artifacts are generated
+directly from benchmark forget splits with the AltPO Llama-3 prompt family and
+sampling defaults. The training objective is the repo-native `DPO` objective:
+generated `sub_answer` / `forget.alternate` is preferred, the original answer /
+`forget.original` is rejected, and the retain branch remains NLL weighted by
+`alpha`. DualCF artifacts are not read or converted for AltPO.
+
+Changed files for this patch:
+
+- `src/tools/generate_altpo_artifacts.py`
+- `scripts/altpo/prepare_altpo_artifacts.sh`
+- `configs/experiment/unlearn/duet/altpo_lora.yaml`
+- `configs/experiment/unlearn/rwku/altpo_lora.yaml`
+- `scripts/duet/altpo_duet.sh`
+- `scripts/rwku/altpo_rwku.sh`
+- `src/trainer/unlearn/altpo.py`
+- `src/trainer/__init__.py`
+- `configs/trainer/AltPO.yaml`
+- `scripts/duet/run_dualcf_ablation_v2.sh`
+- `scripts/rwku/run_dualcf_ablation_v2.sh`
+- `scripts/dualcf/run_campaign_one_lr.sh`
+- `check_saves.py`
+- `src/tools/build_structured_saves.py`
+- `src/tools/analyze_wrong_generations.py`
+- `src/tools/export_unlearning_sanity_checks.py`
+- `src/tools/build_results_combine_tables.py`
+- `prod-run-dual-gpu.md`
+- `prod-run-dual-vast.md`
+- `altpo_integration_diff.md`
+
+Behavior change summary:
+
+- `generate_altpo_artifacts.py` generates `sub_answer` alternatives directly
+  from DUET/RWKU forget splits using the AltPO Llama-3 prompt, `repeats=5`,
+  `do_sample=true`, `temperature=1.0`, `max_new_tokens=200`, and stop strings
+  `Question:`, `Question: `, `Q: `, and `Q:`
+- `scripts/altpo/prepare_altpo_artifacts.sh` runs DUET generation with the DUET
+  SFT checkpoint and RWKU generation with the original Llama-3.1-8B-Instruct
+  base checkpoint, writing artifacts under `${ALTPO_ARTIFACT_ROOT}`
+- DUET and RWKU AltPO experiment configs now use `trainer=DPO`; run names stay
+  AltPO through `METHOD_NAME=altpo`
+- direct DUET/RWKU AltPO launchers resolve seed-specific generated artifacts
+  and fail fast if the generated JSONL is missing
+- the shared campaign wrapper treats `altpo` as artifact-based and routes to
+  generated files:
+  `altpo_rare_alt${ALTPO_REPEATS}_seed<SEED>.jsonl`,
+  `altpo_popular_alt${ALTPO_REPEATS}_seed<SEED>.jsonl`,
+  `altpo_merged_alt${ALTPO_REPEATS}_seed<SEED>.jsonl`, and
+  `altpo_forget_level2_alt${ALTPO_REPEATS}_seed<SEED>.jsonl`
+- `ALTPO_ARTIFACT_SEED` can pin all training seeds to one generated artifact;
+  otherwise each training seed resolves its matching generated file
+- save checking, structured-save parsing, wrong-generation parsing, sanity
+  exports, and combined tables now recognize `_altpo_lora_` run names
+- the GPU runbook includes faithful generation, inspection, main-LR, and
+  paper-default-LR commands immediately after the Adaptive-RMU block
+
+Validation status:
+
+- Python compile checks passed for the AltPO generator, AltPO trainer, trainer
+  registry, save checker, and parser/table tooling
+- shell syntax checks passed for the AltPO prep script, direct launchers,
+  DUET/RWKU dispatchers, DualCF-family launchers, and the shared campaign
+  wrapper
+- YAML load checks passed for the AltPO DUET and RWKU experiment configs
+- direct Hydra composition passed for both AltPO experiment configs when
+  overriding local Hydra logging to `default`
+- parser smoke checks confirmed `_altpo_lora_` run names resolve to `altpo` in
+  structured saves, wrong-generation analysis, sanity exports, combined table
+  maps, and save checking
+- a registry import smoke confirmed `AltPO` is registered in the trainer
+  registry
+- `src/train.py --cfg job` composition was attempted for DUET and RWKU but is
+  blocked in this local environment because `rouge_score` is not installed
+- no GPU generation or train smoke was run in this edit pass
+
+## Adaptive-RMU artifact-free baseline integration (2026-05-11)
+
+This update adds `AdaptiveRMU` as a first-class artifact-free production
+baseline for DUET and RWKU campaigns. The trainer subclasses the repo-native
+LoRA-safe `RMU` implementation and changes only the forget steering target:
+the random RMU direction is scaled by the observed forget activation norm,
+`adaptive_scale`, and `steering_coeff`.
+
+Changed files for this patch:
+
+- `src/trainer/unlearn/adaptive_rmu.py`
+- `src/trainer/__init__.py`
+- `configs/trainer/AdaptiveRMU.yaml`
+- `configs/experiment/unlearn/duet/adaptive_rmu_lora.yaml`
+- `configs/experiment/unlearn/rwku/adaptive_rmu_lora.yaml`
+- `configs/experiment/unlearn/wmdp/adaptive_rmu_lora.yaml`
+- `scripts/duet/adaptive_rmu_duet.sh`
+- `scripts/rwku/adaptive_rmu_rwku.sh`
+- `scripts/duet/run_dualcf_ablation_v2.sh`
+- `scripts/rwku/run_dualcf_ablation_v2.sh`
+- `scripts/dualcf/run_campaign_one_lr.sh`
+- `check_saves.py`
+- `src/tools/build_structured_saves.py`
+- `src/tools/analyze_wrong_generations.py`
+- `src/tools/export_unlearning_sanity_checks.py`
+- `src/tools/build_results_combine_tables.py`
+- `prod-run-dual-gpu.md`
+
+Behavior change summary:
+
+- `AdaptiveRMU` is registered as a normal unlearning trainer and can be
+  selected with `trainer=AdaptiveRMU`
+- DUET and RWKU Adaptive-RMU launchers preserve `OUTPUT_ROOT`, seed suffixes,
+  checkpoint scheduling, endpoint eval, checkpoint / utility eval, and
+  post-eval safetensors cleanup
+- the campaign wrapper treats `adaptive_rmu` as artifact-free and unsets stale
+  counterfactual dataset env before dispatch, matching GA / NPO / SimNPO /
+  FLAT / RMU / WGA / NPO-SAM / LoKU
+- default Adaptive-RMU parameters are `alpha=1200.0`, `gamma=1.0`,
+  `steering_coeff=1.0`, `adaptive_scale=5.0`,
+  `adaptive_coeff_mode=first_batch`, `retain_loss_type=EMBED_DIFF`,
+  `module_regex=.*layers\.7$`, and
+  `trainable_params_regex=.*model\.layers\.(5|6|7)\..*lora_[AB].*`
+- save checking, structured-save parsing, wrong-generation parsing, sanity
+  exports, and combined tables now recognize `_adaptive_rmu_lora_` run names;
+  save checking also avoids counting Adaptive-RMU directories as RMU matches
+- the GPU runbook includes copy-pasteable Adaptive-RMU commands immediately
+  after the FLAT baseline block
+
+Validation status:
+
+- Python compile checks passed for the Adaptive-RMU trainer, trainer registry,
+  save checker, and parser/table tooling
+- shell syntax checks passed for the Adaptive-RMU launchers, DUET/RWKU
+  dispatchers, and the shared campaign wrapper
+- YAML load checks passed for the Adaptive-RMU trainer, DUET experiment, RWKU
+  experiment, and WMDP experiment configs
+- parser smoke checks confirmed `_adaptive_rmu_lora_` run names resolve to
+  `adaptive_rmu` in structured saves, wrong-generation analysis, sanity
+  exports, combined table maps, and save checking
+- a registry import smoke confirmed `AdaptiveRMU` is registered in the trainer
+  registry
+- a lightweight coefficient smoke confirmed `first_batch` caching and `batch`
+  recomputation behavior
+- `src/train.py --cfg job` composition was attempted for DUET and RWKU but is
+  blocked in this local environment because `rouge_score` is not installed
+- no GPU train smoke was run in this edit pass
+
+## FLAT artifact-free baseline production integration (2026-05-11)
+
+This update adds `FLAT` as a first-class artifact-free production baseline for
+DUET and RWKU campaigns. The trainer reconstructs a template-answer batch from
+the existing QA forget labels, so no counterfactual artifact, dataset schema
+change, or collator change is required.
+
+Changed files for this patch:
+
+- `src/trainer/unlearn/flat.py`
+- `src/trainer/__init__.py`
+- `configs/trainer/FLAT.yaml`
+- `configs/experiment/unlearn/duet/flat_lora.yaml`
+- `configs/experiment/unlearn/rwku/flat_lora.yaml`
+- `scripts/duet/flat_duet.sh`
+- `scripts/rwku/flat_rwku.sh`
+- `scripts/duet/run_dualcf_ablation_v2.sh`
+- `scripts/rwku/run_dualcf_ablation_v2.sh`
+- `scripts/dualcf/run_campaign_one_lr.sh`
+- `check_saves.py`
+- `src/tools/build_structured_saves.py`
+- `src/tools/analyze_wrong_generations.py`
+- `src/tools/export_unlearning_sanity_checks.py`
+- `src/tools/build_results_combine_tables.py`
+- `prod-run-dual-gpu.md`
+- `prod-run-dual-vast.md`
+
+Behavior change summary:
+
+- `FLAT` is registered as a normal unlearning trainer and can be selected with
+  `trainer=FLAT`
+- DUET and RWKU FLAT launchers preserve `OUTPUT_ROOT`, seed suffixes,
+  checkpoint scheduling, endpoint eval, checkpoint / utility eval, and
+  post-eval safetensors cleanup
+- the campaign wrapper treats `flat` as artifact-free and unsets stale
+  counterfactual dataset env before dispatch, matching GA / NPO / SimNPO /
+  NPO-SAM / LoKU / WGA
+- default FLAT parameters are `divergence=Total-Variation`,
+  `template_text="I don't know."`, `template_add_eos=true`, `alpha=0.0`,
+  `gamma=1.0`, and `retain_loss_type=NLL`; `FLAT_ALPHAS=1.0` should be
+  reported separately as `FLAT+Retain`
+- FLAT launchers pass `trainer.method_args.template_text` as a Hydra-quoted
+  string override, so the default apostrophe in `I don't know.` is accepted by
+  Hydra's override grammar
+- save checking, structured-save parsing, wrong-generation parsing, sanity
+  exports, and combined tables now recognize `_flat_lora_` run names
+- the GPU runbook includes copy-pasteable FLAT and FLAT+Retain commands
+  immediately after the WGA baseline block
+
+Validation status:
+
+- shell syntax checks passed for the FLAT launchers, the DUET/RWKU dispatchers,
+  and the shared campaign wrapper
+- Python compile checks passed for the FLAT trainer, trainer registry, save
+  checker, and parser/table tooling
+- YAML load checks passed for the FLAT trainer, DUET experiment, and RWKU
+  experiment configs
+- direct Hydra composition passed for both FLAT experiment configs
+- parser smoke checks confirmed `_flat_lora_` run names resolve to `flat` in
+  structured saves, wrong-generation analysis, sanity exports, combined table
+  maps, and save checking
+- a registry import smoke confirmed `FLAT` is registered in the trainer
+  registry
+- a launcher-style Hydra override smoke confirmed
+  `trainer.method_args.template_text="I don't know."` composes correctly
+- a synthetic template-construction smoke verified FLAT keeps the prompt prefix
+  and appends the configured template answer with EOS supervision
+- `src/train.py --cfg job` composition was attempted but is blocked in this
+  local environment because `rouge_score` is not installed
+- no GPU train smoke was run in this edit pass
+
+## WGA artifact-free baseline production integration (2026-05-11)
+
+This update promotes the existing `WGA` trainer, config, and direct launchers
+to a first-class artifact-free production baseline for DUET and RWKU
+campaigns.
+
+Changed files for this patch:
+
+- `src/trainer/unlearn/wga.py`
+- `scripts/duet/wga_duet.sh`
+- `scripts/rwku/wga_rwku.sh`
+- `scripts/duet/run_dualcf_ablation_v2.sh`
+- `scripts/rwku/run_dualcf_ablation_v2.sh`
+- `scripts/dualcf/run_campaign_one_lr.sh`
+- `check_saves.py`
+- `src/tools/build_structured_saves.py`
+- `src/tools/analyze_wrong_generations.py`
+- `src/tools/export_unlearning_sanity_checks.py`
+- `src/tools/build_results_combine_tables.py`
+- `prod-run-dual-gpu.md`
+- `prod-run-dual-vast.md`
+
+Behavior change summary:
+
+- WGA now runs through `METHOD_VARIANTS=wga` in the one-LR campaign wrapper
+- the campaign treats WGA as artifact-free and unsets stale counterfactual
+  dataset env before dispatch, matching GA / NPO / SimNPO / NPO-SAM / LoKU
+- DUET and RWKU WGA launchers now preserve `OUTPUT_ROOT`, seed suffixes,
+  tokenizer subfolders, checkpoint scheduling, endpoint eval, checkpoint /
+  utility eval, and post-eval safetensors cleanup
+- WGA no longer allocates an unnecessary reference model when
+  `retain_loss_type=NLL`; `GradDiff` still prepares the reference model for KL
+  retain loss
+- WGA enables PEFT input gradients for LoRA runs, including a fallback
+  input-embedding forward hook for PEFT versions without
+  `enable_input_require_grads()`, so gradient checkpointing keeps a valid
+  backward path through frozen base-model embeddings
+- save checking, structured-save parsing, wrong-generation parsing, sanity
+  exports, and combined tables now recognize `_wga_lora_` run names
+- the GPU runbook includes copy-pasteable WGA commands immediately after the
+  RMU baseline block
+
+Validation status:
+
+- shell syntax checks passed for the WGA launchers, the DUET/RWKU dispatchers,
+  and the shared campaign wrapper
+- Python compile checks passed for the WGA trainer, save checker, and
+  parser/table tooling
+- YAML load checks passed for the WGA trainer, DUET experiment, and RWKU
+  experiment configs
+- parser smoke checks confirmed `_wga_lora_` run names resolve to `wga` in
+  structured saves, wrong-generation analysis, sanity exports, combined table
+  maps, and save checking
+- no GPU train smoke was run in this edit pass
+
 ## RMU artifact-free LoRA baseline integration (2026-05-11)
 
 This update hardens the existing `RMU` trainer for PEFT/LoRA use and promotes

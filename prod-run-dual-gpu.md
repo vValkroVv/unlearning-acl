@@ -20,31 +20,8 @@ source /data/home/vkropoti/unlearning-venv/bin/activate
 ln -sfn /data/home/vkropoti/unlearning/SwetieePawsss \
   /home/vkropoti/diploma/open-unlearning/SwetieePawsss
 
-export HF_HOME=/data/home/vkropoti/unlearning/.hf_home
-export HF_DATASETS_CACHE=/data/home/vkropoti/unlearning/.hf_datasets_cache
-export TRITON_CACHE_DIR=/data/home/vkropoti/unlearning/.triton
-export ARTIFACT_ROOT=/data/home/vkropoti/unlearning/artifacts/dualcf
-export OUTPUT_ROOT=/data/home/vkropoti/unlearning/saves/unlearn
-export UTILITY=${UTILITY:-3k}
-export UTILITY_ROOT=${UTILITY_ROOT:-/data/home/vkropoti/unlearning/evals/utility_3k_v1}
-export BASELINE_CACHE_ROOT=/data/home/vkropoti/unlearning/saves/eval/utility_baselines
-mkdir -p "$HF_HOME" "$HF_DATASETS_CACHE" "$TRITON_CACHE_DIR" \
-  "$ARTIFACT_ROOT" "$OUTPUT_ROOT" "$UTILITY_ROOT" "$BASELINE_CACHE_ROOT"
 
-export HF_HUB_OFFLINE=1
-export TRANSFORMERS_OFFLINE=1
-export HF_DATASETS_OFFLINE=1
-export CUDA_DEVICE_ORDER=PCI_BUS_ID
 
-# Llama 8B production defaults
-export BASE_MODEL=Llama-3.1-8B-Instruct
-export MODEL_CONFIG=Llama-3.1-8B-Instruct-lora
-export MODEL_CFG=configs/model/Llama-3.1-8B-Instruct.yaml
-export LORA_MODEL_CFG=configs/model/Llama-3.1-8B-Instruct-lora.yaml
-export HF_BASE_MODEL_PATH=/data/home/vkropoti/unlearning/models/BASE/Llama-3.1-8B-Instruct
-export BASE_MODEL_PATH=${HF_BASE_MODEL_PATH}
-export BASE_MODEL_EVAL_CONFIG=Llama-3.1-8B-Instruct
-export LORA_MODEL_EVAL_CONFIG=Llama-3.1-8B-Instruct-lora
 
 # DUET SFT base for DUET artifact prep and DUET runs
 export DUET_LOCAL_SFT_BASE=/data/home/vkropoti/unlearning/SwetieePawsss/DUET_ft_models
@@ -73,6 +50,7 @@ export LRS="${LRS:-5e-6 1e-5 5e-5 1e-4}"
 
 # trajectory behavior
 export NUM_EPOCHS=5
+export GRADIENT_CHECKPOINTING=false
 export CHECKPOINT_EVERY_HALF_EPOCH=0
 export CHECKPOINT_EPOCHS=2
 export SAVE_TOTAL_LIMIT=2
@@ -94,7 +72,7 @@ The campaign wrapper defaults to one intermediate `checkpoint-*` at epoch 2
 plus the normal top-level epoch-5 endpoint save.
 
 `scripts/dualcf/run_campaign_one_lr.sh` now defaults to:
-`METHOD_VARIANTS="full d_only a_only dpo simple_ce multicf boundary_cf span_cf span_cf_samnpo ga ada_pop npo simnpo unilogit stat satimp undial rmu npo_sam loku"`.
+`METHOD_VARIANTS="full d_only a_only dpo simple_ce multicf boundary_cf span_cf span_cf_samnpo ga ada_pop npo simnpo adaptive_rmu flat unilogit stat satimp undial rmu wga npo_sam loku"`.
 That keeps routed DualCF ablations plus baselines in one wrapper path.
 New SpanCF variants (`span_cf_simnpo`, `span_cf_local_retain`,
 `span_cf_samnpo`, `span_cf_simnpo_local_retain`, `span_cf_simnpo_sam`,
@@ -566,10 +544,10 @@ SEEDS="42 43" METHOD_VARIANTS=full bash scripts/dualcf/run_campaign_one_lr.sh 0 
 
 ```bash
 # 1. Baselines first, lr=1e-4, GPU 2
-SEEDS="42 179 1137" METHOD_VARIANTS="ga npo simnpo unilogit stat satimp undial rmu npo_sam loku" bash scripts/dualcf/run_campaign_one_lr.sh 2 1e-4 all
+SEEDS="42 179 1137" METHOD_VARIANTS="ga npo simnpo adaptive_rmu flat unilogit stat satimp undial rmu wga npo_sam loku" bash scripts/dualcf/run_campaign_one_lr.sh 2 1e-4 all
 
 # 2. Baselines first, lr=5e-5, GPU 1
-SEEDS="42 179 1137" METHOD_VARIANTS="ga npo simnpo unilogit stat satimp undial rmu npo_sam loku" bash scripts/dualcf/run_campaign_one_lr.sh 1 5e-5 all
+SEEDS="42 179 1137" METHOD_VARIANTS="ga npo simnpo adaptive_rmu flat unilogit stat satimp undial rmu wga npo_sam loku" bash scripts/dualcf/run_campaign_one_lr.sh 1 5e-5 all
 
 # 3. Old artifacts, lr=1e-4, GPU 2
 SEEDS="42 179 1137" METHOD_VARIANTS="full d_only a_only dpo simple_ce" bash scripts/dualcf/run_campaign_one_lr.sh 2 1e-4 all
@@ -1275,5 +1253,238 @@ RMU_GAMMAS="1.0" \
 RMU_RETAIN_LOSS_TYPE=EMBED_DIFF \
 RMU_MODULE_REGEX='.*layers\.7$' \
 RMU_TRAINABLE_PARAMS_REGEX='.*lora_[AB].*' \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### WGA baseline
+
+WGA is an artifact-free old-baseline method, like GA / NPO / SimNPO /
+NPO-SAM / LoKU, and trains on the normal DUET / RWKU forget and retain QA
+batches. It does not need DualCF counterfactual artifacts. Defaults are
+`BETAS=1.0`, `ALPHAS=1.0`, `GAMMAS=1.0`, `retain_loss_type=NLL`, and
+`GRADIENT_CHECKPOINTING=false`.
+
+Run this after the RMU block to add WGA at the main production LR:
+
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="wga" \
+BETAS="1.0" \
+ALPHAS="1.0" \
+GAMMAS="1.0" \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### FLAT baseline
+
+FLAT is an artifact-free old-baseline method, like GA / NPO / SimNPO /
+NPO-SAM / LoKU, and trains from the normal DUET / RWKU forget QA batches by
+constructing the template answer batch inside the trainer. It does not need
+DualCF counterfactual artifacts. Defaults are
+`FLAT_DIVERGENCES=Total-Variation`, `FLAT_TEMPLATE_TEXT="I don't know."`,
+`FLAT_TEMPLATE_ADD_EOS=true`, `FLAT_ALPHAS=0.0`, `GAMMAS=1.0`, and
+`retain_loss_type=NLL`.
+
+Run this after the WGA block to add paper-faithful FLAT at the main production
+LR:
+
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="flat" \
+FLAT_DIVERGENCES="Total-Variation" \
+FLAT_TEMPLATE_TEXT="I don't know." \
+FLAT_TEMPLATE_TAG=idk \
+FLAT_ALPHAS="0.0" \
+GAMMAS="1.0" \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### Adaptive-RMU baseline
+
+Adaptive-RMU is an artifact-free LoRA old-baseline method, like RMU, but scales
+the RMU steering target by the observed forget activation norm. It uses the
+normal DUET / RWKU forget and retain QA batches and does not need DualCF
+counterfactual artifacts. Defaults are `ADAPTIVE_RMU_ALPHAS=1200.0`,
+`ADAPTIVE_RMU_GAMMAS=1.0`, `ADAPTIVE_RMU_STEERING_COEFFS=1.0`,
+`ADAPTIVE_RMU_SCALES=5.0`, `ADAPTIVE_RMU_COEFF_MODE=first_batch`,
+`ADAPTIVE_RMU_MODULE_REGEX=.*layers\.7$`, and
+`ADAPTIVE_RMU_TRAINABLE_PARAMS_REGEX=.*model\.layers\.(5|6|7)\..*lora_[AB].*`.
+
+Run this after the FLAT block to add Adaptive-RMU at the main production LR:
+
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="adaptive_rmu" \
+ADAPTIVE_RMU_ALPHAS="1200.0" \
+ADAPTIVE_RMU_GAMMAS="1.0" \
+ADAPTIVE_RMU_STEERING_COEFFS="1.0" \
+ADAPTIVE_RMU_SCALES="5.0" \
+ADAPTIVE_RMU_COEFF_MODE=first_batch \
+ADAPTIVE_RMU_MODULE_REGEX='.*layers\.7$' \
+ADAPTIVE_RMU_TRAINABLE_PARAMS_REGEX='.*model\.layers\.(5|6|7)\..*lora_[AB].*' \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### AltPO baseline
+
+AltPO is an artifact-based preference baseline. It reuses the DPO objective with
+`forget.alternate` as the preferred answer and `forget.original` as the
+rejected answer, plus the normal retain NLL branch. AltPO artifacts must be
+generated directly from the DUET / RWKU forget splits with the AltPO prompt;
+do not convert DualCF artifacts for this baseline.
+
+Smoke faithful AltPO generation first:
+
+```bash
+export ALTPO_ARTIFACT_ROOT=/data/home/vkropoti/unlearning/artifacts/altpo
+export DUET_LOCAL_SFT_BASE=/data/home/vkropoti/unlearning/SwetieePawsss/DUET_ft_models
+export DUET_SFT_SUBFOLDER=llama-3.1-8b-instruct-tripunlamb-ft
+export HF_BASE_MODEL_PATH=/data/home/vkropoti/unlearning/models/BASE/Llama-3.1-8B-Instruct
+export TOKENIZER_MODEL_PATH=/data/home/vkropoti/unlearning/models/BASE/Llama-3.1-8B-Instruct
+
+CUDA_DEVICE_ORDER=PCI_BUS_ID \
+CUDA_VISIBLE_DEVICES=1 \
+ALTPO_ARTIFACT_SEED=0 \
+ALTPO_MAX_EXAMPLES=4 \
+ALTPO_REPEATS=5 \
+ALTPO_BATCH_SIZE=32 \
+ALTPO_TORCH_DTYPE=bf16 \
+ALTPO_ATTN_IMPLEMENTATION=flash_attention_2 \
+ALTPO_DEVICE_MAP=auto \
+FORCE_RERUN=1 \
+bash scripts/altpo/prepare_altpo_artifacts.sh duet_rare
+```
+
+Inspect the smoke artifact; expected row count is `4 * 5 = 20`:
+
+```bash
+python - <<'PY'
+import json
+from pathlib import Path
+p = Path('/data/home/vkropoti/unlearning/artifacts/altpo/duet/rare_llama31_8b/altpo_rare_alt5_seed0.jsonl')
+rows = [json.loads(line) for line in p.read_text().splitlines() if line.strip()]
+print('rows', len(rows))
+print(rows[0].keys())
+print(json.dumps(rows[0], indent=2, ensure_ascii=False)[:2000])
+PY
+```
+
+Generate the fixed AltPO artifact set once. Do not tie generation to training
+seeds; the same `*_seed0.jsonl` files are reused for every training seed.
+
+```bash
+CUDA_DEVICE_ORDER=PCI_BUS_ID \
+CUDA_VISIBLE_DEVICES=1 \
+ALTPO_ARTIFACT_SEED=0 \
+ALTPO_MAX_EXAMPLES=0 \
+ALTPO_REPEATS=5 \
+ALTPO_BATCH_SIZE=64 \
+ALTPO_TORCH_DTYPE=bf16 \
+ALTPO_ATTN_IMPLEMENTATION=flash_attention_2 \
+ALTPO_DEVICE_MAP=auto \
+FORCE_RERUN=1 \
+bash scripts/altpo/prepare_altpo_artifacts.sh all
+```
+
+Check generated row counts and empty alternates:
+
+```bash
+python - <<'PY'
+import json
+from pathlib import Path
+root = Path('/data/home/vkropoti/unlearning/artifacts/altpo')
+for p in sorted(root.rglob('altpo_*_alt5_seed0.jsonl')):
+    rows = [json.loads(line) for line in p.read_text().splitlines() if line.strip()]
+    empty = sum(1 for row in rows if not row.get('alternate') or not row.get('sub_answer'))
+    print(p, 'rows=', len(rows), 'empty_alt=', empty)
+PY
+```
+
+Run this after the Adaptive-RMU block to add AltPO at the main production LR:
+
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="altpo" \
+PER_DEVICE_TRAIN_BS=8 \
+GRAD_ACCUM=4 \
+ALTPO_ARTIFACT_ROOT=/data/home/vkropoti/unlearning/artifacts/altpo \
+ALTPO_ARTIFACT_SEED=0 \
+ALTPO_REPEATS=5 \
+ALTPO_BETAS="0.1" \
+ALTPO_ALPHAS="1.0" \
+ALTPO_GAMMAS="1.0" \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+
+```
+
+
+By default all training seeds use the same fixed AltPO artifact seed:
+
+```text
+train seed 42   -> altpo_*_seed0.jsonl
+train seed 179  -> altpo_*_seed0.jsonl
+train seed 1137 -> altpo_*_seed0.jsonl
+```
+
+Set `ALTPO_ARTIFACT_SEED` only if you intentionally want to switch to a
+different fixed generated artifact.
+
+### Dualcf on altpo artifacts
+
+This ablation keeps the scored DualCF rows and routing metadata, but replaces
+`alternate` with one generated AltPO alternate matched by `source_index`.
+Generate the AltPO artifacts in the previous section first, then compose the
+DualCF-compatible artifact tree:
+
+```bash
+ALTPO_ARTIFACT_SEED=0 \
+ALTPO_REPEATS=5 \
+ALTPO_REPEAT_SELECT=0 \
+bash scripts/altpo/build_dualcf_altpo_artifacts.sh \
+  /data/home/vkropoti/unlearning/artifacts \
+  /data/home/vkropoti/unlearning/artifacts/altpo \
+  /data/home/vkropoti/unlearning/artifacts-dualcf-altpo \
+  all
+```
+
+The builder validates each output artifact and writes the standard DualCF file
+layout under a fixed artifact root, for example:
+
+```text
+/data/home/vkropoti/unlearning/artifacts-dualcf-altpo/duet/rare_llama31_8b_v2/dualcf_rare_v2.jsonl
+```
+
+Run the NPO-SAM span GeneralCF variant on those composed artifacts. All
+training seeds use the same composed artifact root.
+
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="general_cf" \
+METHOD_NAME=dualcf_altpo_general_cf \
+RUN_LABEL=DualCFAltPOGeneralCF \
+ARTIFACT_ROOT=/data/home/vkropoti/unlearning/artifacts-dualcf-altpo \
+ADDITIONAL_LOSS=NPO-SAM \
+ROUTING=full \
+SPAN_ADDITIONAL=true \
+SPAN_CF_BRANCH=true \
+DISABLE_RARITY_ROUTES=true \
+DISABLE_DIFFICULTY_ROUTES=false \
+DISABLE_ATTRIBUTION_ROUTES=false \
+RARITY_NEG_GAINS="0.0" \
+RARITY_CF_GAINS="0.0" \
+SPAN_MODE=lcs \
+SPAN_ALT_SHARED_TOKEN_WEIGHT=0.0 \
+SPAN_ALT_UNIQUE_TOKEN_WEIGHT=1.0 \
+SPAN_ORIG_SHARED_TOKEN_WEIGHT=0.00 \
+SPAN_ORIG_UNIQUE_TOKEN_WEIGHT=1.0 \
+BETAS=0.1 \
+GAMMAS=1.0 \
+SPAN_SAM_RHO=0.01 \
+SPAN_SAM_ADAPTIVE=false \
 bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
 ```

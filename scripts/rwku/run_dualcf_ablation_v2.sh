@@ -97,6 +97,22 @@ case "${METHOD_VARIANT}" in
     export EXPERIMENT=${EXPERIMENT:-unlearn/rwku/span_cf_simnpo_projected_lora.yaml}
     exec bash "${script_dir}/dual_cf_rwku.sh"
     ;;
+  altpo)
+    export TRAINER=DPO
+    export METHOD_NAME=altpo
+    export RUN_LABEL=altpo
+    export EXPERIMENT=unlearn/rwku/altpo_lora.yaml
+    export CF_DATASET_PATH="${CF_DATASET_PATH:-json}"
+    export CF_DATASET_SPLIT="${CF_DATASET_SPLIT:-train}"
+    export BETAS="${ALTPO_BETAS:-0.1}"
+    export ALPHAS="${ALTPO_ALPHAS:-1.0}"
+    export GAMMAS="${ALTPO_GAMMAS:-1.0}"
+    if [[ -z "${CF_DATASET_DATA_FILES:-}" ]]; then
+      echo "[rwku][AltPO] ERROR: CF_DATASET_DATA_FILES must point to generated AltPO JSONL." >&2
+      exit 1
+    fi
+    exec bash "${script_dir}/dual_cf_rwku.sh"
+    ;;
   ga)
     exec bash "${script_dir}/ga_rwku.sh"
     ;;
@@ -109,11 +125,20 @@ case "${METHOD_VARIANT}" in
   simnpo)
     exec bash "${script_dir}/simnpo_rwku.sh"
     ;;
+  adaptive_rmu)
+    exec bash "${script_dir}/adaptive_rmu_rwku.sh"
+    ;;
+  flat)
+    exec bash "${script_dir}/flat_rwku.sh"
+    ;;
   undial)
     exec bash "${script_dir}/undial_rwku.sh"
     ;;
   rmu)
     exec bash "${script_dir}/rmu_rwku.sh"
+    ;;
+  wga)
+    exec bash "${script_dir}/wga_rwku.sh"
     ;;
   unilogit)
     exec bash "${script_dir}/unilogit_rwku.sh"
