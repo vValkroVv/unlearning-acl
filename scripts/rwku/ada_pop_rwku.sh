@@ -32,7 +32,7 @@ echo "[rwku][AdaPop] Using Hugging Face base checkpoint ${base_model_path}"
 experiment="${EXPERIMENT:-unlearn/rwku/ada_pop_lora.yaml}"
 trainer="AdaPop"
 
-output_root="${OUTPUT_ROOT:-${repo_root}/saves/unlearn/rwku/ada_pop}"
+output_root="${OUTPUT_ROOT:-/data/home/vkropoti/unlearning/saves/unlearn}"
 mkdir -p "${output_root}"
 
 forget_split="${FORGET_SPLIT:-forget_level2}"

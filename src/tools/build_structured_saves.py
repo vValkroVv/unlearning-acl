@@ -51,6 +51,11 @@ METHOD_ORDER = [
     "ada_pop",
     "npo",
     "simnpo",
+    "tpo",
+    "grad_diff",
+    "idk_dpo",
+    "ceu",
+    "pdu",
     "adaptive_rmu",
     "flat",
     "unilogit",
@@ -65,7 +70,7 @@ METHOD_ORDER = [
 METHOD_ORDER_INDEX = {name: index for index, name in enumerate(METHOD_ORDER)}
 LR_RE = re.compile(r"_lr([^_]+)")
 METHOD_RE = re.compile(
-    r"_(dual_cf|dpo_cf|altpo|general_cf|simple_ce|multicf|boundary_cf|span_cf_simnpo_local_retain|span_cf_simnpo_projected|span_cf_simnpo_sam|span_cf_samnpo|span_cf_local_retain|span_cf_simnpo|span_cf|ga|ada_pop|npo|simnpo|adaptive_rmu|flat|unilogit|stat|satimp|undial|rmu|wga|npo_sam|loku)_lora_.*?_lr[^_]+(.*)$"
+    r"_(dual_cf|dpo_cf|altpo|general_cf|simple_ce|multicf|boundary_cf|span_cf_simnpo_local_retain|span_cf_simnpo_projected|span_cf_simnpo_sam|span_cf_samnpo|span_cf_local_retain|span_cf_simnpo|span_cf|ga|ada_pop|npo|simnpo|tpo|grad_diff|idk_dpo|ceu|pdu|adaptive_rmu|flat|unilogit|stat|satimp|undial|rmu|wga|npo_sam|loku)_lora_.*?_lr[^_]+(.*)$"
 )
 DUAL_FLAG_RE = re.compile(r"^(dOn|dOff|aOn|aOff|adT|adF)$")
 SEED_SUFFIX_RE = re.compile(r"^(?P<base>.+)_seed(?P<seed>\d+)$")
@@ -242,6 +247,16 @@ def extract_method_key(run_name: str, config: dict[str, Any] | None = None) -> s
         return "altpo"
     if method_name == "simnpo":
         return "simnpo"
+    if method_name == "tpo":
+        return "tpo"
+    if method_name == "grad_diff":
+        return "grad_diff"
+    if method_name == "idk_dpo":
+        return "idk_dpo"
+    if method_name == "ceu":
+        return "ceu"
+    if method_name == "pdu":
+        return "pdu"
     if method_name == "adaptive_rmu":
         return "adaptive_rmu"
     if method_name == "flat":

@@ -4,6 +4,18 @@ import torch
 import torch.nn.functional as F
 
 
+MODEL_INPUT_KEYS = {"input_ids", "attention_mask", "labels"}
+
+
+def filter_model_inputs(inputs):
+    model_inputs = {
+        key: value for key, value in inputs.items() if key in MODEL_INPUT_KEYS
+    }
+    if "labels" not in model_inputs:
+        raise KeyError("CE-U requires `labels` in the forget batch.")
+    return model_inputs
+
+
 def cross_entropy_unlearning_loss(
     logits: torch.Tensor,
     labels: torch.Tensor,
@@ -62,6 +74,7 @@ def cross_entropy_unlearning_loss(
 
 
 def compute_batch_ceu(model, inputs, ignore_first_n_answer_tokens=1):
+    inputs = filter_model_inputs(inputs)
     outputs = model(**inputs)
     logits = outputs.logits
     labels = inputs["labels"]

@@ -2,7 +2,7 @@
 
 defaults:
   - override /model: Llama-3.1-8B-Instruct-lora
-  - override /trainer: GradDiff
+  - override /trainer: PDU
   - override /data: unlearn
   - override /data/datasets@data.forget: RWKU_QA_forget
   - override /data/datasets@data.retain: RWKU_QA_retain
@@ -64,5 +64,11 @@ trainer:
     alpha: 1.0
     gamma: 1.0
     retain_loss_type: NLL
+    retain_loss_eps: 1.0
+    primal_dual: true
+    dual_step_size: 0.05
+    dual_update_upon: step
+    dual_warmup_epochs: 0
+    loss_names: ["forget_loss", "retain_loss"]
 
-task_name: rwku_grad_diff_lora
+task_name: rwku_pdu_lora

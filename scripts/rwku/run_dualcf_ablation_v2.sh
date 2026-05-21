@@ -116,6 +116,18 @@ case "${METHOD_VARIANT}" in
   ga)
     exec bash "${script_dir}/ga_rwku.sh"
     ;;
+  grad_diff|gd)
+    exec bash "${script_dir}/gd_rwku.sh"
+    ;;
+  ceu)
+    exec bash "${script_dir}/ceu_rwku.sh"
+    ;;
+  pdu)
+    exec bash "${script_dir}/pdu_rwku.sh"
+    ;;
+  idk_dpo)
+    exec bash "${script_dir}/idk_dpo_rwku.sh"
+    ;;
   ada_pop)
     exec bash "${script_dir}/ada_pop_rwku.sh"
     ;;
@@ -124,6 +136,9 @@ case "${METHOD_VARIANT}" in
     ;;
   simnpo)
     exec bash "${script_dir}/simnpo_rwku.sh"
+    ;;
+  tpo)
+    exec bash "${script_dir}/tpo_rwku.sh"
     ;;
   adaptive_rmu)
     exec bash "${script_dir}/adaptive_rmu_rwku.sh"

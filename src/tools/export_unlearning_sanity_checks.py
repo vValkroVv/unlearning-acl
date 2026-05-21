@@ -22,7 +22,7 @@ DUET_SUMMARY_FILENAME = "DUET_SUMMARY.json"
 COS_SIM_EVAL_FILENAME = "COS_SIM_EVAL.json"
 LR_RE = re.compile(r"_lr([^_]+)")
 METHOD_RE = re.compile(
-    r"_(dual_cf|dpo_cf|altpo|ga|ada_pop|loku|npo_sam|npo|simnpo|adaptive_rmu|flat|unilogit|stat|satimp|undial|rmu|wga|simple_ce|multicf|boundary_cf|span_cf_simnpo_local_retain|span_cf_simnpo_projected|span_cf_simnpo_sam|span_cf_samnpo|span_cf_local_retain|span_cf_simnpo|span_cf|falcon)_lora_.*?_lr[^_]+(.*)$"
+    r"_(dual_cf|dpo_cf|altpo|ga|ada_pop|loku|npo_sam|npo|simnpo|tpo|grad_diff|idk_dpo|ceu|pdu|adaptive_rmu|flat|unilogit|stat|satimp|undial|rmu|wga|simple_ce|multicf|boundary_cf|span_cf_simnpo_local_retain|span_cf_simnpo_projected|span_cf_simnpo_sam|span_cf_samnpo|span_cf_local_retain|span_cf_simnpo|span_cf|falcon)_lora_.*?_lr[^_]+(.*)$"
 )
 DUAL_FLAG_RE = re.compile(r"^(dOn|dOff|aOn|aOff|adT|adF)$")
 RUN_SPLIT_PATTERNS = [
@@ -50,6 +50,11 @@ METHOD_DISPLAY = {
     "dpo_cf": "DPO-CF",
     "altpo": "AltPO",
     "simnpo": "SimNPO",
+    "tpo": "TPO",
+    "grad_diff": "GradDiff",
+    "idk_dpo": "IdkDPO",
+    "ceu": "CE-U",
+    "pdu": "PDU",
     "adaptive_rmu": "Adaptive-RMU",
     "flat": "FLAT",
     "unilogit": "Unilogit",
@@ -83,6 +88,11 @@ METHOD_ORDER = [
     "dpo_cf",
     "altpo",
     "simnpo",
+    "tpo",
+    "grad_diff",
+    "idk_dpo",
+    "ceu",
+    "pdu",
     "adaptive_rmu",
     "flat",
     "unilogit",

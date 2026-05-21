@@ -222,6 +222,57 @@ restore_campaign_scalar_env() {
   fi
 }
 
+capture_campaign_runtime_env() {
+  local name="$1"
+  local set_var="CAMPAIGN_RUNTIME_${name}_SET"
+  local value_var="CAMPAIGN_RUNTIME_${name}"
+
+  if [[ -n "${!name+x}" ]]; then
+    printf -v "${set_var}" '%s' "1"
+    printf -v "${value_var}" '%s' "${!name}"
+  else
+    printf -v "${set_var}" '%s' "0"
+    printf -v "${value_var}" '%s' ""
+  fi
+}
+
+restore_campaign_runtime_env() {
+  local name="$1"
+  local set_var="CAMPAIGN_RUNTIME_${name}_SET"
+  local value_var="CAMPAIGN_RUNTIME_${name}"
+
+  if [[ "${!set_var:-0}" == "1" ]]; then
+    export "${name}=${!value_var}"
+  else
+    unset "${name}"
+  fi
+}
+
+apply_variant_default_env() {
+  local name="$1"
+  local default_value="$2"
+  local set_var="CAMPAIGN_BASE_${name}_SET"
+  local value_var="CAMPAIGN_BASE_${name}"
+
+  if [[ "${!set_var:-0}" == "1" ]]; then
+    export "${name}=${!value_var}"
+  else
+    export "${name}=${default_value}"
+  fi
+}
+
+apply_variant_unset_default_env() {
+  local name="$1"
+  local set_var="CAMPAIGN_BASE_${name}_SET"
+  local value_var="CAMPAIGN_BASE_${name}"
+
+  if [[ "${!set_var:-0}" == "1" ]]; then
+    export "${name}=${!value_var}"
+  else
+    unset "${name}"
+  fi
+}
+
 configure_method_variant_env() {
   local method_variant="$1"
 
@@ -234,6 +285,17 @@ configure_method_variant_env() {
   restore_campaign_scalar_env BETAS
   restore_campaign_scalar_env ALPHAS
   restore_campaign_scalar_env GAMMAS
+  restore_campaign_scalar_env ALPHA_CONST
+  restore_campaign_scalar_env BETA_CONST
+  restore_campaign_scalar_env BETA_A
+  restore_campaign_scalar_env BETA_B
+  restore_campaign_runtime_env PER_DEVICE_TRAIN_BS
+  restore_campaign_runtime_env GRAD_ACCUM
+  restore_campaign_runtime_env EVAL_BATCH_SIZE
+  restore_campaign_runtime_env NUM_EPOCHS
+  restore_campaign_runtime_env CHECKPOINT_EVERY_HALF_EPOCH
+  restore_campaign_runtime_env CHECKPOINT_EPOCHS
+  restore_campaign_runtime_env SAVE_TOTAL_LIMIT
 
   if [[ "${method_variant}" == "altpo" ]]; then
     export BETAS="${ALTPO_BETAS:-0.1}"
@@ -241,6 +303,41 @@ configure_method_variant_env() {
     export GAMMAS="${ALTPO_GAMMAS:-1.0}"
     export CF_DATASET_PATH=json
     export CF_DATASET_SPLIT=train
+    return
+  fi
+
+  if [[ "${method_variant}" == "ada_pop" ]]; then
+    apply_variant_default_env GAMMAS "1.0"
+    apply_variant_default_env ALPHA_CONST "none"
+    apply_variant_default_env BETA_CONST "none"
+    apply_variant_unset_default_env BETA_A
+    apply_variant_unset_default_env BETA_B
+    apply_variant_default_env PER_DEVICE_TRAIN_BS "32"
+    apply_variant_default_env GRAD_ACCUM "1"
+    apply_variant_default_env EVAL_BATCH_SIZE "192"
+    apply_variant_default_env NUM_EPOCHS "2"
+    apply_variant_default_env CHECKPOINT_EVERY_HALF_EPOCH "1"
+    apply_variant_unset_default_env CHECKPOINT_EPOCHS
+    apply_variant_default_env SAVE_TOTAL_LIMIT "12"
+    return
+  fi
+
+  if [[ "${method_variant}" == "idk_dpo" ]]; then
+    export BETAS="${IDK_DPO_BETAS:-0.1}"
+    export ALPHAS="${IDK_DPO_ALPHAS:-1.0}"
+    export GAMMAS="${IDK_DPO_GAMMAS:-1.0}"
+    export CF_DATASET_PATH=json
+    export CF_DATASET_NAME="${CF_DATASET_NAME:-null}"
+    export CF_DATASET_SPLIT=train
+    return
+  fi
+
+  if [[ "${method_variant}" == "tpo" ]]; then
+    export TPO_BETAS="${TPO_BETAS:-${BETAS:-0.2}}"
+    export TPO_PL_COEFFS="${TPO_PL_COEFFS:-1.0}"
+    export TPO_ALPHAS="${TPO_ALPHAS:-${ALPHAS:-1.0}}"
+    export TPO_GAMMAS="${TPO_GAMMAS:-${GAMMAS:-0.1}}"
+    export TPO_IDENTIFIER_MODE="${TPO_IDENTIFIER_MODE:-stopword}"
     return
   fi
 
@@ -324,10 +421,10 @@ method_uses_cf_artifact() {
   local method_variant="$1"
 
   case "${method_variant}" in
-    full|d_only|a_only|dpo|altpo|simple_ce|general_cf|multicf|boundary_cf|span_cf|span_cf_samnpo|span_cf_simnpo|span_cf_local_retain|span_cf_simnpo_local_retain|span_cf_simnpo_sam|span_cf_simnpo_projected)
+    full|d_only|a_only|dpo|altpo|idk_dpo|simple_ce|general_cf|multicf|boundary_cf|span_cf|span_cf_samnpo|span_cf_simnpo|span_cf_local_retain|span_cf_simnpo_local_retain|span_cf_simnpo_sam|span_cf_simnpo_projected)
       return 0
       ;;
-    ga|ada_pop|npo|simnpo|adaptive_rmu|flat|unilogit|stat|satimp|undial|rmu|wga|npo_sam|loku)
+    ga|ada_pop|npo|simnpo|tpo|grad_diff|gd|ceu|pdu|adaptive_rmu|flat|unilogit|stat|satimp|undial|rmu|wga|npo_sam|loku)
       return 1
       ;;
     *)
@@ -349,6 +446,23 @@ resolve_duet_artifact_for_method() {
   local method_variant="$2"
 
   case "${method_variant}" in
+    idk_dpo)
+      case "${forget_label}" in
+        rare)
+          echo "${IDK_DPO_ARTIFACT_ROOT}/duet/rare_llama31_8b_v2/idk_dpo_rare_v1.jsonl"
+          ;;
+        popular)
+          echo "${IDK_DPO_ARTIFACT_ROOT}/duet/popular_llama31_8b_v2/idk_dpo_popular_v1.jsonl"
+          ;;
+        merged)
+          echo "${IDK_DPO_ARTIFACT_ROOT}/duet/merged_llama31_8b_v2/idk_dpo_merged_v1.jsonl"
+          ;;
+        *)
+          echo "[dualcf][campaign] Unsupported DUET IdkDPO forget_label=${forget_label}" >&2
+          exit 1
+          ;;
+      esac
+      ;;
     altpo)
       local altpo_seed
       altpo_seed="$(current_altpo_artifact_seed)"
@@ -406,6 +520,9 @@ resolve_rwku_artifact_for_method() {
   local method_variant="$1"
 
   case "${method_variant}" in
+    idk_dpo)
+      echo "${IDK_DPO_ARTIFACT_ROOT}/rwku/llama31_8b_level2_v2/idk_dpo_forget_level2_v1.jsonl"
+      ;;
     altpo)
       local altpo_seed
       altpo_seed="$(current_altpo_artifact_seed)"
@@ -497,6 +614,18 @@ run_rwku_block() {
   done
 }
 
+capture_campaign_scalar_env PER_DEVICE_TRAIN_BS
+capture_campaign_scalar_env GRAD_ACCUM
+capture_campaign_scalar_env EVAL_BATCH_SIZE
+capture_campaign_scalar_env NUM_EPOCHS
+capture_campaign_scalar_env CHECKPOINT_EVERY_HALF_EPOCH
+capture_campaign_scalar_env CHECKPOINT_EPOCHS
+capture_campaign_scalar_env SAVE_TOTAL_LIMIT
+capture_campaign_scalar_env ALPHA_CONST
+capture_campaign_scalar_env BETA_CONST
+capture_campaign_scalar_env BETA_A
+capture_campaign_scalar_env BETA_B
+
 export REPO_ROOT="${REPO_ROOT:-/home/vkropoti/diploma/open-unlearning}"
 export VENV_PATH="${VENV_PATH:-/data/home/vkropoti/unlearning-venv}"
 
@@ -553,6 +682,21 @@ else
 fi
 export ALTPO_REPEATS="${ALTPO_REPEATS:-5}"
 
+if [[ -z "${IDK_DPO_ARTIFACT_ROOT:-}" ]]; then
+  if [[ "$(basename "${ARTIFACT_ROOT}")" == "dualcf" ]]; then
+    export IDK_DPO_ARTIFACT_ROOT="$(dirname "${ARTIFACT_ROOT}")/idk_dpo"
+  else
+    export IDK_DPO_ARTIFACT_ROOT="${ARTIFACT_ROOT}/idk_dpo"
+  fi
+else
+  export IDK_DPO_ARTIFACT_ROOT
+fi
+if [[ -z "${IDK_DPO_TEMPLATE+x}" ]]; then
+  export IDK_DPO_TEMPLATE="I don't know."
+else
+  export IDK_DPO_TEMPLATE
+fi
+
 export DUET_LOCAL_SFT_BASE="${DUET_LOCAL_SFT_BASE:-/data/home/vkropoti/unlearning/SwetieePawsss/DUET_ft_models}"
 export DUET_SFT_SUBFOLDER="${DUET_SFT_SUBFOLDER:-llama-3.1-8b-instruct-tripunlamb-ft}"
 export DUET_LOCAL_SFT_BASE="$(resolve_existing_dir "${DUET_LOCAL_SFT_BASE}")"
@@ -591,6 +735,14 @@ export DIFFICULTY_BATCH_SIZE="${DIFFICULTY_BATCH_SIZE:-32}"
 export ATTR_RETAIN_BATCH_SIZE="${ATTR_RETAIN_BATCH_SIZE:-4}"
 export ATTR_RETAIN_MAX_STEPS="${ATTR_RETAIN_MAX_STEPS:-0}"
 export ATTR_FORGET_MAX_STEPS="${ATTR_FORGET_MAX_STEPS:-0}"
+
+capture_campaign_runtime_env PER_DEVICE_TRAIN_BS
+capture_campaign_runtime_env GRAD_ACCUM
+capture_campaign_runtime_env EVAL_BATCH_SIZE
+capture_campaign_runtime_env NUM_EPOCHS
+capture_campaign_runtime_env CHECKPOINT_EVERY_HALF_EPOCH
+capture_campaign_runtime_env CHECKPOINT_EPOCHS
+capture_campaign_runtime_env SAVE_TOTAL_LIMIT
 
 capture_campaign_scalar_env BETAS
 capture_campaign_scalar_env ALPHAS

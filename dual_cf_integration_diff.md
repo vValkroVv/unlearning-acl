@@ -3,6 +3,103 @@
 Base commit: `3e15a8ba7682cf316469a6ffc417c62d33aa22b1` (before DualCF integration)
 Target: current working tree
 
+## GradDiff, IdkDPO, CE-U, PDU, and TPO DUET/RWKU campaign integration (2026-05-12)
+
+This update adds five old-method comparison variants to the DUET/RWKU
+one-LR campaign surface while preserving the existing default campaign list.
+Run them explicitly with `METHOD_VARIANTS` so artifact-backed `idk_dpo` is not
+accidentally required by ordinary default campaigns.
+
+Changed files for this patch:
+
+- `src/tools/build_idk_dpo_artifact.py`
+- `src/trainer/unlearn/tpo.py`
+- `configs/trainer/TPO.yaml`
+- `configs/experiment/unlearn/duet/grad_diff_lora.yaml`
+- `configs/experiment/unlearn/duet/ceu_lora.yaml`
+- `configs/experiment/unlearn/duet/pdu_lora.yaml`
+- `configs/experiment/unlearn/duet/idk_dpo_lora.yaml`
+- `configs/experiment/unlearn/duet/tpo_lora.yaml`
+- `configs/experiment/unlearn/rwku/grad_diff_lora.yaml`
+- `configs/experiment/unlearn/rwku/ceu_lora.yaml`
+- `configs/experiment/unlearn/rwku/pdu_lora.yaml`
+- `configs/experiment/unlearn/rwku/idk_dpo_lora.yaml`
+- `configs/experiment/unlearn/rwku/tpo_lora.yaml`
+- `scripts/duet/gd_family_duet.sh`
+- `scripts/duet/gd_duet.sh`
+- `scripts/duet/ceu_duet.sh`
+- `scripts/duet/pdu_duet.sh`
+- `scripts/duet/idk_dpo_duet.sh`
+- `scripts/duet/tpo_duet.sh`
+- `scripts/rwku/gd_family_rwku.sh`
+- `scripts/rwku/gd_rwku.sh`
+- `scripts/rwku/ceu_rwku.sh`
+- `scripts/rwku/pdu_rwku.sh`
+- `scripts/rwku/idk_dpo_rwku.sh`
+- `scripts/rwku/tpo_rwku.sh`
+- `scripts/duet/run_dualcf_ablation_v2.sh`
+- `scripts/rwku/run_dualcf_ablation_v2.sh`
+- `scripts/dualcf/run_campaign_one_lr.sh`
+- `check_saves.py`
+- `src/tools/build_structured_saves.py`
+- `src/tools/analyze_wrong_generations.py`
+- `src/tools/export_unlearning_sanity_checks.py`
+- `src/tools/build_results_combine_tables.py`
+- `prod-run-dual-gpu.md`
+
+Behavior change summary:
+
+- `grad_diff`, `ceu`, and `pdu` are registered as artifact-free campaign
+  variants and use split-matched DUET/RWKU QA forget and retain datasets.
+- `CEU` filters forget batches down to `input_ids`, `attention_mask`, and
+  `labels` before model forward so routed metadata such as DUET `pop_sum` is
+  not passed into `LlamaForCausalLM.forward()`.
+- `idk_dpo` is registered as an artifact-backed DPO variant. It resolves
+  split-matched JSONL files under `${IDK_DPO_ARTIFACT_ROOT}`, with preferred
+  `alternate` answers set to a fixed IDK template and rejected answers kept as
+  the original forget answers.
+- `tpo` is registered as an artifact-free TPO/TIF-style comparison method. It
+  uses a frozen reference model for logit preference loss on answer-content
+  target tokens and CE preservation loss on stopword/punctuation/general answer
+  tokens.
+- Shared GradDiff-family launchers preserve `OUTPUT_ROOT`, seed suffixes,
+  checkpoint scheduling, endpoint eval, checkpoint / utility eval, and
+  safetensors cleanup behavior.
+- The shared launchers now expose TPO sweeps through `TPO_BETAS`,
+  `TPO_PL_COEFFS`, `TPO_ALPHAS`, `TPO_GAMMAS`, and
+  `TPO_IDENTIFIER_MODE`.
+- PDU launchers pass concrete production defaults for the previously unset
+  `retain_loss_eps` config: `retain_loss_eps=1.0`,
+  `dual_step_size=0.05`, `dual_update_upon=step`, and
+  `dual_warmup_epochs=0`.
+- Save checking, structured-save parsing, wrong-generation parsing, sanity
+  exports, and combined tables now recognize `_grad_diff_lora_`,
+  `_idk_dpo_lora_`, `_ceu_lora_`, `_pdu_lora_`, and `_tpo_lora_` run names.
+- The GPU runbook adds one separate `###` command section for each of
+  GradDiff, IdkDPO, CE-U, and PDU immediately after the
+  `### Dualcf on altpo artifacts` section, with TPO production and ablation
+  commands added after `### PDU baseline`.
+
+Validation status:
+
+- Python compile checks passed for the new IdkDPO builder, touched trainers,
+  TPO trainer, trainer registry, save checker, and parser/table tooling.
+- Shell syntax checks passed for the new DUET/RWKU launchers, dispatchers, and
+  the shared campaign wrapper.
+- YAML load checks passed for all new or touched DUET/RWKU experiment configs,
+  including `configs/trainer/TPO.yaml` and the DUET/RWKU TPO experiment files.
+- The local trainer registry import resolved `TRAINER_REGISTRY["TPO"]`.
+- IdkDPO artifact builder smoke test confirmed template rewrite and metadata
+  preservation.
+- A CE-U metadata-filter smoke confirmed metadata-bearing batches no longer
+  forward non-model keys such as `pop_sum`.
+- Parser smoke checks confirmed the new run-name patterns resolve in
+  structured saves, wrong-generation analysis, sanity exports, combined table
+  maps, and save checking.
+- `src/train.py --cfg job` composition was attempted for DUET GradDiff but is
+  blocked in this local environment because `rouge_score` is not installed.
+- No GPU train smoke was run in this edit pass.
+
 ## Campaign gradient checkpointing default (2026-05-11)
 
 The one-LR campaign now defaults `GRADIENT_CHECKPOINTING=false`, and the
@@ -1148,6 +1245,13 @@ Updates:
   - `scripts/duet/run_dualcf_ablation_v2.sh`
   - `scripts/rwku/run_dualcf_ablation_v2.sh`
   - `scripts/dualcf/run_campaign_one_lr.sh`
+- `scripts/dualcf/run_campaign_one_lr.sh` now applies standalone AdaPop
+  defaults only for `METHOD_VARIANTS=ada_pop`: adaptive alpha
+  (`ALPHA_CONST=none`), dynamic popularity beta (`BETA_CONST=none`),
+  `GAMMAS=1.0`, `PER_DEVICE_TRAIN_BS=32`, `GRAD_ACCUM=1`,
+  `EVAL_BATCH_SIZE=192`, `NUM_EPOCHS=2`, half-epoch checkpointing, and
+  `SAVE_TOTAL_LIMIT=12`, while preserving explicit user overrides and
+  restoring the normal campaign defaults before the next method.
 - save checking and downstream summary tooling now recognize `ada_pop` run
   names, so AdaPop no longer disappears from structured saves, sanity exports,
   or combined table generation

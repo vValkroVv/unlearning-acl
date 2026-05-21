@@ -20,8 +20,31 @@ source /data/home/vkropoti/unlearning-venv/bin/activate
 ln -sfn /data/home/vkropoti/unlearning/SwetieePawsss \
   /home/vkropoti/diploma/open-unlearning/SwetieePawsss
 
+export HF_HOME=/data/home/vkropoti/unlearning/.hf_home
+export HF_DATASETS_CACHE=/data/home/vkropoti/unlearning/.hf_datasets_cache
+export TRITON_CACHE_DIR=/data/home/vkropoti/unlearning/.triton
+export ARTIFACT_ROOT=/data/home/vkropoti/unlearning/artifacts/dualcf
+export OUTPUT_ROOT=/data/home/vkropoti/unlearning/saves/unlearn
+export UTILITY=${UTILITY:-3k}
+export UTILITY_ROOT=${UTILITY_ROOT:-/data/home/vkropoti/unlearning/evals/utility_3k_v1}
+export BASELINE_CACHE_ROOT=/data/home/vkropoti/unlearning/saves/eval/utility_baselines
+mkdir -p "$HF_HOME" "$HF_DATASETS_CACHE" "$TRITON_CACHE_DIR" \
+  "$ARTIFACT_ROOT" "$OUTPUT_ROOT" "$UTILITY_ROOT" "$BASELINE_CACHE_ROOT"
 
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
 
+# Llama 8B production defaults
+export BASE_MODEL=Llama-3.1-8B-Instruct
+export MODEL_CONFIG=Llama-3.1-8B-Instruct-lora
+export MODEL_CFG=configs/model/Llama-3.1-8B-Instruct.yaml
+export LORA_MODEL_CFG=configs/model/Llama-3.1-8B-Instruct-lora.yaml
+export HF_BASE_MODEL_PATH=/data/home/vkropoti/unlearning/models/BASE/Llama-3.1-8B-Instruct
+export BASE_MODEL_PATH=${HF_BASE_MODEL_PATH}
+export BASE_MODEL_EVAL_CONFIG=Llama-3.1-8B-Instruct
+export LORA_MODEL_EVAL_CONFIG=Llama-3.1-8B-Instruct-lora
 
 # DUET SFT base for DUET artifact prep and DUET runs
 export DUET_LOCAL_SFT_BASE=/data/home/vkropoti/unlearning/SwetieePawsss/DUET_ft_models
@@ -79,8 +102,12 @@ New SpanCF variants (`span_cf_simnpo`, `span_cf_local_retain`,
 `span_cf_simnpo_projected`) are available as explicit `METHOD_VARIANTS` values
 when needed. The standalone AdaPop launchers also accept `BETA_A` and `BETA_B`
 overrides for the dynamic popularity curve while keeping the same checkpoint /
-cleanup cadence as the other baselines. The wrapper also accepts an optional
-fourth positional argument for `SEED`; when set, runs get a matching
+cleanup cadence as the other baselines. When `METHOD_VARIANTS=ada_pop`, the
+wrapper now switches to the same AdaPop defaults as the standalone launchers:
+`PER_DEVICE_TRAIN_BS=32`, `GRAD_ACCUM=1`, `EVAL_BATCH_SIZE=192`,
+`NUM_EPOCHS=2`, `GAMMAS=1.0`, `ALPHA_CONST=none`, and `BETA_CONST=none`,
+unless those variables were explicitly set before launching. The wrapper also
+accepts an optional fourth positional argument for `SEED`; when set, runs get a matching
 `_seed<SEED>` suffix. It now defaults to `UTILITY=3k`; set `UTILITY=1k` to keep
 the old Utility-1K panel.
 
@@ -1486,5 +1513,129 @@ BETAS=0.1 \
 GAMMAS=1.0 \
 SPAN_SAM_RHO=0.01 \
 SPAN_SAM_ADAPTIVE=false \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### GradDiff baseline
+
+GradDiff is artifact-free and uses the normal DUET/RWKU forget/retain QA
+batches. Run it after the DualCF-on-AltPO ablation when adding the new
+old-method comparison set:
+
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="grad_diff" \
+GRAD_DIFF_ALPHAS="1.0" \
+GRAD_DIFF_GAMMAS="1.0" \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### IdkDPO baseline
+
+IdkDPO is artifact-backed. Build the split-matched IDK preference artifacts once
+from the validated DualCF v2 artifacts, then run the campaign command:
+
+```bash
+export ARTIFACT_ROOT=${ARTIFACT_ROOT:-/data/home/vkropoti/unlearning/artifacts/dualcf}
+export IDK_DPO_ARTIFACT_ROOT=${IDK_DPO_ARTIFACT_ROOT:-/data/home/vkropoti/unlearning/artifacts/idk_dpo}
+export IDK_DPO_TEMPLATE=${IDK_DPO_TEMPLATE:-"I don't know."}
+
+python src/tools/build_idk_dpo_artifact.py \
+  --input-path "${ARTIFACT_ROOT}/duet/rare_llama31_8b_v2/dualcf_rare_v2.jsonl" \
+  --output-path "${IDK_DPO_ARTIFACT_ROOT}/duet/rare_llama31_8b_v2/idk_dpo_rare_v1.jsonl" \
+  --question-key question \
+  --answer-key answer \
+  --template "${IDK_DPO_TEMPLATE}" \
+  --fail-on-empty
+
+python src/tools/build_idk_dpo_artifact.py \
+  --input-path "${ARTIFACT_ROOT}/duet/popular_llama31_8b_v2/dualcf_popular_v2.jsonl" \
+  --output-path "${IDK_DPO_ARTIFACT_ROOT}/duet/popular_llama31_8b_v2/idk_dpo_popular_v1.jsonl" \
+  --question-key question \
+  --answer-key answer \
+  --template "${IDK_DPO_TEMPLATE}" \
+  --fail-on-empty
+
+python src/tools/build_idk_dpo_artifact.py \
+  --input-path "${ARTIFACT_ROOT}/duet/merged_llama31_8b_v2/dualcf_merged_v2.jsonl" \
+  --output-path "${IDK_DPO_ARTIFACT_ROOT}/duet/merged_llama31_8b_v2/idk_dpo_merged_v1.jsonl" \
+  --question-key question \
+  --answer-key answer \
+  --template "${IDK_DPO_TEMPLATE}" \
+  --fail-on-empty
+
+python src/tools/build_idk_dpo_artifact.py \
+  --input-path "${ARTIFACT_ROOT}/rwku/llama31_8b_level2_v2/dualcf_forget_level2_v2.jsonl" \
+  --output-path "${IDK_DPO_ARTIFACT_ROOT}/rwku/llama31_8b_level2_v2/idk_dpo_forget_level2_v1.jsonl" \
+  --question-key query \
+  --answer-key answer \
+  --template "${IDK_DPO_TEMPLATE}" \
+  --fail-on-empty
+
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="idk_dpo" \
+IDK_DPO_BETAS="0.1" \
+IDK_DPO_ALPHAS="1.0" \
+IDK_DPO_GAMMAS="1.0" \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### CE-U baseline
+
+CE-U is artifact-free. The production default keeps the implementation's
+one-token answer warmup:
+
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="ceu" \
+CEU_IGNORE_FIRST_NS="1" \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### PDU baseline
+
+PDU is artifact-free. Always pass a concrete retain constraint because the base
+trainer config leaves `retain_loss_eps` unset:
+
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="pdu" \
+ALPHAS="1.0" \
+GAMMAS="1.0" \
+PDU_RETAIN_LOSS_EPS="1.0" \
+PDU_DUAL_STEP_SIZE="0.05" \
+PDU_DUAL_UPDATE_UPON="step" \
+PDU_DUAL_WARMUP_EPOCHS="0" \
+PDU_PRIMAL_DUAL="true" \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### TPO baseline
+
+TPO is artifact-free. The default identifier treats stopwords, punctuation, and
+subword artifacts as preservation tokens, and applies logit preference loss to
+the remaining answer-content tokens:
+
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="tpo" \
+TPO_BETAS="0.2" \
+TPO_PL_COEFFS="1.0" \
+TPO_ALPHAS="1.0" \
+TPO_GAMMAS="0.1" \
+TPO_IDENTIFIER_MODE=stopword \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
+```
+
+### AdaPop Comparison
+```bash
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="ada_pop" \
 bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
 ```

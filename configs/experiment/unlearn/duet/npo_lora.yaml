@@ -2,17 +2,17 @@
 
 defaults:
   - override /model: Llama-3.1-8B-Instruct-lora
-  - override /trainer: GradDiff
+  - override /trainer: NPO
   - override /data: unlearn
-  - override /data/datasets@data.forget: RWKU_QA_forget
-  - override /data/datasets@data.retain: RWKU_QA_retain
-  - override /eval: rwku
+  - override /data/datasets@data.forget: DUET_QA_forget
+  - override /data/datasets@data.retain: DUET_QA_retain
+  - override /eval: duet
 
-forget_split: forget_level2
-retain_split: neighbor_level2
+forget_split: city_forget_rare_5
+retain_split: city_fast_retain_500
 holdout_split: ${retain_split}
 retain_logs_path: null
-question_key: query
+question_key: question
 
 model:
   model_args:
@@ -21,20 +21,18 @@ model:
 data:
   anchor: forget
   forget:
-    RWKU_QA_forget:
+    DUET_QA_forget:
       args:
         hf_args:
-          path: SwetieePawsss/exp_r
-          name: ${forget_split}
-          split: "test"
+          path: SwetieePawsss/DUET
+          split: ${forget_split}
         question_key: ${question_key}
   retain:
-    RWKU_QA_retain:
+    DUET_QA_retain:
       args:
         hf_args:
-          path: SwetieePawsss/exp_r
-          name: ${retain_split}
-          split: "test"
+          path: SwetieePawsss/DUET
+          split: ${retain_split}
         question_key: ${question_key}
 
 eval:
@@ -49,7 +47,7 @@ trainer:
     per_device_train_batch_size: 1
     gradient_accumulation_steps: 32
     learning_rate: 1e-5
-    num_train_epochs: 5
+    num_train_epochs: 2
     lr_scheduler_type: constant
     warmup_ratio: 0.1
     logging_steps: 10
@@ -61,8 +59,9 @@ trainer:
     gradient_checkpointing: false
     ddp_find_unused_parameters: false
   method_args:
+    beta: 0.5
     alpha: 1.0
     gamma: 1.0
     retain_loss_type: NLL
 
-task_name: rwku_grad_diff_lora
+task_name: duet_npo_lora

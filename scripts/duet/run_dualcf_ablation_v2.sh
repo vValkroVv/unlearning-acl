@@ -139,6 +139,18 @@ case "${METHOD_VARIANT}" in
   ga)
     exec bash "${script_dir}/ga_duet.sh"
     ;;
+  grad_diff|gd)
+    exec bash "${script_dir}/gd_duet.sh"
+    ;;
+  ceu)
+    exec bash "${script_dir}/ceu_duet.sh"
+    ;;
+  pdu)
+    exec bash "${script_dir}/pdu_duet.sh"
+    ;;
+  idk_dpo)
+    exec bash "${script_dir}/idk_dpo_duet.sh"
+    ;;
   ada_pop)
     exec bash "${script_dir}/ada_pop_duet.sh"
     ;;
@@ -147,6 +159,9 @@ case "${METHOD_VARIANT}" in
     ;;
   simnpo)
     exec bash "${script_dir}/simnpo_duet.sh"
+    ;;
+  tpo)
+    exec bash "${script_dir}/tpo_duet.sh"
     ;;
   adaptive_rmu)
     exec bash "${script_dir}/adaptive_rmu_duet.sh"

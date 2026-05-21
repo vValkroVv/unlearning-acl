@@ -3,9 +3,9 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-export METHOD_NAME=grad_diff
-export RUN_LABEL=GradDiff
-export TRAINER=GradDiff
-export EXPERIMENT=unlearn/duet/grad_diff_lora.yaml
+export METHOD_NAME=ceu
+export RUN_LABEL=CEU
+export TRAINER=CEU
+export EXPERIMENT=unlearn/duet/ceu_lora.yaml
 
 bash "${script_dir}/gd_family_duet.sh"

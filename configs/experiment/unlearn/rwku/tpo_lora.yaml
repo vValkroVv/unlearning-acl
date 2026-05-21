@@ -2,7 +2,7 @@
 
 defaults:
   - override /model: Llama-3.1-8B-Instruct-lora
-  - override /trainer: GradDiff
+  - override /trainer: TPO
   - override /data: unlearn
   - override /data/datasets@data.forget: RWKU_QA_forget
   - override /data/datasets@data.retain: RWKU_QA_retain
@@ -49,7 +49,7 @@ trainer:
     per_device_train_batch_size: 1
     gradient_accumulation_steps: 32
     learning_rate: 1e-5
-    num_train_epochs: 5
+    num_train_epochs: 2
     lr_scheduler_type: constant
     warmup_ratio: 0.1
     logging_steps: 10
@@ -61,8 +61,13 @@ trainer:
     gradient_checkpointing: false
     ddp_find_unused_parameters: false
   method_args:
+    beta: 0.2
+    pl_coeff: 1.0
     alpha: 1.0
-    gamma: 1.0
+    gamma: 0.1
     retain_loss_type: NLL
+    identifier_mode: stopword
+    normalize_lpl_by_tokens: true
+    normalize_pl_by_tokens: true
 
-task_name: rwku_grad_diff_lora
+task_name: rwku_tpo_lora

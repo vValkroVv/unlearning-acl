@@ -11,6 +11,7 @@ from trainer.unlearn.npo_sam import NPOSAM
 from trainer.unlearn.dpo import DPO
 from trainer.unlearn.altpo import AltPO
 from trainer.unlearn.simnpo import SimNPO
+from trainer.unlearn.tpo import TPO
 from trainer.unlearn.flat import FLAT
 from trainer.unlearn.simple_ce import SimpleCE
 from trainer.unlearn.stat import STAT
@@ -133,6 +134,7 @@ _register_trainer(NPOSAM)
 _register_trainer(DPO)
 _register_trainer(AltPO)
 _register_trainer(SimNPO)
+_register_trainer(TPO)
 _register_trainer(FLAT)
 _register_trainer(SimpleCE)
 _register_trainer(STAT)

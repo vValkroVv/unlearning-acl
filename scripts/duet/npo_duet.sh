@@ -48,7 +48,7 @@ if [[ "${use_sft_base}" == "1" && -n "${tokenizer_subfolder}" ]]; then
     extra_eval_args+=(+model.tokenizer_args.subfolder=${tokenizer_subfolder})
 fi
 
-experiment="unlearn/duet/grad_ascent_lora.yaml"
+experiment="unlearn/duet/npo_lora.yaml"
 trainer="NPO"
 
 output_root="${OUTPUT_ROOT:-${repo_root}/saves/unlearn/duet/npo}"
