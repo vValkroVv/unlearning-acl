@@ -1,229 +1,416 @@
 <div align="center">
 
-![*Open*Unlearning](assets/banner.png)
+# DualCF: Target-Aware Counterfactual Preference Unlearning
 
-<h3><strong>An easily extensible framework unifying LLM unlearning evaluation benchmarks.</strong></h3>
+**Selective factual erasure by validating the replacement target before unlearning.**
 
-  <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
-    <a href="https://arxiv.org/abs/2506.12618"><img src="https://img.shields.io/badge/arXiv-Report-b31b1b?logo=arxiv&logoColor=white" alt="arXiv Paper"/></a>
-    <a href="https://github.com/locuslab/open-unlearning"><img src="https://img.shields.io/github/stars/locuslab/open-unlearning?style=social" alt="GitHub Repo stars"/></a>
-    <a href="https://github.com/locuslab/open-unlearning/actions"><img src="https://github.com/locuslab/open-unlearning/actions/workflows/tests.yml/badge.svg" alt="Build Status"/></a>
-    <a href="https://huggingface.co/open-unlearning"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Model-blue" alt="HuggingFace 🤗"/></a>
-    <a href="https://github.com/locuslab/open-unlearning"><img src="https://img.shields.io/github/repo-size/locuslab/open-unlearning" alt="GitHub repo size"/></a>
-    <a href="https://github.com/locuslab/open-unlearning"><img src="https://img.shields.io/github/languages/top/locuslab/open-unlearning" alt="GitHub top language"/></a>
-    <a href="https://github.com/locuslab/open-unlearning/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue" alt="License: MIT"/></a>
-  </div>
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.4.1-ee4c2c)
+![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-yellow)
+![LoRA](https://img.shields.io/badge/PEFT-LoRA-green)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
 </div>
 
----
+DualCF is a target-aware unlearning method for factual QA: it builds validated
+counterfactual targets, then trains with a routed objective that learns the
+target, rejects the original answer, and protects retained behavior.
 
-## 📖 Overview
+Selective factual unlearning should remove a target answer without destroying
+nearby facts or general utility. In target-guided unlearning, the replacement
+answer is part of the training signal; a copied, wrong-type, or brittle
+replacement gives the optimizer a bad endpoint. DualCF separates this into two
+auditable stages: counterfactual artifact construction and routed
+counterfactual optimization.
 
-We provide efficient and streamlined implementations of the TOFU, MUSE and WMDP unlearning benchmarks while supporting 12+ unlearning methods, 5+ datasets, 10+ evaluation metrics, and 7+ LLM architectures. Each of these can be easily extended to incorporate more variants.
+On DUET Rare, holding the optimizer fixed while improving only the
+counterfactual artifact moves the forget score from `32.8` to `0.7` while
+preserving high holdout and utility (`H=96.5`, `U=56.9`). Against the current
+19-baseline comparison on DUET and RWKU, DualCF gives a stronger selective
+trade-off than destructive deletion methods that lower forgetting by collapsing
+holdout or utility.
 
+<p align="center">
+  <img src="assets/dualcf_artifact_construction.png" width="48%" alt="DualCF counterfactual artifact construction" />
+  <img src="assets/dualcf_routed_optimization.png" width="48%" alt="DualCF routed counterfactual optimization" />
+</p>
 
-We invite the LLM unlearning community to collaborate by adding new benchmarks, unlearning methods, datasets and evaluation metrics here to expand OpenUnlearning's features, gain feedback from wider usage and drive progress in the field.
+## Why Target Quality Matters
 
----
+Negative-only unlearning can suppress the original answer, but it can also
+produce collapse, nonsensical answers, or locality damage. Preference-style
+unlearning needs a preferred response. For factual unlearning, that response is
+a counterfactual target, and its validity is central to the method.
 
-> 📝 If you've found this repository or the models we've provided in [HuggingFace](https://huggingface.co/open-unlearning) useful, please cite our [technical report](https://arxiv.org/abs/2506.12618) (bibtex at [*Citing this work*](#-citing-this-work)).
+Rare facts are especially brittle: generators may return obscure entities,
+wrong-type replacements, over-specific answers, or strings that leak the
+original answer. DualCF makes the target endpoint explicit, validated, and
+frozen before training.
 
----
+## Method: DualCF In Two Stages
 
-### 📢 Updates
+```text
+Stage A: Counterfactual artifact construction
+    forget question + original answer
+    -> candidate generation
+    -> leakage/type/overlap validation
+    -> relation-aware ranking
+    -> optional repair/fallback
+    -> frozen artifact row with alternate + provenance + offline scores
 
-### [June 20, 2025]
-
-🚨 Our paper `OpenUnlearning: Accelerating LLM Unlearning via Unified Benchmarking of Methods and Metrics` is now out on [arXiv](https://arxiv.org/abs/2506.12618).
-
-🌟 **Highlights:**
-- A detailed technical report on OpenUnlearning covering the design, features, and implementation.
-- A meta-evaluation framework for benchmarking unlearning evaluations across 450+ models, open-sourced on HuggingFace 🤗: [TOFU Models w & w/o Knowledge](https://huggingface.co/collections/open-unlearning/tofu-models-w-and-w-o-knowledge-6861e4d935eb99ba162e55cd), [TOFU Unlearned Models](https://huggingface.co/collections/open-unlearning/tofu-unlearned-models-6860f6cf3fe35d0223d92e88).
-- Results benchmarking 8 diverse unlearning methods in one place using 10 evaluation metrics on TOFU.
-
-<details>
-<summary><b>Older Updates</b></summary>
-
-
-#### [May 19, 2025]
-
-- **More Methods!** Added support for unlearning methods [UNDIAL](https://aclanthology.org/2025.naacl-long.444/) and [AltPO](https://aclanthology.org/2025.coling-main.252/).
-
-#### [May 12, 2025]
-
-- **Another benchmark!** We now support running the [`WMDP`](https://wmdp.ai/) benchmark with its `Zephyr` task model.
-- **More evaluations!**  The [`lm-evaluation-harness`](https://github.com/EleutherAI/lm-evaluation-harness) toolkit has been integrated into OpenUnlearning, enabling WMDP evaluations and support for popular general LLM benchmarks, including MMLU, GSM8K, and others.
-
-#### [Apr 6, 2025]
-- **More Metrics!** Added 6 Membership Inference Attacks (MIA) (LOSS, ZLib, Reference, GradNorm, MinK, and MinK++), along with Extraction Strength (ES) and  Exact Memorization (EM) as additional evaluation metrics.
-- **More TOFU Evaluations!** Now includes a holdout set and supports MIA attack-based evaluation. You can now compute MUSE's privleak on TOFU.
-- **More Documentation!** [`docs/links.md`](docs/links.md) contains resources for each of the implemented features and other useful LLM unlearning resources.
-
-Be sure to run `python setup_data.py` immediately after merging the latest version. This is required to refresh the downloaded eval log files and ensure they're compatible with the latest evaluation metrics.
-
-#### [Mar 27, 2025]
-- **More Documentation: easy contributions and the leaderboard functionality**: We've updated the documentation to make contributing new unlearning methods and benchmarks much easier. Users can document additions better and also update a leaderboard with their results. See [this section](#-how-to-contribute) for details.
-
-#### [Mar 9, 2025]
-- **More Methods!** Added support for [RMU](https://arxiv.org/abs/2403.03218) (representation-engineering based unlearning).
-
-#### [Feb 27, 2025]  
-⚠️ **Repository Update**: This repo replaces the original TOFU codebase at [`github.com/locuslab/tofu`](https://github.com/locuslab/tofu), which is no longer maintained.
-
-</details>
-
----
-
-## 🗃️ Available Components
-
-We provide several variants for each of the components in the unlearning pipeline.
-
-| **Component**          | **Available Options** |
-|------------------------|----------------------|
-| **Benchmarks**        | [TOFU](https://arxiv.org/abs/2401.06121), [MUSE](https://muse-bench.github.io/), [WMDP](https://www.wmdp.ai/) |
-| **Unlearning Methods** | GradAscent, GradDiff, NPO, SimNPO, DPO, RMU, UNDIAL, AltPO, SatImp, WGA, CE-U, PDU |
-| **Evaluation Metrics** | Verbatim Probability, Verbatim ROUGE, Knowledge QA-ROUGE, Model Utility, Forget Quality, TruthRatio, Extraction Strength, Exact Memorization, 6 MIA attacks, [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) |
-| **Datasets**          | MUSE-News (BBC), MUSE-Books (Harry Potter), TOFU (different splits), WMDP-Bio, WMDP-Cyber |
-| **Model Families**    | TOFU: Llama-3.2, Llama-3.1, Llama-2; MUSE: Llama-2; Additional: Phi-3.5, Phi-1.5, Gemma, Zephyr |
-
----
-
-
-## 📌 Table of Contents
-- 📖 [Overview](#-overview)
-- 📢 [Updates](#-updates)
-- 🗃️ [Available Components](#%EF%B8%8F-available-components)
-- ⚡ [Quickstart](#-quickstart)
-- 🔄 [Updated TOFU benchmark](#-updated-tofu-benchmark)
-- 🧪 [Running Experiments](#-running-experiments)
-  - 🚀 [Perform Unlearning](#-perform-unlearning)
-  - 📊 [Perform an Evaluation](#-perform-an-evaluation)
-  - 📜 [Running Baseline Experiments](#-running-baseline-experiments)
-- ➕ [How to Contribute](#-how-to-contribute)
-- 📚 [Further Documentation](#-further-documentation)
-- 🔗 [Support & Contributors](#-support--contributors)
-- 📝 [Citing this work](#-citing-this-work)
-- 🤝 [Acknowledgements](#-acknowledgements)
-- 📄 [License](#-license)
-
----
-
-## ⚡ Quickstart
-
-```bash
-# Environment setup
-conda create -n unlearning python=3.11
-conda activate unlearning
-pip install .[lm_eval]
-pip install --no-build-isolation flash-attn==2.6.3
-
-# Data setup
-python setup_data.py --eval # saves/eval now contains evaluation results of the uploaded models
-# This downloads log files with evaluation results (including retain model logs)
-# into `saves/eval`, used for evaluating unlearning across supported benchmarks.
-# Additional datasets (e.g., WMDP) are supported — run below for options:
-# python setup_data.py --help
+Stage B: Routed counterfactual optimization
+    consume frozen alternate, difficulty_score, attribution_score
+    -> learn selected alternate
+    -> reject original answer
+    -> preserve retained behavior
 ```
 
----
+| Artifact | Meaning |
+|---|---|
+| `CF-Single` | One generated/selected alternate per forget example. |
+| `CF-Multi` | Eight OpenAI/Codex/ChatGPT-Pro generated candidates per row; a deterministic validator/ranker selects one final alternate. |
+| `CF-Repair` | Repairs the multi-candidate artifact where repair is active. Active on DUET Rare and the rare side of DUET Merged; equal to `CF-Multi` on DUET Popular and RWKU. |
 
-### 🔄 Updated TOFU benchmark
+| Split | Rows |
+|---|---:|
+| DUET Rare | 482 |
+| DUET Popular | 482 |
+| DUET Merged | 964 |
+| RWKU Level 2 | 2879 |
 
-We've updated Open-Unlearning's TOFU benchmark target models to use a wider variety of newer architectures with sizes varying from 1B to 8B. These include Llama 3.2 1B, Llama 3.2 3B, Llama 3.1 8B, and the original Llama-2 7B (re-created) target models from [the old version of TOFU](github.com/locuslab/tofu). 
+## Objective
 
-For each architecture, we have finetuned with four different splits of the TOFU datasets: `full`, `retain90`, `retain95`, `retain99`, for a total of 16 finetuned models. The first serves as the target (base model for unlearning) and the rest are retain models used to measure performance against for each forget split. These models are on [HuggingFace](`https://huggingface.co/collections/open-unlearning/tofu-new-models-67bcf636334ea81727573a9f0`) and the paths to these models can be set in the experimental configs or in command-line overrides.
+The trainer consumes a frozen row
+`(x, y_orig, y_cf, difficulty_score, attribution_score)` and optimizes a
+practical decomposition:
 
----
-
-## 🧪 Running Experiments
-
-We provide an easily configurable interface for running evaluations by leveraging Hydra configs. For a more detailed documentation of aspects like running experiments, commonly overriden arguments, interfacing with configurations, distributed training and simple finetuning of models, refer [`docs/experiments.md`](docs/experiments.md).
-
-### 🚀 Perform Unlearning
-
-An example command for launching an unlearning process with `GradAscent` on the TOFU `forget10` split:
-
-```bash
-python src/train.py --config-name=unlearn.yaml experiment=unlearn/tofu/default \
-  forget_split=forget10 retain_split=retain90 trainer=GradAscent task_name=SAMPLE_UNLEARN
+```text
+L = L_cf(x, y_cf) + lambda_neg_i L_NPO(x, y_orig) + alpha_eff L_ret
 ```
 
-- `experiment`- Path to the Hydra config file [`configs/experiment/unlearn/tofu/default.yaml`](configs/experiment/unlearn/tofu/default.yaml) with default experimental settings for TOFU unlearning, e.g. train dataset, eval benchmark details, model paths etc..
-- `forget_split/retain_split`- Sets the forget and retain dataset splits.
-- `trainer`- Load [`configs/trainer/GradAscent.yaml`](configs/trainer/GradAscent.yaml) and override the unlearning method with the handler (see config) implemented in [`src/trainer/unlearn/grad_ascent.py`](src/trainer/unlearn/grad_ascent.py).
+- `L_cf` learns the selected counterfactual target.
+- `L_NPO` suppresses the original answer.
+- `L_ret` anchors retained behavior.
+- Difficulty routing increases rejection pressure for examples that remain easy
+  to answer.
+- Attribution-risk routing reduces aggressive forget updates and increases
+  retain protection when a forget update is likely to interfere with retained
+  behavior.
 
-LoRA adapters can be trained with UNDIAL via the LoRA-specific experiment:
+For the reported setup:
+
+```text
+s_i = sigmoid((difficulty_i - 0.6) / 0.15)
+r_i = sigmoid((attribution_i - 0.6) / 0.15)
+
+lambda_neg = s_i * (1 - r_i)
+forget_scale = 1 - 0.5 * r_i
+alpha_eff = 1 + 2 * topk_mean_25%(r_i over the batch)
+```
+
+The final method also uses span masking and an NPO-SAM branch. Full details are
+in [docs/dualcf_repro.md](docs/dualcf_repro.md) and
+[prod-run-dual-gpu.md](prod-run-dual-gpu.md).
+
+## Repository Map
+
+| Purpose | Files |
+|---|---|
+| Trainers | [dual_cf.py](src/trainer/unlearn/dual_cf.py), [general_cf.py](src/trainer/unlearn/general_cf.py), [span_cf.py](src/trainer/unlearn/span_cf.py), [span_cf_samnpo.py](src/trainer/unlearn/span_cf_samnpo.py) |
+| Trainer configs | [DualCF.yaml](configs/trainer/DualCF.yaml), [GeneralCF.yaml](configs/trainer/GeneralCF.yaml), [SpanCF.yaml](configs/trainer/SpanCF.yaml), [SpanCFSAMNPO.yaml](configs/trainer/SpanCFSAMNPO.yaml) |
+| DUET/RWKU configs | [configs/experiment/unlearn/duet](configs/experiment/unlearn/duet), [configs/experiment/unlearn/rwku](configs/experiment/unlearn/rwku) |
+| Artifact generation | [make_counterfactuals.py](src/tools/make_counterfactuals.py), [clean_counterfactuals.py](src/tools/clean_counterfactuals.py), [score_difficulty.py](src/tools/score_difficulty.py), [score_attribution.py](src/tools/score_attribution.py), [calibrate_dual_cf_scores.py](src/tools/calibrate_dual_cf_scores.py), [validate_dual_cf_artifact.py](src/tools/validate_dual_cf_artifact.py) |
+| Campaign launchers | [run_campaign_one_lr.sh](scripts/dualcf/run_campaign_one_lr.sh), [scripts/duet](scripts/duet), [scripts/rwku](scripts/rwku) |
+| Result processing | [build_structured_saves.py](src/tools/build_structured_saves.py), [build_results_combine_tables.py](src/tools/build_results_combine_tables.py), [calc_cos_sim.py](scripts/calc_cos_sim.py), [calc_wrong_generations.py](scripts/calc_wrong_generations.py), [package_saves.sh](package_saves.sh) |
+| Production runbook | [prod-run-dual-gpu.md](prod-run-dual-gpu.md) |
+
+## Setup
+
+Quick local setup for reading configs and running lightweight utilities:
+
+```bash
+git clone git@github.com:vValkroVv/unlearning-acl.git
+cd unlearning-acl
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+```
+
+GPU environment matching the maintained runbooks:
+
+```bash
+bash setup_vast_env.sh
+source .venv/bin/activate
+```
+
+`setup_vast_env.sh` installs the runtime used by the DualCF scripts, including
+`torch==2.4.1` with CUDA 12.4 wheels, `transformers==4.45.1`,
+`accelerate==0.34.2`, `datasets==3.0.1`, `peft==0.15.2`,
+`flash-attn==2.6.3`, `bitsandbytes==0.44.1`, `lm-eval==0.4.8`, and related
+runtime tools. `setup.py` reads `requirements.txt`, which may reflect a
+machine-specific environment snapshot; prefer the maintained setup script and
+runbooks for production work.
+
+Use placeholders for local storage paths:
+
+```bash
+export REPO_ROOT=$PWD
+export DATA_ROOT=/path/to/unlearning-data
+export HF_HOME=${DATA_ROOT}/.hf_home
+export HF_DATASETS_CACHE=${DATA_ROOT}/.hf_datasets_cache
+export TRITON_CACHE_DIR=${DATA_ROOT}/.triton
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
+mkdir -p "$HF_HOME" "$HF_DATASETS_CACHE" "$TRITON_CACHE_DIR"
+```
+
+Offline production runs expect local mirrors such as:
+
+```text
+${DATA_ROOT}/SwetieePawsss/DUET
+${DATA_ROOT}/SwetieePawsss/exp_r
+${DATA_ROOT}/SwetieePawsss/DUET_ft_models
+${DATA_ROOT}/models/BASE/Llama-3.1-8B-Instruct
+```
+
+## Sanity Checks
+
+```bash
+source .venv/bin/activate
+pip check
+python src/train.py --help >/dev/null
+python src/eval.py --help >/dev/null
+python setup_data.py --help >/dev/null
+python src/tools/validate_dual_cf_artifact.py --help >/dev/null
+```
+
+If CUDA is available:
+
+```bash
+python - <<'PY'
+import torch
+print("cuda_available", torch.cuda.is_available())
+if torch.cuda.is_available():
+    print("gpu", torch.cuda.get_device_name(0))
+PY
+```
+
+## Validate An Artifact Before Training
+
+DUET:
+
+```bash
+python src/tools/validate_dual_cf_artifact.py \
+  --artifact-path /path/to/dualcf_rare_v2.jsonl \
+  --question-key question \
+  --reject-gold-substring \
+  --require-short-answer \
+  --check-overlap-ratio 0.85 \
+  --strict
+```
+
+RWKU:
+
+```bash
+python src/tools/validate_dual_cf_artifact.py \
+  --artifact-path /path/to/dualcf_forget_level2_v2.jsonl \
+  --question-key query \
+  --reject-gold-substring \
+  --require-short-answer \
+  --check-overlap-ratio 0.85 \
+  --strict
+```
+
+Expected trainer-facing schema:
+
+```json
+{
+  "index": 17,
+  "question": "...",
+  "answer": "...",
+  "alternate": "...",
+  "difficulty_score": 0.73,
+  "attribution_score": 0.18
+}
+```
+
+`rarity_score` can exist for compatibility, but the reported optimizer consumes
+`difficulty_score` and `attribution_score`.
+
+## Minimal Smoke Run
+
+Use local JSON mode and quote `cf_dataset_split`, because Hydra treats bracket
+slices as grammar unless quoted.
 
 ```bash
 python src/train.py --config-name=unlearn.yaml \
-  experiment=unlearn/muse/undial_lora.yaml trainer=UNDIAL \
-  model=Llama-3.2-1B-Instruct task_name=muse_undial_lora_run
+  experiment=unlearn/duet/dual_cf_lora.yaml \
+  trainer=DualCF \
+  model=Llama-3.2-1B-Instruct-lora \
+  task_name=duet_dualcf_smoke \
+  forget_split=city_forget_rare_5 \
+  retain_split=city_fast_retain_500 \
+  cf_dataset_path=json \
+  cf_dataset_data_files=/path/to/dualcf_rare_v2.jsonl \
+  "cf_dataset_split='train[:2]'" \
+  trainer.args.per_device_train_batch_size=1 \
+  trainer.args.gradient_accumulation_steps=1 \
+  trainer.args.num_train_epochs=1 \
+  +trainer.args.max_steps=1 \
+  trainer.args.learning_rate=1e-5 \
+  paths.output_dir=/tmp/duet_dualcf_smoke
 ```
 
-This loads the [`Llama-3.2-1B-Instruct-lora`](configs/model/Llama-3.2-1B-Instruct-lora.yaml) adapters and the LoRA-tuned training arguments defined in [`configs/experiment/unlearn/muse/undial_lora.yaml`](configs/experiment/unlearn/muse/undial_lora.yaml).
+Expected checks: training completes without OOM, `dualcf_*` logs appear,
+`difficulty_score` and `attribution_score` reach the trainer, and an adapter
+checkpoint is saved.
 
-### 📊 Perform an Evaluation
+## Reproduce The Reported Campaign
 
-An example command for launching a TOFU evaluation process on `forget10` split:
+The full production path is in [prod-run-dual-gpu.md](prod-run-dual-gpu.md).
+For the paper-facing full GeneralCF-style DualCF row:
 
 ```bash
-model=Llama-3.2-1B-Instruct
-python src/eval.py --config-name=eval.yaml experiment=eval/tofu/default \
-  model=${model} \
-  model.model_args.pretrained_model_name_or_path=open-unlearning/tofu_${model}_full \
-  retain_logs_path=saves/eval/tofu_${model}_retain90/TOFU_EVAL.json \
-  task_name=SAMPLE_EVAL
+source .venv/bin/activate
+
+export ARTIFACT_ROOT=/path/to/artifacts/dualcf
+export ALTPO_ARTIFACT_ROOT=/path/to/artifacts/altpo
+export OUTPUT_ROOT=/path/to/saves/unlearn
+export HF_HOME=/path/to/.hf_home
+export HF_DATASETS_CACHE=/path/to/.hf_datasets_cache
+export TRITON_CACHE_DIR=/path/to/.triton
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
+
+GPU_ID=0
+SEEDS="42 179 1137" \
+METHOD_VARIANTS="general_cf" \
+ADDITIONAL_LOSS=NPO-SAM \
+ROUTING=full \
+SPAN_ADDITIONAL=true \
+SPAN_CF_BRANCH=true \
+DISABLE_RARITY_ROUTES=true \
+DISABLE_DIFFICULTY_ROUTES=false \
+DISABLE_ATTRIBUTION_ROUTES=false \
+RARITY_NEG_GAINS="0.0" \
+RARITY_CF_GAINS="0.0" \
+SPAN_MODE=lcs \
+SPAN_ALT_SHARED_TOKEN_WEIGHT=0.0 \
+SPAN_ALT_UNIQUE_TOKEN_WEIGHT=1.0 \
+SPAN_ORIG_SHARED_TOKEN_WEIGHT=0.0 \
+SPAN_ORIG_UNIQUE_TOKEN_WEIGHT=1.0 \
+BETAS=0.1 \
+GAMMAS=1.0 \
+SPAN_SAM_RHO=0.01 \
+SPAN_SAM_ADAPTIVE=false \
+bash scripts/dualcf/run_campaign_one_lr.sh "${GPU_ID}" 1e-4 all
 ```
 
-- `experiment`- Path to the evaluation configuration [`configs/experiment/eval/tofu/default.yaml`](configs/experiment/eval/tofu/default.yaml).
-- `model`- Sets up the model and tokenizer configs for the `Llama-3.2-1B-Instruct` model.
-- `model.model_args.pretrained_model_name_or_path`- Overrides the default experiment config to evaluate a model from a HuggingFace ID (can use a local model checkpoint path as well).
-- `retain_logs_path`- Sets the path to the reference model eval logs that is needed to compute reference model based metrics like `forget_quality` in TOFU.
+## Results
 
-For more details about creating and running evaluations, refer [`docs/evaluation.md`](docs/evaluation.md).
+All values are percentages. `F↓` is the original-answer forget score, `H↑` is
+holdout/locality, and `U↑` is general utility. The metrics must be read
+together.
 
+| Split | DualCF F↓ | DualCF H↑ | DualCF U↑ |
+|---|---:|---:|---:|
+| DUET Rare | 0.7 | 96.5 | 56.9 |
+| DUET Popular | 6.5 | 98.8 | 57.2 |
+| DUET Merged | 1.9 | 98.7 | 56.6 |
+| RWKU | 8.8 | 96.8 | 57.3 |
 
-### 📜 Running Baseline Experiments
-The scripts below execute standard baseline unlearning experiments on the TOFU and MUSE datasets, evaluated using their corresponding benchmarks. The expected results for these are in [`docs/repro.md`](docs/repro.md).
+Artifact quality under the same full objective:
 
-```bash
-bash scripts/tofu_unlearn.sh
-bash scripts/muse_unlearn.sh
+| Split | Artifact | F↓ | H↑ | U↑ |
+|---|---|---:|---:|---:|
+| DUET Rare | CF-Single | 32.8 | 98.5 | 56.8 |
+| DUET Rare | CF-Multi | 5.6 | 97.7 | 56.0 |
+| DUET Rare | CF-Repair | 0.7 | 96.5 | 56.9 |
+| DUET Popular | CF-Single | 2.9 | 98.2 | 56.9 |
+| DUET Popular | CF-Multi | 6.5 | 98.8 | 57.2 |
+| DUET Popular | CF-Repair | 6.5 | 98.8 | 57.2 |
+| DUET Merged | CF-Single | 17.6 | 99.0 | 56.2 |
+| DUET Merged | CF-Multi | 5.9 | 99.2 | 56.5 |
+| DUET Merged | CF-Repair | 1.9 | 98.7 | 56.6 |
+| RWKU | CF-Single | 12.6 | 96.3 | 56.6 |
+| RWKU | CF-Multi | 8.8 | 96.8 | 57.3 |
+| RWKU | CF-Repair | 8.8 | 96.8 | 57.3 |
+
+Selected baseline contrasts:
+
+| Split | Method | F↓ | H↑ | U↑ | Interpretation |
+|---|---|---:|---:|---:|---|
+| DUET Rare | DualCF | 0.7 | 96.5 | 56.9 | strong forgetting with high locality/utility |
+| DUET Rare | GA | 0.0 | 0.0 | 36.6 | destructive collapse |
+| DUET Rare | LoKU | 0.8 | 97.3 | 47.0 | strong forgetting, high utility cost |
+| DUET Rare | WGA | 1.6 | 97.3 | 56.5 | strong competitor |
+| DUET Rare | AltPO | 36.7 | 99.9 | 56.3 | target-guided but weak rare forgetting |
+| DUET Merged | DualCF | 1.9 | 98.7 | 56.6 | stable mixed rare/popular setting |
+| DUET Merged | GA | 0.0 | 0.1 | 45.6 | destructive collapse |
+| DUET Merged | WGA | 7.8 | 99.0 | 56.4 | strong but less deletion |
+| RWKU | DualCF | 8.8 | 96.8 | 57.3 | balanced real-world knowledge setting |
+| RWKU | Unilogit | 2.5 | 95.9 | 58.2 | strong raw-forgetting competitor |
+| RWKU | WGA | 6.2 | 97.4 | 58.4 | strong competitor |
+| RWKU | GA | 0.1 | 0.0 | 31.8 | destructive collapse |
+
+The full Markdown result summary is in [docs/results.md](docs/results.md).
+The source LaTeX tables copied from the paper workspace are in
+[docs/paper_tables](docs/paper_tables).
+
+## Baseline Coverage
+
+| Family | Methods |
+|---|---|
+| Classical loss-based | GA, GradDiff, NPO, CE-U |
+| Preference / replacement-answer | DPO, AltPO, FLAT, TPO |
+| Representation-level | RMU, Adaptive RMU |
+| Logit-space / distribution shaping | UnDIAL, Unilogit, STAT, PDU |
+| Difficulty / token selectivity | SimNPO, WGA, SatImp, LoKU |
+| Robustness / relearning resistance | NPO-SAM |
+
+This is the current 19-baseline comparison scope.
+
+## Main Takeaways
+
+1. **Counterfactual target construction is not a preprocessing detail.** Under
+   the same optimizer, moving from `CF-Single` to `CF-Multi` to `CF-Repair`
+   reduces DUET Rare `F` from `32.8` to `5.6` to `0.7`.
+2. **Raw forgetting alone is misleading.** GA and FLAT can push `F` near zero,
+   but often collapse holdout/locality or utility.
+3. **Routing complements target repair.** Routing and original-answer
+   suppression help most when the selected target is plausible but still noisy.
+4. **Repair is split-dependent.** Repair is active for DUET Rare and the rare
+   side of DUET Merged; it is inactive for DUET Popular and RWKU.
+5. **Evaluation must be split-matched.** Rare, popular, merged, and RWKU
+   artifacts/runs are separate.
+
+## Further Documentation
+
+| Document | Contents |
+|---|---|
+| [docs/dualcf_repro.md](docs/dualcf_repro.md) | Environment, artifact validation, smoke runs, production wrapper, and post-run analysis. |
+| [docs/results.md](docs/results.md) | Result definitions, full F/H/U matrix, artifact table, and ablation pointers. |
+| [docs/artifacts.md](docs/artifacts.md) | Artifact schema, validation rules, artifact levels, and routing boundary. |
+| [docs/experiments.md](docs/experiments.md) | Upstream Hydra experiment guide. |
+| [docs/evaluation.md](docs/evaluation.md) | Upstream evaluation guide. |
+| [docs/hydra.md](docs/hydra.md) | Hydra configuration notes. |
+
+## Citing
+
+DualCF manuscript:
+
+```bibtex
+@misc{kropotin2026dualcf,
+  title  = {Target-Aware Counterfactual Preference Unlearning for Selective Factual Erasure},
+  author = {Kropotin, Valerii},
+  year   = {2026},
+  note   = {Diploma thesis manuscript}
+}
 ```
 
-The above scripts are not tuned and uses default hyper parameter settings. We encourage you to tune your methods and add your final results in [`community/leaderboard.md`](community/leaderboard.md).
-
----
-
-## ➕ How to Contribute
-
-If you are interested in contributing to our work, please have a look at [`contributing.md`](docs/contributing.md) guide.
-
-
-## 📚 Further Documentation
-
-For more in-depth information on specific aspects of the framework, refer to the following documents:
-
-| **Documentation**                              | **Contains**                                                                                                       |
-|------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| [`docs/contributing.md`](docs/contributing.md)       | Instructions on how to add new methods, benchmarks, components such as trainers, benchmarks, metrics, models, datasets, etc.              |
-| [`docs/evaluation.md`](docs/evaluation.md)       | Detailed instructions on creating and running evaluation metrics and benchmarks.                                     |
-| [`docs/experiments.md`](docs/experiments.md)     | Guide on running experiments in various configurations and settings, including distributed training, fine-tuning, and overriding arguments. |
-| [`docs/hydra.md`](docs/hydra.md)                 | A short tutorial on Hydra features, Hydra is the configuration management package we use extensively.                                  |
-| [`community/leaderboard.md`](community/leaderboard.md)             | Reference results from various unlearning methods run using this framework on TOFU and MUSE benchmarks.              |
-| [`docs/links.md`](docs/links.md)             | List of all links to the research papers or other sources the implemented features are sourced from.              |
-| [`docs/repro.md`](docs/repro.md)            | Results are provided solely for reproducibility purposes, without any parameter tuning.             |
----
-
-## 🔗 Support & Contributors
-
-Developed and maintained by Vineeth Dorna ([@Dornavineeth](https://github.com/Dornavineeth)) and Anmol Mekala ([@molereddy](https://github.com/molereddy)).
-
-If you encounter any issues or have questions, feel free to raise an issue in the repository 🛠️.
-
-## 📝 Citing this work
-
-If you use OpenUnlearning in your research, please make sure to cite our OpenUnlearning technical report, the TOFU and MUSE benchmarks.
+This repository builds on OpenUnlearning. If you use the framework, cite the
+upstream technical report:
 
 ```bibtex
 @article{openunlearning2025,
@@ -233,36 +420,16 @@ If you use OpenUnlearning in your research, please make sure to cite our OpenUnl
   year={2025},
   url={https://arxiv.org/abs/2506.12618}
 }
-@inproceedings{maini2024tofu,
-  title={{TOFU}: A Task of Fictitious Unlearning for {LLMs}},
-  author={Maini, Pratyush and Feng, Zhili and Schwarzschild, Avi and Lipton, Zachary Chase and Kolter, J Zico},
-  booktitle={First Conference on Language Modeling},
-  year={2024}
-}
-@article{shi2024muse,
-  title={{MUSE}: Machine Unlearning Six-Way Evaluation for Language Models},
-  author={Weijia Shi and Jaechan Lee and Yangsibo Huang and Sadhika Malladi and Jieyu Zhao and Ari Holtzman and Daogao Liu and Luke Zettlemoyer and Noah A. Smith and Chiyuan Zhang},
-  year={2024},
-  eprint={2407.06460},
-  archivePrefix={arXiv},
-  primaryClass={cs.CL},
-  url={https://arxiv.org/abs/2407.06460}
-}
 ```
-</details>
 
----
+## Acknowledgements
 
-### 🤝 Acknowledgements
+This repository builds on the OpenUnlearning framework and extends it with
+DualCF artifact construction, routed counterfactual optimization, DUET/RWKU
+launchers, artifact validation, and result-processing utilities. See
+[LICENSE](LICENSE) and the upstream OpenUnlearning documentation for the
+original framework.
 
-- This repo is inspired from [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory). 
-- The [TOFU](https://github.com/locuslab/tofu) and [MUSE](https://github.com/swj0419/muse_bench) benchmarks served as the foundation for our re-implementation. 
+## License
 
----
-
-### 📄 License
-This project is licensed under the MIT License. See the [`LICENSE`](LICENSE) file for details.
-
----
-
-[![Star History Chart](https://api.star-history.com/svg?repos=locuslab/open-unlearning&type=Date)](https://www.star-history.com/#locuslab/open-unlearning&Date)
+This project is licensed under the MIT License. See [LICENSE](LICENSE).

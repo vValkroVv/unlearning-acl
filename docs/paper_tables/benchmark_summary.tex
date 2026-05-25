@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tabularx}{\linewidth}{l l p{1.2cm} p{3.02cm}}
+\toprule
+Benchmark & Split & Forget examples & Evaluation focus \\
+\midrule
+RWKU & Level 2 & 2879 & Real-world facts with neighbor/locality preservation. \\
+DUET & Rare & 482 & Low-salience facts where brittle replacement targets are common. \\
+DUET & Popular & 482 & Salient facts where preservation and utility trade-offs are visible. \\
+DUET & Merged & 964 & Mixed rare/popular setting with shared protocol constraints. \\
+\bottomrule
+\end{tabularx}
+\caption{Benchmark regimes used in the main experiments. Counts are the final forget-example counts preserved by all reported \textsc{DualCF} artifacts.}
+\label{tab:benchmark-summary}
+\end{table}

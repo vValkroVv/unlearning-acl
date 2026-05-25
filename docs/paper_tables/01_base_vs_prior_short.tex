@@ -1,0 +1,29 @@
+\begin{table*}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.02}
+\caption{Compact comparison against 19 unlearning baselines on DUET and RWKU. The table shows the final \textsc{DualCF} system, the strongest representative methods from the main mechanism families in Table~\ref{tab:baseline-families}, and destructive failure modes; the full 19-method matrix is in Appendix~\ref{app:full-results}. Values are mean (sample standard deviation) over three seeds, in percentage points. Lower $F$ is better; higher $H/U$ are better.}
+\label{tab:sota-comparison}
+\begin{tabular}{@{}lrrr@{\hspace{2pt}}rrr@{\hspace{2pt}}rrr@{\hspace{2pt}}rrr@{}}
+\toprule
+& \multicolumn{3}{c}{DUET Rare} & \multicolumn{3}{c}{DUET Popular} & \multicolumn{3}{c}{DUET Merged} & \multicolumn{3}{c}{RWKU} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}\cmidrule(lr){11-13}
+Method & $F\downarrow$ & $H\uparrow$ & $U\uparrow$ & $F\downarrow$ & $H\uparrow$ & $U\uparrow$ & $F\downarrow$ & $H\uparrow$ & $U\uparrow$ & $F\downarrow$ & $H\uparrow$ & $U\uparrow$ \\
+\midrule
+\rowcolor{blue!12}
+\textsc{DualCF} & \stdcell{0.7}{0.1} & \stdcell{96.5}{0.2} & \stdcell{56.9}{0.2} & \stdcell{6.5}{1.7} & \stdcell{98.8}{0.6} & \stdcell{57.2}{0.3} & \stdcell{1.9}{0.4} & \stdcell{98.7}{0.5} & \stdcell{56.6}{0.5} & \stdcell{8.8}{0.1} & \stdcell{96.8}{0.5} & \stdcell{57.3}{0.3} \\
+DPO & \stdcell{58.2}{7.2} & \stdcell{99.8}{0.2} & \stdcell{56.2}{0.6} & \stdcell{18.1}{4.9} & \stdcell{99.7}{0.4} & \stdcell{56.9}{0.2} & \stdcell{33.7}{5.0} & \stdcell{100.0}{0.0} & \stdcell{56.1}{0.3} & \stdcell{12.8}{1.2} & \stdcell{95.8}{0.3} & \stdcell{57.1}{0.9} \\
+AltPO & \stdcell{36.7}{4.6} & \stdcell{99.9}{0.2} & \stdcell{56.3}{0.3} & \stdcell{3.4}{3.0} & \stdcell{100.0}{0.0} & \stdcell{55.6}{0.8} & \stdcell{18.1}{4.6} & \stdcell{100.0}{0.0} & \stdcell{56.7}{0.1} & \stdcell{20.0}{3.2} & \stdcell{98.8}{0.8} & \stdcell{55.2}{0.3} \\
+GA & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{36.6}{5.3} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{54.8}{0.3} & \stdcell{0.0}{0.0} & \stdcell{0.1}{0.1} & \stdcell{45.6}{2.4} & \stdcell{0.1}{0.0} & \stdcell{0.0}{0.0} & \stdcell{31.8}{4.8} \\
+NPO & \stdcell{67.2}{5.1} & \stdcell{99.2}{0.2} & \stdcell{57.0}{0.2} & \stdcell{85.9}{3.1} & \stdcell{99.4}{0.5} & \stdcell{57.2}{0.0} & \stdcell{73.5}{1.6} & \stdcell{99.5}{0.2} & \stdcell{57.1}{0.3} & \stdcell{55.3}{3.7} & \stdcell{95.9}{0.1} & \stdcell{57.7}{0.6} \\
+LoKU & \stdcell{0.8}{0.1} & \stdcell{97.3}{0.7} & \stdcell{47.0}{2.1} & \stdcell{5.5}{1.2} & \stdcell{97.7}{0.4} & \stdcell{49.6}{1.1} & \stdcell{4.8}{0.3} & \stdcell{99.4}{0.6} & \stdcell{43.6}{2.1} & \stdcell{1.9}{0.4} & \stdcell{97.4}{0.2} & \stdcell{45.8}{0.9} \\
+FLAT & \stdcell{0.1}{0.0} & \stdcell{0.1}{0.0} & \stdcell{52.0}{4.0} & \stdcell{0.0}{0.0} & \stdcell{0.1}{0.0} & \stdcell{53.0}{4.1} & \stdcell{0.1}{0.0} & \stdcell{0.1}{0.0} & \stdcell{46.3}{3.2} & \stdcell{0.4}{0.0} & \stdcell{0.3}{0.0} & \stdcell{44.9}{9.6} \\
+Unilogit & \stdcell{1.7}{0.8} & \stdcell{94.7}{0.5} & \stdcell{56.1}{0.5} & \stdcell{7.4}{4.8} & \stdcell{98.7}{0.4} & \stdcell{57.3}{0.2} & \stdcell{3.2}{1.0} & \stdcell{98.5}{1.5} & \stdcell{56.6}{0.5} & \stdcell{2.5}{1.9} & \stdcell{95.9}{0.3} & \stdcell{58.2}{1.2} \\
+WGA & \stdcell{1.6}{0.2} & \stdcell{97.3}{1.4} & \stdcell{56.5}{0.6} & \stdcell{7.9}{2.7} & \stdcell{99.3}{0.2} & \stdcell{56.8}{0.3} & \stdcell{7.8}{3.6} & \stdcell{99.0}{0.8} & \stdcell{56.4}{0.3} & \stdcell{6.2}{1.5} & \stdcell{97.4}{0.2} & \stdcell{58.4}{0.5} \\
+\bottomrule
+\end{tabular}
+\vspace{0.25em}
+
+%\footnotesize Baseline citations: DPO~\citep{rafailov2023dpo}, AltPO~\citep{mekala2025altpo}, GA~\citep{jang2023}, NPO~\citep{zhang2024npo}, LoKU~\citep{cha2025loku}, FLAT~\citep{wang2025flat}, Unilogit~\citep{vasilev2025unilogit}, and WGA~\citep{wang2025}. Full model descriptions are in Appendix~\ref{app:unlearning-methods}.
+\end{table*}

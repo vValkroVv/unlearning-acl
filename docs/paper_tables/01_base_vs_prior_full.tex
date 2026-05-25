@@ -1,0 +1,189 @@
+\begin{table*}[t]
+\centering
+\caption{Full main comparison against prior unlearning baselines under the shared protocol. \textsc{DualCF} denotes the full reported method. Values are mean (sample standard deviation) over three seeds, in percentage points. Metric definitions are described in Appendix~\ref{app:metrics}.}
+\label{tab:sota-comparison-full}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrrrrrrr}
+\toprule
+Split & Method & F$\downarrow$ & H$\uparrow$ & FW$\downarrow$ & HW$\downarrow$ & FC$\downarrow$ & HC$\uparrow$ & U$\uparrow$ & M$\uparrow$ & T$\uparrow$ & W$\uparrow$ & A$\uparrow$ \\
+\midrule
+\rowcolor{blue!12}
+DUET Rare & \textsc{DualCF} & \stdcell{0.7}{0.1} & \stdcell{96.5}{0.2} & \stdcell{0.1}{0.1} & \stdcell{0.0}{0.0} & \stdcell{39.9}{0.7} & \stdcell{98.0}{0.2} & \stdcell{56.9}{0.2} & \stdcell{35.7}{0.2} & \stdcell{66.0}{0.3} & \stdcell{64.3}{1.3} & \stdcell{82.8}{0.3} \\
+\rowcolor{gray!10}
+DUET Rare & DPO & \stdcell{58.2}{7.2} & \stdcell{99.8}{0.2} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{70.6}{6.4} & \stdcell{99.9}{0.1} & \stdcell{56.2}{0.6} & \stdcell{35.4}{1.0} & \stdcell{64.9}{1.0} & \stdcell{63.5}{0.4} & \stdcell{81.8}{0.7} \\
+\rowcolor{gray!10}
+DUET Rare & GA & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{100.0}{0.0} & \stdcell{100.0}{0.0} & \stdcell{9.7}{0.0} & \stdcell{9.3}{0.0} & \stdcell{36.6}{5.3} & \stdcell{19.2}{3.8} & \stdcell{54.7}{7.6} & \stdcell{50.6}{0.3} & \stdcell{39.2}{10.8} \\
+\rowcolor{gray!10}
+DUET Rare & NPO & \stdcell{67.2}{5.1} & \stdcell{99.2}{0.2} & \stdcell{36.6}{20.9} & \stdcell{0.4}{0.2} & \stdcell{62.3}{5.3} & \stdcell{99.2}{0.0} & \stdcell{57.0}{0.2} & \stdcell{35.9}{0.2} & \stdcell{67.4}{1.0} & \stdcell{63.7}{0.5} & \stdcell{81.8}{0.3} \\
+\rowcolor{gray!10}
+DUET Rare & NPO-SAM & \stdcell{13.8}{9.4} & \stdcell{96.0}{1.9} & \stdcell{7.5}{9.3} & \stdcell{0.3}{0.3} & \stdcell{44.3}{5.2} & \stdcell{97.5}{1.0} & \stdcell{57.1}{0.2} & \stdcell{35.8}{0.3} & \stdcell{67.6}{0.4} & \stdcell{64.1}{1.2} & \stdcell{82.3}{0.3} \\
+\rowcolor{gray!10}
+DUET Rare & LoKU & \stdcell{0.8}{0.1} & \stdcell{97.3}{0.7} & \stdcell{8.3}{8.3} & \stdcell{0.7}{0.6} & \stdcell{32.3}{6.3} & \stdcell{98.1}{0.6} & \stdcell{47.0}{2.1} & \stdcell{25.7}{2.0} & \stdcell{56.4}{5.0} & \stdcell{55.5}{1.0} & \stdcell{71.6}{2.0} \\
+\rowcolor{gray!10}
+DUET Rare & SimNPO & \stdcell{33.1}{10.6} & \stdcell{99.1}{0.2} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{57.9}{7.4} & \stdcell{99.4}{0.0} & \stdcell{56.9}{0.1} & \stdcell{36.3}{0.0} & \stdcell{65.7}{0.7} & \stdcell{64.1}{0.4} & \stdcell{82.3}{0.1} \\
+\rowcolor{gray!10}
+DUET Rare & Adaptive-RMU & \stdcell{96.2}{0.2} & \stdcell{96.5}{0.3} & \stdcell{21.9}{1.3} & \stdcell{3.8}{0.2} & \stdcell{80.2}{0.1} & \stdcell{88.2}{0.2} & \stdcell{57.4}{0.1} & \stdcell{36.0}{0.0} & \stdcell{68.6}{0.5} & \stdcell{63.6}{0.1} & \stdcell{82.8}{0.3} \\
+\rowcolor{gray!10}
+DUET Rare & FLAT & \stdcell{0.1}{0.0} & \stdcell{0.1}{0.0} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{7.7}{0.0} & \stdcell{12.9}{0.0} & \stdcell{52.0}{4.0} & \stdcell{27.9}{5.2} & \stdcell{76.1}{1.9} & \stdcell{53.2}{4.6} & \stdcell{75.2}{3.8} \\
+\rowcolor{gray!10}
+DUET Rare & Unilogit & \stdcell{1.7}{0.8} & \stdcell{94.7}{0.5} & \stdcell{13.8}{1.2} & \stdcell{0.3}{0.1} & \stdcell{34.3}{1.1} & \stdcell{96.8}{0.4} & \stdcell{56.1}{0.5} & \stdcell{35.2}{0.3} & \stdcell{65.6}{1.4} & \stdcell{62.4}{0.4} & \stdcell{82.0}{0.6} \\
+\rowcolor{gray!10}
+DUET Rare & STAT & \stdcell{31.7}{27.0} & \stdcell{99.5}{0.6} & \stdcell{60.9}{30.3} & \stdcell{0.2}{0.3} & \stdcell{35.5}{31.2} & \stdcell{99.6}{0.5} & \stdcell{56.1}{0.6} & \stdcell{35.0}{1.2} & \stdcell{64.3}{0.3} & \stdcell{62.9}{0.5} & \stdcell{83.1}{0.5} \\
+\rowcolor{gray!10}
+DUET Rare & SatImp & \stdcell{19.3}{16.8} & \stdcell{99.6}{0.3} & \stdcell{0.4}{0.5} & \stdcell{0.0}{0.0} & \stdcell{49.7}{11.9} & \stdcell{99.8}{0.1} & \stdcell{56.3}{0.2} & \stdcell{35.8}{0.4} & \stdcell{63.7}{1.1} & \stdcell{63.5}{0.3} & \stdcell{82.7}{0.4} \\
+\rowcolor{gray!10}
+DUET Rare & UnDIAL & \stdcell{89.4}{0.2} & \stdcell{96.4}{0.4} & \stdcell{26.6}{1.7} & \stdcell{4.1}{0.6} & \stdcell{77.4}{0.4} & \stdcell{86.6}{0.1} & \stdcell{57.5}{0.1} & \stdcell{36.1}{0.0} & \stdcell{68.6}{0.1} & \stdcell{63.4}{0.3} & \stdcell{83.1}{0.3} \\
+\rowcolor{gray!10}
+DUET Rare & RMU & \stdcell{59.8}{5.4} & \stdcell{93.3}{0.2} & \stdcell{58.3}{2.7} & \stdcell{5.3}{0.9} & \stdcell{58.2}{2.2} & \stdcell{86.9}{0.4} & \stdcell{55.8}{0.3} & \stdcell{34.9}{0.6} & \stdcell{69.7}{0.6} & \stdcell{57.9}{1.0} & \stdcell{81.4}{0.2} \\
+\rowcolor{gray!10}
+DUET Rare & WGA & \stdcell{1.6}{0.2} & \stdcell{97.3}{1.4} & \stdcell{31.3}{47.2} & \stdcell{0.5}{0.5} & \stdcell{31.3}{5.0} & \stdcell{98.2}{1.1} & \stdcell{56.5}{0.6} & \stdcell{35.4}{1.0} & \stdcell{65.8}{1.1} & \stdcell{63.9}{0.8} & \stdcell{81.9}{0.6} \\
+\rowcolor{gray!10}
+DUET Rare & AltPO & \stdcell{36.7}{4.6} & \stdcell{99.9}{0.2} & \stdcell{6.7}{5.0} & \stdcell{0.0}{0.0} & \stdcell{53.6}{2.0} & \stdcell{99.9}{0.1} & \stdcell{56.3}{0.3} & \stdcell{35.4}{0.1} & \stdcell{65.5}{1.3} & \stdcell{63.2}{1.2} & \stdcell{82.1}{0.5} \\
+\rowcolor{gray!10}
+DUET Rare & TPO & \stdcell{61.7}{12.9} & \stdcell{99.4}{0.3} & \stdcell{2.6}{2.0} & \stdcell{0.0}{0.0} & \stdcell{74.0}{8.8} & \stdcell{99.6}{0.3} & \stdcell{56.4}{0.2} & \stdcell{35.8}{0.3} & \stdcell{65.7}{0.3} & \stdcell{63.1}{1.1} & \stdcell{81.7}{0.4} \\
+\rowcolor{gray!10}
+DUET Rare & GradDiff & \stdcell{0.4}{0.1} & \stdcell{81.7}{1.4} & \stdcell{97.4}{1.0} & \stdcell{7.1}{2.3} & \stdcell{10.7}{0.3} & \stdcell{87.4}{0.8} & \stdcell{56.2}{0.3} & \stdcell{35.2}{0.2} & \stdcell{66.9}{0.9} & \stdcell{61.6}{1.3} & \stdcell{81.8}{1.1} \\
+\rowcolor{gray!10}
+DUET Rare & CE-U & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{96.3}{6.3} & \stdcell{99.3}{1.3} & \stdcell{4.7}{4.2} & \stdcell{10.7}{9.3} & \stdcell{51.3}{1.7} & \stdcell{24.8}{4.0} & \stdcell{67.3}{1.0} & \stdcell{59.2}{0.9} & \stdcell{80.3}{0.7} \\
+\rowcolor{gray!10}
+DUET Rare & PDU & \stdcell{1.8}{1.4} & \stdcell{92.0}{2.6} & \stdcell{71.1}{20.4} & \stdcell{3.1}{2.4} & \stdcell{14.1}{6.2} & \stdcell{94.0}{2.2} & \stdcell{56.6}{0.6} & \stdcell{35.6}{0.6} & \stdcell{66.4}{0.3} & \stdcell{63.4}{1.0} & \stdcell{82.1}{0.7} \\
+\addlinespace
+\rowcolor{blue!12}
+DUET Popular & \textsc{DualCF} & \stdcell{6.5}{1.7} & \stdcell{98.8}{0.6} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{66.8}{1.3} & \stdcell{99.4}{0.3} & \stdcell{57.2}{0.3} & \stdcell{36.2}{0.7} & \stdcell{67.4}{0.6} & \stdcell{63.1}{0.8} & \stdcell{83.2}{0.1} \\
+\rowcolor{gray!10}
+DUET Popular & DPO & \stdcell{18.1}{4.9} & \stdcell{99.7}{0.4} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{68.9}{1.3} & \stdcell{99.9}{0.2} & \stdcell{56.9}{0.2} & \stdcell{36.6}{0.4} & \stdcell{65.4}{0.8} & \stdcell{63.5}{0.3} & \stdcell{82.6}{0.4} \\
+\rowcolor{gray!10}
+DUET Popular & GA & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{100.0}{0.0} & \stdcell{100.0}{0.0} & \stdcell{12.5}{3.1} & \stdcell{8.3}{0.9} & \stdcell{54.8}{0.3} & \stdcell{33.6}{0.2} & \stdcell{64.9}{1.2} & \stdcell{61.3}{0.3} & \stdcell{80.7}{0.2} \\
+\rowcolor{gray!10}
+DUET Popular & NPO & \stdcell{85.9}{3.1} & \stdcell{99.4}{0.5} & \stdcell{23.0}{13.2} & \stdcell{0.1}{0.2} & \stdcell{67.0}{6.9} & \stdcell{99.4}{0.3} & \stdcell{57.2}{0.0} & \stdcell{36.2}{0.2} & \stdcell{67.9}{0.7} & \stdcell{63.6}{0.6} & \stdcell{82.1}{0.3} \\
+\rowcolor{gray!10}
+DUET Popular & NPO-SAM & \stdcell{83.6}{4.9} & \stdcell{98.6}{0.4} & \stdcell{60.0}{15.9} & \stdcell{0.2}{0.2} & \stdcell{64.1}{5.6} & \stdcell{98.2}{0.8} & \stdcell{57.5}{0.2} & \stdcell{36.4}{0.3} & \stdcell{68.7}{0.3} & \stdcell{63.4}{0.6} & \stdcell{82.5}{0.0} \\
+\rowcolor{gray!10}
+DUET Popular & LoKU & \stdcell{5.5}{1.2} & \stdcell{97.7}{0.4} & \stdcell{1.7}{2.9} & \stdcell{0.0}{0.0} & \stdcell{60.3}{3.6} & \stdcell{98.6}{0.2} & \stdcell{49.6}{1.1} & \stdcell{27.0}{1.5} & \stdcell{60.7}{2.2} & \stdcell{57.0}{1.0} & \stdcell{76.2}{1.4} \\
+\rowcolor{gray!10}
+DUET Popular & SimNPO & \stdcell{15.5}{2.4} & \stdcell{99.6}{0.4} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{64.8}{1.7} & \stdcell{99.8}{0.2} & \stdcell{56.9}{0.1} & \stdcell{36.2}{0.4} & \stdcell{65.7}{0.3} & \stdcell{64.2}{0.5} & \stdcell{82.4}{0.1} \\
+\rowcolor{gray!10}
+DUET Popular & Adaptive-RMU & \stdcell{85.5}{8.4} & \stdcell{96.5}{0.1} & \stdcell{80.8}{2.1} & \stdcell{4.5}{0.2} & \stdcell{44.7}{1.1} & \stdcell{87.8}{0.2} & \stdcell{57.5}{0.2} & \stdcell{36.1}{0.4} & \stdcell{69.2}{0.3} & \stdcell{63.3}{0.4} & \stdcell{82.9}{0.3} \\
+\rowcolor{gray!10}
+DUET Popular & FLAT & \stdcell{0.0}{0.0} & \stdcell{0.1}{0.0} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{12.8}{0.0} & \stdcell{12.9}{0.0} & \stdcell{53.0}{4.1} & \stdcell{30.6}{3.7} & \stdcell{69.9}{1.9} & \stdcell{55.9}{6.2} & \stdcell{77.9}{4.9} \\
+\rowcolor{gray!10}
+DUET Popular & Unilogit & \stdcell{7.4}{4.8} & \stdcell{98.7}{0.4} & \stdcell{25.4}{26.8} & \stdcell{0.6}{1.0} & \stdcell{50.2}{6.5} & \stdcell{98.8}{0.7} & \stdcell{57.3}{0.2} & \stdcell{35.8}{0.2} & \stdcell{68.2}{0.5} & \stdcell{64.1}{0.3} & \stdcell{82.6}{0.3} \\
+\rowcolor{gray!10}
+DUET Popular & STAT & \stdcell{13.1}{4.0} & \stdcell{99.2}{0.2} & \stdcell{80.8}{8.6} & \stdcell{0.2}{0.0} & \stdcell{20.6}{2.3} & \stdcell{99.5}{0.1} & \stdcell{56.5}{0.4} & \stdcell{35.8}{0.3} & \stdcell{65.7}{1.8} & \stdcell{62.8}{0.8} & \stdcell{82.5}{0.6} \\
+\rowcolor{gray!10}
+DUET Popular & SatImp & \stdcell{9.1}{5.5} & \stdcell{99.6}{0.3} & \stdcell{0.6}{0.5} & \stdcell{0.0}{0.0} & \stdcell{60.0}{1.5} & \stdcell{99.8}{0.1} & \stdcell{57.2}{0.1} & \stdcell{36.1}{0.0} & \stdcell{67.0}{0.9} & \stdcell{64.4}{0.3} & \stdcell{82.2}{0.4} \\
+\rowcolor{gray!10}
+DUET Popular & UnDIAL & \stdcell{90.3}{0.1} & \stdcell{96.5}{0.2} & \stdcell{2.2}{0.4} & \stdcell{4.2}{0.2} & \stdcell{87.9}{0.3} & \stdcell{86.1}{0.1} & \stdcell{57.5}{0.1} & \stdcell{36.0}{0.1} & \stdcell{68.9}{0.3} & \stdcell{64.1}{0.4} & \stdcell{82.5}{0.3} \\
+\rowcolor{gray!10}
+DUET Popular & RMU & \stdcell{77.5}{6.8} & \stdcell{96.1}{0.2} & \stdcell{65.5}{9.3} & \stdcell{4.1}{1.4} & \stdcell{57.4}{6.6} & \stdcell{88.0}{0.9} & \stdcell{57.5}{0.4} & \stdcell{35.8}{0.2} & \stdcell{69.8}{0.3} & \stdcell{63.1}{0.9} & \stdcell{83.1}{0.5} \\
+\rowcolor{gray!10}
+DUET Popular & WGA & \stdcell{7.9}{2.7} & \stdcell{99.3}{0.2} & \stdcell{22.8}{18.9} & \stdcell{0.1}{0.1} & \stdcell{53.5}{7.0} & \stdcell{99.3}{0.1} & \stdcell{56.8}{0.3} & \stdcell{36.0}{0.0} & \stdcell{65.9}{0.3} & \stdcell{64.2}{0.9} & \stdcell{82.1}{0.7} \\
+\rowcolor{gray!10}
+DUET Popular & AltPO & \stdcell{3.4}{3.0} & \stdcell{100.0}{0.0} & \stdcell{0.9}{0.1} & \stdcell{0.0}{0.0} & \stdcell{53.0}{1.9} & \stdcell{100.0}{0.0} & \stdcell{55.6}{0.8} & \stdcell{35.6}{0.7} & \stdcell{62.7}{1.9} & \stdcell{61.9}{0.3} & \stdcell{82.4}{0.3} \\
+\rowcolor{gray!10}
+DUET Popular & TPO & \stdcell{9.4}{0.6} & \stdcell{99.1}{0.6} & \stdcell{44.3}{20.6} & \stdcell{0.1}{0.1} & \stdcell{57.4}{2.0} & \stdcell{99.5}{0.3} & \stdcell{56.5}{0.3} & \stdcell{36.1}{0.1} & \stdcell{65.4}{1.3} & \stdcell{62.8}{1.0} & \stdcell{82.4}{0.5} \\
+\rowcolor{gray!10}
+DUET Popular & GradDiff & \stdcell{3.1}{0.8} & \stdcell{85.9}{3.2} & \stdcell{93.8}{2.0} & \stdcell{5.9}{1.3} & \stdcell{11.6}{11.3} & \stdcell{90.7}{1.6} & \stdcell{57.0}{0.7} & \stdcell{36.0}{0.5} & \stdcell{67.3}{1.0} & \stdcell{63.7}{1.3} & \stdcell{81.8}{0.3} \\
+\rowcolor{gray!10}
+DUET Popular & CE-U & \stdcell{0.4}{0.6} & \stdcell{1.7}{3.0} & \stdcell{80.8}{31.1} & \stdcell{86.3}{23.3} & \stdcell{16.5}{4.9} & \stdcell{15.6}{1.2} & \stdcell{45.4}{1.8} & \stdcell{27.6}{1.2} & \stdcell{52.4}{1.5} & \stdcell{49.9}{0.2} & \stdcell{69.4}{5.7} \\
+\rowcolor{gray!10}
+DUET Popular & PDU & \stdcell{59.9}{13.3} & \stdcell{96.0}{0.7} & \stdcell{42.2}{26.9} & \stdcell{1.3}{0.9} & \stdcell{43.1}{8.3} & \stdcell{96.6}{1.0} & \stdcell{57.2}{0.4} & \stdcell{36.1}{0.8} & \stdcell{67.1}{0.5} & \stdcell{63.7}{0.3} & \stdcell{83.0}{0.4} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\begin{table*}[t]
+\centering
+\caption{Full main comparison continued for DUET Merged and RWKU. \textsc{DualCF} denotes the full reported method. Values are mean (sample standard deviation) over three seeds, in percentage points. Metric definitions are described in Appendix~\ref{app:metrics}.}
+\label{tab:sota-comparison-full-continued}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrrrrrrr}
+\toprule
+Split & Method & F$\downarrow$ & H$\uparrow$ & FW$\downarrow$ & HW$\downarrow$ & FC$\downarrow$ & HC$\uparrow$ & U$\uparrow$ & M$\uparrow$ & T$\uparrow$ & W$\uparrow$ & A$\uparrow$ \\
+\midrule
+\rowcolor{blue!12}
+DUET Merged & \textsc{DualCF} & \stdcell{1.9}{0.4} & \stdcell{98.7}{0.5} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{51.6}{0.7} & \stdcell{99.2}{0.3} & \stdcell{56.6}{0.5} & \stdcell{35.8}{0.4} & \stdcell{66.6}{0.8} & \stdcell{63.3}{2.4} & \stdcell{81.8}{0.3} \\
+\rowcolor{gray!10}
+DUET Merged & DPO & \stdcell{33.7}{5.0} & \stdcell{100.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{67.0}{3.4} & \stdcell{100.0}{0.0} & \stdcell{56.1}{0.3} & \stdcell{35.9}{0.3} & \stdcell{64.2}{0.8} & \stdcell{62.6}{0.2} & \stdcell{82.0}{0.2} \\
+\rowcolor{gray!10}
+DUET Merged & GA & \stdcell{0.0}{0.0} & \stdcell{0.1}{0.1} & \stdcell{100.0}{0.0} & \stdcell{100.0}{0.0} & \stdcell{9.8}{0.4} & \stdcell{10.3}{0.8} & \stdcell{45.6}{2.4} & \stdcell{25.0}{1.5} & \stdcell{63.1}{4.0} & \stdcell{55.3}{1.7} & \stdcell{59.7}{5.1} \\
+\rowcolor{gray!10}
+DUET Merged & NPO & \stdcell{73.5}{1.6} & \stdcell{99.5}{0.2} & \stdcell{42.8}{14.5} & \stdcell{0.2}{0.0} & \stdcell{57.5}{4.4} & \stdcell{99.3}{0.2} & \stdcell{57.1}{0.3} & \stdcell{35.8}{0.7} & \stdcell{67.6}{0.8} & \stdcell{63.9}{0.3} & \stdcell{82.3}{0.3} \\
+\rowcolor{gray!10}
+DUET Merged & NPO-SAM & \stdcell{36.5}{16.5} & \stdcell{97.8}{1.1} & \stdcell{32.2}{25.3} & \stdcell{0.7}{1.1} & \stdcell{51.4}{2.1} & \stdcell{98.4}{0.2} & \stdcell{57.2}{0.6} & \stdcell{36.0}{0.7} & \stdcell{68.3}{0.6} & \stdcell{63.0}{1.7} & \stdcell{82.6}{0.4} \\
+\rowcolor{gray!10}
+DUET Merged & LoKU & \stdcell{4.8}{0.3} & \stdcell{99.4}{0.6} & \stdcell{17.8}{17.2} & \stdcell{0.2}{0.0} & \stdcell{45.1}{4.2} & \stdcell{99.7}{0.2} & \stdcell{43.6}{2.1} & \stdcell{24.3}{2.3} & \stdcell{49.9}{2.9} & \stdcell{54.2}{1.3} & \stdcell{65.3}{3.3} \\
+\rowcolor{gray!10}
+DUET Merged & SimNPO & \stdcell{34.0}{6.9} & \stdcell{99.9}{0.1} & \stdcell{0.0}{0.1} & \stdcell{0.0}{0.0} & \stdcell{67.0}{2.4} & \stdcell{99.9}{0.1} & \stdcell{56.9}{0.1} & \stdcell{36.1}{0.1} & \stdcell{66.3}{0.4} & \stdcell{63.7}{0.5} & \stdcell{82.3}{0.7} \\
+\rowcolor{gray!10}
+DUET Merged & Adaptive-RMU & \stdcell{93.3}{0.6} & \stdcell{96.3}{0.5} & \stdcell{55.6}{9.1} & \stdcell{4.5}{0.5} & \stdcell{63.6}{1.9} & \stdcell{88.1}{0.4} & \stdcell{57.6}{0.2} & \stdcell{36.2}{0.4} & \stdcell{68.7}{0.6} & \stdcell{64.3}{0.2} & \stdcell{82.7}{0.2} \\
+\rowcolor{gray!10}
+DUET Merged & FLAT & \stdcell{0.1}{0.0} & \stdcell{0.1}{0.0} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{10.3}{0.0} & \stdcell{12.9}{0.0} & \stdcell{46.3}{3.2} & \stdcell{20.3}{5.3} & \stdcell{73.7}{0.8} & \stdcell{50.7}{1.2} & \stdcell{66.8}{3.8} \\
+\rowcolor{gray!10}
+DUET Merged & Unilogit & \stdcell{3.2}{1.0} & \stdcell{98.5}{1.5} & \stdcell{17.9}{12.1} & \stdcell{0.3}{0.4} & \stdcell{44.3}{3.4} & \stdcell{98.9}{1.0} & \stdcell{56.6}{0.5} & \stdcell{35.1}{1.3} & \stdcell{67.8}{0.6} & \stdcell{62.8}{0.3} & \stdcell{82.3}{0.8} \\
+\rowcolor{gray!10}
+DUET Merged & STAT & \stdcell{7.8}{2.5} & \stdcell{99.7}{0.2} & \stdcell{87.9}{3.1} & \stdcell{0.1}{0.1} & \stdcell{12.2}{7.4} & \stdcell{99.8}{0.1} & \stdcell{56.7}{0.4} & \stdcell{35.7}{0.9} & \stdcell{66.1}{1.0} & \stdcell{63.4}{0.5} & \stdcell{82.7}{1.0} \\
+\rowcolor{gray!10}
+DUET Merged & SatImp & \stdcell{10.8}{4.9} & \stdcell{99.5}{0.5} & \stdcell{15.5}{17.8} & \stdcell{0.1}{0.1} & \stdcell{48.1}{1.2} & \stdcell{99.8}{0.2} & \stdcell{56.5}{0.4} & \stdcell{36.1}{0.3} & \stdcell{64.9}{0.9} & \stdcell{63.0}{0.9} & \stdcell{82.2}{0.9} \\
+\rowcolor{gray!10}
+DUET Merged & UnDIAL & \stdcell{90.1}{0.2} & \stdcell{96.7}{0.3} & \stdcell{15.1}{1.7} & \stdcell{4.2}{0.4} & \stdcell{82.4}{0.2} & \stdcell{86.2}{0.2} & \stdcell{57.5}{0.2} & \stdcell{36.2}{0.5} & \stdcell{68.6}{0.4} & \stdcell{63.9}{0.5} & \stdcell{82.6}{0.2} \\
+\rowcolor{gray!10}
+DUET Merged & RMU & \stdcell{71.3}{2.6} & \stdcell{95.0}{0.5} & \stdcell{70.5}{7.2} & \stdcell{7.7}{0.9} & \stdcell{52.1}{1.9} & \stdcell{86.7}{0.4} & \stdcell{53.5}{0.8} & \stdcell{32.6}{0.5} & \stdcell{66.9}{0.8} & \stdcell{55.8}{0.7} & \stdcell{79.6}{1.7} \\
+\rowcolor{gray!10}
+DUET Merged & WGA & \stdcell{7.8}{3.6} & \stdcell{99.0}{0.8} & \stdcell{19.3}{30.8} & \stdcell{0.3}{0.5} & \stdcell{45.3}{3.1} & \stdcell{99.1}{0.5} & \stdcell{56.4}{0.3} & \stdcell{35.5}{0.2} & \stdcell{65.2}{0.4} & \stdcell{64.2}{1.4} & \stdcell{81.9}{0.5} \\
+\rowcolor{gray!10}
+DUET Merged & AltPO & \stdcell{18.1}{4.6} & \stdcell{100.0}{0.0} & \stdcell{3.6}{3.6} & \stdcell{0.0}{0.0} & \stdcell{54.1}{0.3} & \stdcell{100.0}{0.1} & \stdcell{56.7}{0.1} & \stdcell{36.1}{0.5} & \stdcell{65.9}{0.8} & \stdcell{63.4}{0.1} & \stdcell{81.8}{0.3} \\
+\rowcolor{gray!10}
+DUET Merged & TPO & \stdcell{39.7}{2.5} & \stdcell{99.7}{0.1} & \stdcell{36.5}{4.2} & \stdcell{0.1}{0.1} & \stdcell{70.1}{6.7} & \stdcell{99.8}{0.1} & \stdcell{56.5}{0.5} & \stdcell{35.8}{0.3} & \stdcell{65.7}{1.5} & \stdcell{62.7}{0.7} & \stdcell{82.3}{0.7} \\
+\rowcolor{gray!10}
+DUET Merged & GradDiff & \stdcell{2.1}{0.4} & \stdcell{86.6}{0.2} & \stdcell{96.5}{0.7} & \stdcell{8.9}{1.1} & \stdcell{11.8}{0.4} & \stdcell{89.5}{0.6} & \stdcell{56.5}{0.1} & \stdcell{35.4}{0.2} & \stdcell{68.0}{0.3} & \stdcell{62.6}{0.4} & \stdcell{81.2}{0.1} \\
+\rowcolor{gray!10}
+DUET Merged & CE-U & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.1} & \stdcell{100.0}{0.1} & \stdcell{100.0}{0.0} & \stdcell{9.3}{4.7} & \stdcell{10.5}{4.3} & \stdcell{46.5}{2.5} & \stdcell{22.9}{2.1} & \stdcell{60.8}{3.5} & \stdcell{53.8}{4.4} & \stdcell{72.2}{1.8} \\
+\rowcolor{gray!10}
+DUET Merged & PDU & \stdcell{36.5}{3.0} & \stdcell{97.4}{0.5} & \stdcell{67.8}{22.4} & \stdcell{4.7}{4.8} & \stdcell{29.2}{1.0} & \stdcell{96.3}{2.3} & \stdcell{56.1}{0.5} & \stdcell{35.0}{1.2} & \stdcell{66.6}{1.7} & \stdcell{61.9}{0.9} & \stdcell{82.0}{0.7} \\
+\addlinespace
+\rowcolor{blue!12}
+RWKU & \textsc{DualCF} & \stdcell{8.8}{0.1} & \stdcell{96.8}{0.5} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{43.0}{0.2} & \stdcell{98.2}{0.4} & \stdcell{57.3}{0.3} & \stdcell{37.2}{0.2} & \stdcell{68.5}{1.7} & \stdcell{61.3}{3.2} & \stdcell{81.9}{0.5} \\
+\rowcolor{gray!10}
+RWKU & DPO & \stdcell{12.8}{1.2} & \stdcell{95.8}{0.3} & \stdcell{0.1}{0.1} & \stdcell{0.0}{0.0} & \stdcell{43.3}{1.7} & \stdcell{97.6}{0.2} & \stdcell{57.1}{0.9} & \stdcell{37.3}{0.7} & \stdcell{69.0}{2.6} & \stdcell{61.6}{1.1} & \stdcell{80.4}{0.4} \\
+\rowcolor{gray!10}
+RWKU & GA & \stdcell{0.1}{0.0} & \stdcell{0.0}{0.0} & \stdcell{100.0}{0.0} & \stdcell{100.0}{0.0} & \stdcell{6.4}{1.2} & \stdcell{6.6}{1.4} & \stdcell{31.8}{4.8} & \stdcell{16.6}{8.4} & \stdcell{48.3}{0.7} & \stdcell{50.3}{0.1} & \stdcell{26.9}{7.8} \\
+\rowcolor{gray!10}
+RWKU & NPO & \stdcell{55.3}{3.7} & \stdcell{95.9}{0.1} & \stdcell{32.9}{12.3} & \stdcell{0.5}{0.2} & \stdcell{46.5}{3.4} & \stdcell{96.8}{0.2} & \stdcell{57.7}{0.6} & \stdcell{37.7}{0.4} & \stdcell{68.8}{2.4} & \stdcell{62.1}{0.6} & \stdcell{82.1}{0.3} \\
+\rowcolor{gray!10}
+RWKU & NPO-SAM & \stdcell{30.3}{9.3} & \stdcell{94.7}{0.2} & \stdcell{94.2}{1.8} & \stdcell{1.9}{0.2} & \stdcell{22.2}{2.8} & \stdcell{95.3}{0.2} & \stdcell{56.6}{0.3} & \stdcell{37.0}{1.1} & \stdcell{65.9}{1.6} & \stdcell{61.6}{1.4} & \stdcell{81.6}{0.2} \\
+\rowcolor{gray!10}
+RWKU & LoKU & \stdcell{1.9}{0.4} & \stdcell{97.4}{0.2} & \stdcell{63.0}{54.6} & \stdcell{0.4}{0.4} & \stdcell{40.9}{23.8} & \stdcell{98.5}{0.2} & \stdcell{45.8}{0.9} & \stdcell{24.5}{1.0} & \stdcell{57.4}{3.9} & \stdcell{52.8}{0.9} & \stdcell{69.7}{2.8} \\
+\rowcolor{gray!10}
+RWKU & SimNPO & \stdcell{57.3}{1.9} & \stdcell{98.7}{0.2} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{72.0}{1.5} & \stdcell{99.3}{0.1} & \stdcell{57.6}{0.9} & \stdcell{37.6}{0.7} & \stdcell{64.1}{1.6} & \stdcell{65.0}{1.5} & \stdcell{83.6}{0.8} \\
+\rowcolor{gray!10}
+RWKU & Adaptive-RMU & \stdcell{16.2}{3.0} & \stdcell{81.9}{0.6} & \stdcell{78.4}{4.5} & \stdcell{2.7}{0.8} & \stdcell{26.1}{2.5} & \stdcell{81.5}{0.6} & \stdcell{57.5}{0.1} & \stdcell{37.3}{0.1} & \stdcell{70.6}{0.1} & \stdcell{60.4}{0.3} & \stdcell{82.2}{0.3} \\
+\rowcolor{gray!10}
+RWKU & FLAT & \stdcell{0.4}{0.0} & \stdcell{0.3}{0.0} & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{11.8}{0.0} & \stdcell{11.2}{0.0} & \stdcell{44.9}{9.6} & \stdcell{19.6}{8.6} & \stdcell{74.2}{7.9} & \stdcell{53.1}{1.9} & \stdcell{57.8}{25.0} \\
+\rowcolor{gray!10}
+RWKU & Unilogit & \stdcell{2.5}{1.9} & \stdcell{95.9}{0.3} & \stdcell{74.9}{12.8} & \stdcell{0.5}{0.2} & \stdcell{12.9}{3.9} & \stdcell{97.3}{0.2} & \stdcell{58.2}{1.2} & \stdcell{37.8}{1.0} & \stdcell{70.7}{2.2} & \stdcell{62.1}{2.3} & \stdcell{82.5}{0.2} \\
+\rowcolor{gray!10}
+RWKU & STAT & \stdcell{7.7}{3.4} & \stdcell{98.0}{0.2} & \stdcell{88.5}{5.1} & \stdcell{0.4}{0.2} & \stdcell{13.1}{5.3} & \stdcell{98.7}{0.2} & \stdcell{56.6}{0.8} & \stdcell{36.4}{0.6} & \stdcell{64.2}{2.2} & \stdcell{63.2}{1.0} & \stdcell{82.8}{0.3} \\
+\rowcolor{gray!10}
+RWKU & SatImp & \stdcell{41.7}{3.4} & \stdcell{98.5}{0.2} & \stdcell{6.5}{5.3} & \stdcell{0.0}{0.0} & \stdcell{56.9}{4.2} & \stdcell{99.1}{0.1} & \stdcell{57.4}{0.1} & \stdcell{37.6}{0.5} & \stdcell{66.2}{1.7} & \stdcell{63.5}{0.8} & \stdcell{81.8}{0.9} \\
+\rowcolor{gray!10}
+RWKU & UnDIAL & \stdcell{56.7}{0.4} & \stdcell{81.4}{0.4} & \stdcell{2.6}{0.2} & \stdcell{1.4}{0.1} & \stdcell{65.1}{0.4} & \stdcell{81.2}{0.2} & \stdcell{58.2}{0.3} & \stdcell{38.1}{0.9} & \stdcell{71.2}{0.3} & \stdcell{61.3}{0.2} & \stdcell{82.6}{0.3} \\
+\rowcolor{gray!10}
+RWKU & RMU & \stdcell{10.6}{3.4} & \stdcell{80.7}{0.3} & \stdcell{67.5}{10.9} & \stdcell{3.0}{0.6} & \stdcell{17.8}{3.8} & \stdcell{80.8}{0.5} & \stdcell{56.6}{0.9} & \stdcell{37.8}{0.6} & \stdcell{71.7}{0.7} & \stdcell{54.2}{3.0} & \stdcell{81.8}{0.3} \\
+\rowcolor{gray!10}
+RWKU & WGA & \stdcell{6.2}{1.5} & \stdcell{97.4}{0.2} & \stdcell{66.2}{13.5} & \stdcell{0.2}{0.1} & \stdcell{17.4}{0.3} & \stdcell{98.3}{0.0} & \stdcell{58.4}{0.5} & \stdcell{37.6}{0.7} & \stdcell{69.6}{1.4} & \stdcell{64.7}{1.2} & \stdcell{82.4}{0.2} \\
+\rowcolor{gray!10}
+RWKU & AltPO & \stdcell{20.0}{3.2} & \stdcell{98.8}{0.8} & \stdcell{27.9}{6.7} & \stdcell{0.2}{0.2} & \stdcell{25.6}{1.3} & \stdcell{99.1}{0.8} & \stdcell{55.2}{0.3} & \stdcell{35.8}{0.4} & \stdcell{63.9}{1.5} & \stdcell{59.7}{0.9} & \stdcell{80.9}{0.3} \\
+\rowcolor{gray!10}
+RWKU & TPO & \stdcell{34.1}{8.4} & \stdcell{98.6}{0.2} & \stdcell{62.7}{8.6} & \stdcell{0.2}{0.1} & \stdcell{39.7}{6.8} & \stdcell{99.1}{0.0} & \stdcell{57.4}{0.4} & \stdcell{37.4}{1.1} & \stdcell{64.9}{1.3} & \stdcell{64.6}{1.4} & \stdcell{82.8}{0.7} \\
+\rowcolor{gray!10}
+RWKU & GradDiff & \stdcell{1.9}{0.1} & \stdcell{75.3}{1.9} & \stdcell{96.6}{0.1} & \stdcell{8.8}{0.4} & \stdcell{9.2}{1.0} & \stdcell{81.7}{1.2} & \stdcell{55.5}{1.8} & \stdcell{35.7}{1.3} & \stdcell{64.7}{3.5} & \stdcell{60.7}{2.8} & \stdcell{80.9}{0.6} \\
+\rowcolor{gray!10}
+RWKU & CE-U & \stdcell{0.0}{0.0} & \stdcell{0.0}{0.0} & \stdcell{100.0}{0.0} & \stdcell{100.0}{0.0} & \stdcell{9.7}{2.8} & \stdcell{9.9}{3.0} & \stdcell{43.9}{9.3} & \stdcell{22.8}{6.7} & \stdcell{63.4}{4.7} & \stdcell{50.6}{0.3} & \stdcell{59.8}{29.2} \\
+\rowcolor{gray!10}
+RWKU & PDU & \stdcell{9.8}{1.7} & \stdcell{94.1}{0.3} & \stdcell{82.9}{16.6} & \stdcell{2.8}{1.1} & \stdcell{18.5}{1.8} & \stdcell{95.6}{0.4} & \stdcell{57.3}{0.7} & \stdcell{36.1}{0.4} & \stdcell{71.2}{2.5} & \stdcell{60.7}{1.9} & \stdcell{82.3}{0.6} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

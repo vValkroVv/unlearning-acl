@@ -1,0 +1,75 @@
+% Deprecated / not included in the current manuscript build.
+% Do not input this file unless it is first synchronized with the final DualCF semantics.
+
+\begin{table*}[t]
+\centering
+\caption{Component ablations under the fixed \textsc{CF-Multi} artifact. The \textsc{DualCF} entry is the full reported method used in the main comparison and artifact-quality study. \textsc{DualCF-MeanRoute} and \textsc{DualCF-SplitMeanRoute} replace sample-wise routing by global or split-level mean routing statistics; \textsc{DualCF-NoSpan}, \textsc{DualCF-NoSAM}, and \textsc{DualCF-NoRejection} remove individual objective components. Values are mean (sample standard deviation) over three seeds, in percentage points.}
+\label{tab:ablation-multi-short}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrr}
+\toprule
+Split & Method & F$\downarrow$ & H$\uparrow$ & U$\uparrow$ \\
+\midrule
+\rowcolor{blue!12}
+DUET Rare & \textsc{DualCF} & \stdcell{5.6}{1.6} & \stdcell{97.7}{0.9} & \stdcell{56.0}{0.0} \\
+\rowcolor{blue!12}
+DUET Rare & \textsc{DualCF-MeanRoute} & \stdcell{2.5}{0.5} & \stdcell{96.2}{0.9} & \stdcell{56.1}{0.3} \\
+\rowcolor{blue!12}
+DUET Rare & \textsc{DualCF-SplitMeanRoute} & \stdcell{3.1}{1.2} & \stdcell{96.1}{1.0} & \stdcell{56.1}{0.2} \\
+\rowcolor{blue!12}
+DUET Rare & \textsc{DualCF-NoSpan} & \stdcell{8.5}{1.5} & \stdcell{98.3}{0.7} & \stdcell{56.0}{0.3} \\
+\rowcolor{blue!12}
+DUET Rare & \textsc{DualCF-NoSAM} & \stdcell{5.4}{1.3} & \stdcell{97.1}{1.2} & \stdcell{55.8}{0.2} \\
+\rowcolor{blue!12}
+DUET Rare & \textsc{DualCF-NoRejection} & \stdcell{15.1}{14.6} & \stdcell{98.6}{0.2} & \stdcell{55.9}{0.6} \\
+\rowcolor{gray!10}
+DUET Rare & \textsc{SimpleCE} & \stdcell{22.9}{12.4} & \stdcell{99.0}{0.2} & \stdcell{55.8}{0.3} \\
+\addlinespace
+\rowcolor{blue!12}
+DUET Popular & \textsc{DualCF} & \stdcell{6.5}{1.7} & \stdcell{98.8}{0.6} & \stdcell{57.2}{0.3} \\
+\rowcolor{blue!12}
+DUET Popular & \textsc{DualCF-MeanRoute} & \stdcell{3.5}{0.8} & \stdcell{98.4}{0.3} & \stdcell{57.1}{0.2} \\
+\rowcolor{blue!12}
+DUET Popular & \textsc{DualCF-SplitMeanRoute} & \stdcell{3.5}{0.4} & \stdcell{98.6}{0.1} & \stdcell{57.4}{0.5} \\
+\rowcolor{blue!12}
+DUET Popular & \textsc{DualCF-NoSpan} & \stdcell{9.4}{0.4} & \stdcell{99.0}{0.5} & \stdcell{56.9}{0.1} \\
+\rowcolor{blue!12}
+DUET Popular & \textsc{DualCF-NoSAM} & \stdcell{6.6}{1.8} & \stdcell{99.2}{0.2} & \stdcell{57.3}{0.2} \\
+\rowcolor{blue!12}
+DUET Popular & \textsc{DualCF-NoRejection} & \stdcell{6.7}{0.8} & \stdcell{98.8}{0.3} & \stdcell{57.1}{0.4} \\
+\rowcolor{gray!10}
+DUET Popular & \textsc{SimpleCE} & \stdcell{4.6}{0.9} & \stdcell{97.7}{0.5} & \stdcell{56.6}{0.4} \\
+\addlinespace
+\rowcolor{blue!12}
+DUET Merged & \textsc{DualCF} & \stdcell{5.9}{2.7} & \stdcell{99.2}{0.5} & \stdcell{56.5}{0.3} \\
+\rowcolor{blue!12}
+DUET Merged & \textsc{DualCF-MeanRoute} & \stdcell{4.7}{2.5} & \stdcell{98.8}{0.4} & \stdcell{55.7}{0.3} \\
+\rowcolor{blue!12}
+DUET Merged & \textsc{DualCF-SplitMeanRoute} & \stdcell{5.9}{4.1} & \stdcell{98.6}{0.3} & \stdcell{55.9}{0.2} \\
+\rowcolor{blue!12}
+DUET Merged & \textsc{DualCF-NoSpan} & \stdcell{9.2}{4.0} & \stdcell{99.4}{0.2} & \stdcell{56.3}{0.2} \\
+\rowcolor{blue!12}
+DUET Merged & \textsc{DualCF-NoSAM} & \stdcell{6.6}{2.7} & \stdcell{99.5}{0.2} & \stdcell{56.4}{0.8} \\
+\rowcolor{blue!12}
+DUET Merged & \textsc{DualCF-NoRejection} & \stdcell{6.2}{2.9} & \stdcell{99.5}{0.4} & \stdcell{56.1}{0.5} \\
+\rowcolor{gray!10}
+DUET Merged & \textsc{SimpleCE} & \stdcell{16.0}{2.2} & \stdcell{99.4}{0.2} & \stdcell{55.9}{0.4} \\
+\addlinespace
+\rowcolor{blue!12}
+RWKU & \textsc{DualCF} & \stdcell{8.8}{0.1} & \stdcell{96.8}{0.5} & \stdcell{57.3}{0.3} \\
+\rowcolor{blue!12}
+RWKU & \textsc{DualCF-MeanRoute} & \stdcell{7.5}{0.4} & \stdcell{96.6}{0.5} & \stdcell{57.3}{1.1} \\
+\rowcolor{blue!12}
+RWKU & \textsc{DualCF-SplitMeanRoute} & \stdcell{7.9}{0.3} & \stdcell{97.0}{0.4} & \stdcell{57.1}{0.6} \\
+\rowcolor{blue!12}
+RWKU & \textsc{DualCF-NoSpan} & \stdcell{10.2}{0.3} & \stdcell{97.1}{0.3} & \stdcell{57.6}{0.4} \\
+\rowcolor{blue!12}
+RWKU & \textsc{DualCF-NoSAM} & \stdcell{9.9}{1.0} & \stdcell{96.9}{0.4} & \stdcell{57.0}{0.6} \\
+\rowcolor{blue!12}
+RWKU & \textsc{DualCF-NoRejection} & \stdcell{10.3}{0.2} & \stdcell{97.8}{0.1} & \stdcell{57.4}{0.9} \\
+\rowcolor{gray!10}
+RWKU & \textsc{SimpleCE} & \stdcell{8.1}{0.7} & \stdcell{97.1}{0.2} & \stdcell{57.1}{0.8} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

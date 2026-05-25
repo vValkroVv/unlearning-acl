@@ -1,0 +1,31 @@
+\begin{table}[t!]
+\centering
+%\scriptsize
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.0}
+\caption{Artifact-quality comparison under the same full \textsc{DualCF} objective. Only the selected counterfactual target changes; the training objective is fixed, and forget-example coverage is fixed. Values are mean (sample standard deviation) over three seeds, in percentage points. Lower $F$ is better; higher $H/U$ are better.}
+\label{tab:artifact-quality}
+\scalebox{0.80}{
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Split & \makecell[l]{Counterfactual\\artifact} & $F\downarrow$ & $H\uparrow$ & $U\uparrow$ \\
+\midrule
+DUET Rare & \textsc{CF-Single} & \stdcell{32.8}{0.9} & \stdcell{98.5}{0.2} & \stdcell{56.8}{0.3} \\
+DUET Rare & \textsc{CF-Multi} & \stdcell{5.6}{1.6} & \stdcell{97.7}{0.9} & \stdcell{56.0}{0.0} \\
+DUET Rare & \textsc{CF-Repair} & \stdcell{0.7}{0.1} & \stdcell{96.5}{0.2} & \stdcell{56.9}{0.2} \\
+\addlinespace
+DUET Popular & \textsc{CF-Single} & \stdcell{2.9}{0.6} & \stdcell{98.2}{0.2} & \stdcell{56.9}{0.7} \\
+DUET Popular & \textsc{CF-Multi} & \stdcell{6.5}{1.7} & \stdcell{98.8}{0.6} & \stdcell{57.2}{0.3} \\
+DUET Popular & \textsc{CF-Repair} & \stdcell{6.5}{1.7} & \stdcell{98.8}{0.6} & \stdcell{57.2}{0.3} \\
+\addlinespace
+DUET Merged & \textsc{CF-Single} & \stdcell{17.6}{1.1} & \stdcell{99.0}{1.0} & \stdcell{56.2}{0.5} \\
+DUET Merged & \textsc{CF-Multi} & \stdcell{5.9}{2.7} & \stdcell{99.2}{0.5} & \stdcell{56.5}{0.3} \\
+DUET Merged & \textsc{CF-Repair} & \stdcell{1.9}{0.4} & \stdcell{98.7}{0.5} & \stdcell{56.6}{0.5} \\
+\addlinespace
+RWKU & \textsc{CF-Single} & \stdcell{12.6}{0.4} & \stdcell{96.3}{0.3} & \stdcell{56.6}{0.8} \\
+RWKU & \textsc{CF-Multi} & \stdcell{8.8}{0.1} & \stdcell{96.8}{0.5} & \stdcell{57.3}{0.3} \\
+RWKU & \textsc{CF-Repair} & \stdcell{8.8}{0.1} & \stdcell{96.8}{0.5} & \stdcell{57.3}{0.3} \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
