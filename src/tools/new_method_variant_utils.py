@@ -9,13 +9,9 @@ from typing import Any
 
 
 MULTICF_RUN_RE = re.compile(
-    r"_k(?P<k>[^_]+)_ag(?P<agg>[^_]+)_w(?P<weight>[^_]+)_t(?P<temp>[^_]+)"
-    r"_(?:dOn|dOff)_(?:aOn|aOff)(?:_seed\d+)?$"
+    r"_k(?P<k>[^_]+)_ag(?P<agg>[^_]+)_w(?P<weight>[^_]+)_t(?P<temp>[^_]+)" r"_(?:dOn|dOff)_(?:aOn|aOff)(?:_seed\d+)?$"
 )
-BOUNDARY_RUN_RE = re.compile(
-    r"_lr(?P<local>[^_]+)_bm(?P<margin>[^_]+)"
-    r"_(?:dOn|dOff)_(?:aOn|aOff)(?:_seed\d+)?$"
-)
+BOUNDARY_RUN_RE = re.compile(r"_lr(?P<local>[^_]+)_bm(?P<margin>[^_]+)" r"_(?:dOn|dOff)_(?:aOn|aOff)(?:_seed\d+)?$")
 SPAN_TAIL_RE = re.compile(r"_(?:dOn|dOff)_(?:aOn|aOff)(?:_seed\d+)?$")
 SPAN_OLD_BODY_RE = re.compile(r"m(?P<mode>[^_]+)_sw(?P<shared>[^_]+)_uw(?P<unique>[^_]+)")
 SPAN_NEW_BODY_RE = re.compile(

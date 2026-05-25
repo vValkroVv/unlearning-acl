@@ -30,7 +30,7 @@ setup(
         ],  # Install using `pip install .[lm-eval]`
         "dev": [
             "pre-commit==4.0.1",
-            "ruff==0.6.9",
+            "ruff==0.15.8",
         ],  # Install using `pip install .[dev]`
     },
     python_requires=">=3.11",
