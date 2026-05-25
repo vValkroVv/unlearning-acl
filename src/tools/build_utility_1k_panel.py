@@ -243,13 +243,10 @@ def sample_rows(rows: list[dict[str, Any]], count: int, rng: random.Random) -> l
 def proportional_allocation(counts: dict[str, int], target_total: int) -> dict[str, int]:
     available_total = sum(counts.values())
     if available_total < target_total:
-        raise ValueError(
-            f"Requested {target_total} stratified rows but only {available_total} are available."
-        )
+        raise ValueError(f"Requested {target_total} stratified rows but only {available_total} are available.")
 
     raw_allocations = {
-        category: (target_total * category_count) / available_total
-        for category, category_count in counts.items()
+        category: (target_total * category_count) / available_total for category, category_count in counts.items()
     }
     allocations = {}
     for category, category_count in counts.items():
@@ -477,10 +474,7 @@ def main() -> None:
     }
 
     total_examples = (
-        len(sampled_mmlu_rows)
-        + len(sampled_truthfulqa_rows)
-        + len(sampled_arc_rows)
-        + len(sampled_winogrande_rows)
+        len(sampled_mmlu_rows) + len(sampled_truthfulqa_rows) + len(sampled_arc_rows) + len(sampled_winogrande_rows)
     )
 
     manifest = {

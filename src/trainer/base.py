@@ -36,9 +36,7 @@ class FinetuneTrainer(Trainer):
                 eval_metrics = {}
                 if self.accelerator.num_processes == 1:
                     run_dir = self._get_output_dir(trial=trial)
-                    checkpoint_folder = (
-                        f"{PREFIX_CHECKPOINT_DIR}-{self.state.global_step}"
-                    )
+                    checkpoint_folder = f"{PREFIX_CHECKPOINT_DIR}-{self.state.global_step}"
                     output_dir = os.path.join(run_dir, checkpoint_folder, "evals")
                     os.makedirs(output_dir, exist_ok=True)
                     eval_metrics = {}

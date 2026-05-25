@@ -5,11 +5,15 @@ on:
     paths:
       - "**.py"
       - "requirements.txt"
+      - "requirements-gpu.txt"
+      - "pyproject.toml"
       - ".github/workflows/*.yml"
   pull_request:
     paths:
       - "**.py"
       - "requirements.txt"
+      - "requirements-gpu.txt"
+      - "pyproject.toml"
       - ".github/workflows/*.yml"
 
 jobs:

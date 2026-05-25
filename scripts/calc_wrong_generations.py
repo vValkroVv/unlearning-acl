@@ -148,6 +148,7 @@ def main() -> None:
         def _iter(items: Iterable[Path], desc: str):
             return tqdm(list(items), desc=desc, unit="file")
     except Exception:
+
         def _iter(items: Iterable[Path], desc: str):
             print(f"[wrong_gen] {desc}")
             return items

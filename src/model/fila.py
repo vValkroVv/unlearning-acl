@@ -30,11 +30,7 @@ def get_lora_layer_map(
     layer_map: Dict[str, torch.nn.Module] = {}
 
     for module_name, module in peft_model.named_modules():
-        if not (
-            hasattr(module, "lora_A")
-            and hasattr(module, "lora_B")
-            and hasattr(module, "base_layer")
-        ):
+        if not (hasattr(module, "lora_A") and hasattr(module, "lora_B") and hasattr(module, "base_layer")):
             continue
         if not hasattr(module.base_layer, "weight"):
             continue
@@ -112,9 +108,7 @@ def apply_fila_initialization(
     required = {"importance_f", "importance_r", "f_cnt", "r_cnt"}
     missing = required.difference(payload.keys())
     if missing:
-        raise ValueError(
-            f"Importance file is missing required keys: {sorted(missing)}"
-        )
+        raise ValueError(f"Importance file is missing required keys: {sorted(missing)}")
 
     importance_f = _canonicalize_importance_dict(payload["importance_f"])
     importance_r = _canonicalize_importance_dict(payload["importance_r"])
@@ -122,15 +116,11 @@ def apply_fila_initialization(
     f_cnt = float(payload["f_cnt"])
     r_cnt = float(payload["r_cnt"])
     if f_cnt <= 0 or r_cnt <= 0:
-        raise ValueError(
-            f"Invalid token counters in importance file: f_cnt={f_cnt}, r_cnt={r_cnt}"
-        )
+        raise ValueError(f"Invalid token counters in importance file: f_cnt={f_cnt}, r_cnt={r_cnt}")
 
     layer_map = get_lora_layer_map(peft_model=peft_model, target_modules=target_modules)
     if not layer_map:
-        raise ValueError(
-            "No LoRA-wrapped target layers found for FILA initialization."
-        )
+        raise ValueError("No LoRA-wrapped target layers found for FILA initialization.")
 
     matched = 0
     max_rel_error = 0.0
@@ -145,14 +135,10 @@ def apply_fila_initialization(
             continue
 
         if adapter_name not in layer.lora_A or adapter_name not in layer.lora_B:
-            raise ValueError(
-                f"Adapter '{adapter_name}' not found in LoRA layer for {weight_name}."
-            )
+            raise ValueError(f"Adapter '{adapter_name}' not found in LoRA layer for {weight_name}.")
 
         base_weight = layer.base_layer.weight.data
-        if tuple(imp_f.shape) != tuple(base_weight.shape) or tuple(imp_r.shape) != tuple(
-            base_weight.shape
-        ):
+        if tuple(imp_f.shape) != tuple(base_weight.shape) or tuple(imp_r.shape) != tuple(base_weight.shape):
             skipped_shape.append(
                 (
                     weight_name,
@@ -199,10 +185,7 @@ def apply_fila_initialization(
         sqrt_s = torch.sqrt(s)
 
         new_a = (v * sqrt_s.unsqueeze(0)).t().contiguous()  # [r, in]
-        new_b = (
-            (u * sqrt_s.unsqueeze(0))
-            / (row_importance.unsqueeze(1) + float(eps))
-        ).contiguous()  # [out, r]
+        new_b = ((u * sqrt_s.unsqueeze(0)) / (row_importance.unsqueeze(1) + float(eps))).contiguous()  # [out, r]
 
         a_weight.zero_()
         b_weight.zero_()
@@ -216,8 +199,7 @@ def apply_fila_initialization(
 
         if run_sanity_check:
             recon = base_weight.float() + scaling * (
-                layer.lora_B[adapter_name].weight.data.float()
-                @ layer.lora_A[adapter_name].weight.data.float()
+                layer.lora_B[adapter_name].weight.data.float() @ layer.lora_A[adapter_name].weight.data.float()
             )
             rel_error = torch.norm(recon - original_w) / (torch.norm(original_w) + 1e-12)
             max_rel_error = max(max_rel_error, float(rel_error.item()))
@@ -225,9 +207,7 @@ def apply_fila_initialization(
         matched += 1
 
     if strict and matched == 0:
-        raise ValueError(
-            "FILA did not match any layers. Check target_modules, naming, and importance file contents."
-        )
+        raise ValueError("FILA did not match any layers. Check target_modules, naming, and importance file contents.")
 
     if skipped_shape:
         logger.warning("[FILA] Skipped %d layers due to shape mismatch.", len(skipped_shape))

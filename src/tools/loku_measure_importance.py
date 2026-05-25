@@ -83,8 +83,7 @@ def _resolve_target_modules(cfg) -> List[str]:
         raise ValueError("model.lora_config.target_modules must be non-empty.")
     if any(str(name).split(".")[-1] == "lm_head" for name in target_modules):
         raise ValueError(
-            "LoKU importance measurement requires `lm_head` to be excluded from "
-            "model.lora_config.target_modules."
+            "LoKU importance measurement requires `lm_head` to be excluded from model.lora_config.target_modules."
         )
     return target_modules
 
@@ -132,10 +131,7 @@ def _to_model_inputs(batch_split, device: str) -> Dict[str, torch.Tensor]:
     model_inputs = _filter_model_inputs(batch_split)
     if "labels" not in model_inputs:
         raise ValueError("Batch is missing labels required for CE-based importance.")
-    return {
-        key: value.to(device) if hasattr(value, "to") else value
-        for key, value in model_inputs.items()
-    }
+    return {key: value.to(device) if hasattr(value, "to") else value for key, value in model_inputs.items()}
 
 
 def _accumulate_for_split(
@@ -168,12 +164,10 @@ def _init_accumulators(
     target_params: Dict[str, torch.nn.Parameter],
 ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
     importance_f = {
-        name: torch.zeros_like(param.detach().float(), device="cpu")
-        for name, param in target_params.items()
+        name: torch.zeros_like(param.detach().float(), device="cpu") for name, param in target_params.items()
     }
     importance_r = {
-        name: torch.zeros_like(param.detach().float(), device="cpu")
-        for name, param in target_params.items()
+        name: torch.zeros_like(param.detach().float(), device="cpu") for name, param in target_params.items()
     }
     return importance_f, importance_r
 
@@ -249,9 +243,7 @@ def main() -> None:
             )
 
     if f_cnt <= 0 or r_cnt <= 0:
-        raise ValueError(
-            f"Invalid counters after measurement: f_cnt={f_cnt}, r_cnt={r_cnt}."
-        )
+        raise ValueError(f"Invalid counters after measurement: f_cnt={f_cnt}, r_cnt={r_cnt}.")
 
     os.makedirs(os.path.dirname(args.output_path) or ".", exist_ok=True)
     payload = {

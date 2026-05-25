@@ -159,9 +159,7 @@ SPLIT_LABELS = {
     "duet_merged": "DUET Merged",
     "rwku": "RWKU",
 }
-SIMPLE_CE_RE = re.compile(
-    r"^simple_ce(?:_cf(?P<cf>[^_]+))?(?:_ret(?P<ret>[^_]+))?(?:_gamma(?P<gamma>[^_]+))?$"
-)
+SIMPLE_CE_RE = re.compile(r"^simple_ce(?:_cf(?P<cf>[^_]+))?(?:_ret(?P<ret>[^_]+))?(?:_gamma(?P<gamma>[^_]+))?$")
 
 
 def parse_args() -> argparse.Namespace:
@@ -190,25 +188,18 @@ def parse_args() -> argparse.Namespace:
         "--variant-algorithm",
         action="append",
         help=(
-            "Optional variant algorithm family filter. Can be repeated. "
-            "Examples: span_cf_samnpo, span_cf_simnpo_sam."
+            "Optional variant algorithm family filter. Can be repeated. Examples: span_cf_samnpo, span_cf_simnpo_sam."
         ),
     )
     parser.add_argument(
         "--variant-method-key",
         action="append",
-        help=(
-            "Optional exact variant method key filter. Can be repeated. "
-            "Examples: span_cf_s2, span_cf_s4."
-        ),
+        help=("Optional exact variant method key filter. Can be repeated. Examples: span_cf_s2, span_cf_s4."),
     )
     parser.add_argument(
         "--variant-display-name",
         action="append",
-        help=(
-            "Optional variant row label override in METHOD=DISPLAY format. "
-            "Can be repeated."
-        ),
+        help=("Optional variant row label override in METHOD=DISPLAY format. Can be repeated."),
     )
     parser.add_argument(
         "--variant-display",
@@ -373,9 +364,13 @@ def load_wrong_generation_index(
             if not label:
                 continue
             labels.add(label)
-            split_map = index.setdefault(label, {}).setdefault(split, {}).setdefault(
-                str(row.get("lr") or ""),
-                {},
+            split_map = (
+                index.setdefault(label, {})
+                .setdefault(split, {})
+                .setdefault(
+                    str(row.get("lr") or ""),
+                    {},
+                )
             )
             method_key = str(row.get("method_key") or "")
             method_map = split_map.setdefault(epoch_column, {}).setdefault(method_key, {})
@@ -426,11 +421,7 @@ def load_wrong_generation_rows(
         return {}
 
     rows: dict[str, dict[str, str]] = {}
-    by_epoch = (
-        wrong_generation_index.get(wrong_generation_label, {})
-        .get(split, {})
-        .get(lr, {})
-    )
+    by_epoch = wrong_generation_index.get(wrong_generation_label, {}).get(split, {}).get(lr, {})
     for epoch_column, method_entries in by_epoch.items():
         for method_key, metric_values in method_entries.items():
             raw_value = metric_values.get(metric_name)
@@ -448,15 +439,12 @@ def load_table_bundle(
     lr: str,
     metrics: list[tuple[str, str]],
     *,
-    wrong_generation_index: dict[str, dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]]]
-    | None = None,
+    wrong_generation_index: dict[str, dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]]] | None = None,
     wrong_generation_label: str | None = None,
 ) -> dict[str, dict[str, dict[str, str]]]:
     bundle: dict[str, dict[str, dict[str, str]]] = {}
     fixed_metric_names = {
-        metric_name
-        for metric_name, _metric_abbrev in FIXED_METRICS
-        if metric_name not in WRONG_GENERATION_METRIC_NAMES
+        metric_name for metric_name, _metric_abbrev in FIXED_METRICS if metric_name not in WRONG_GENERATION_METRIC_NAMES
     }
     for metric_name, _metric_abbrev in metrics:
         if metric_name in WRONG_GENERATION_METRIC_NAMES:
@@ -507,7 +495,9 @@ def build_header_cells(metrics: list[tuple[str, str]]) -> list[str]:
 
 
 def build_direction_text(metrics: list[tuple[str, str]]) -> str:
-    lower = [metric_abbrev for metric_name, metric_abbrev in metrics if METRIC_DIRECTION.get(metric_name) == r"$\downarrow$"]
+    lower = [
+        metric_abbrev for metric_name, metric_abbrev in metrics if METRIC_DIRECTION.get(metric_name) == r"$\downarrow$"
+    ]
     higher = [
         metric_abbrev
         for metric_name, metric_abbrev in metrics
@@ -782,8 +772,7 @@ def build_bundles(
     lr: str,
     metrics: list[tuple[str, str]],
     *,
-    wrong_generation_index: dict[str, dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]]]
-    | None = None,
+    wrong_generation_index: dict[str, dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]]] | None = None,
     wrong_generation_labels_by_source: dict[str, str | None] | None = None,
 ) -> dict[str, dict[str, dict[str, dict[str, str]]]]:
     return {
@@ -836,13 +825,9 @@ def build_combined_row_specs(
     if simplece_new_root is not None:
         variant_tag = "new" if simplece_old_root is not None else None
         for method_name in COMBINED_SIMPLECE_METHODS:
-            row_specs.append(
-                ("simplece_new", method_name, simple_ce_display_name(method_name, variant_tag), "")
-            )
+            row_specs.append(("simplece_new", method_name, simple_ce_display_name(method_name, variant_tag), ""))
             if simplece_old_root is not None:
-                row_specs.append(
-                    ("simplece_old", method_name, simple_ce_display_name(method_name, "old"), "")
-                )
+                row_specs.append(("simplece_old", method_name, simple_ce_display_name(method_name, "old"), ""))
     return row_specs
 
 
@@ -872,9 +857,7 @@ def load_simplece_row_specs(
     row_specs: list[tuple[str, str, str, str]] = []
     for source_name, _root, variant_tag, color in source_specs:
         for method_name in sorted(methods_by_source[source_name], key=simple_ce_sort_key):
-            row_specs.append(
-                (source_name, method_name, simple_ce_display_name(method_name, variant_tag), color)
-            )
+            row_specs.append((source_name, method_name, simple_ce_display_name(method_name, variant_tag), color))
     return row_specs
 
 
@@ -888,10 +871,7 @@ def build_output_text(
     label_prefix: str,
     split_lrs: list[tuple[str, str]] | None = None,
 ) -> str:
-    abbreviations = [
-        f"{metric_abbrev}={metric_name}"
-        for metric_name, metric_abbrev in metrics
-    ]
+    abbreviations = [f"{metric_abbrev}={metric_name}" for metric_name, metric_abbrev in metrics]
     sections = [
         header_comment,
         "% Abbreviations: " + ", ".join(abbreviations) + ".",
@@ -1135,37 +1115,21 @@ def load_variant_row_specs(
 def main() -> None:
     args = parse_args()
     output_file = args.output_file.expanduser().resolve()
-    output_slides_tex = (
-        None if args.output_slides_tex is None else args.output_slides_tex.expanduser().resolve()
-    )
-    variant_roots = (
-        []
-        if args.variant_root is None
-        else [root.expanduser().resolve() for root in args.variant_root]
-    )
+    output_slides_tex = None if args.output_slides_tex is None else args.output_slides_tex.expanduser().resolve()
+    variant_roots = [] if args.variant_root is None else [root.expanduser().resolve() for root in args.variant_root]
     old_root = None if args.old_root is None else args.old_root.expanduser().resolve()
     new_root = None if args.new_root is None else args.new_root.expanduser().resolve()
     simnpo_root = None if args.simnpo_root is None else args.simnpo_root.expanduser().resolve()
-    simplece_new_root = (
-        simnpo_root
-        if args.simplece_new_root is None
-        else args.simplece_new_root.expanduser().resolve()
-    )
-    simplece_old_root = (
-        None if args.simplece_old_root is None else args.simplece_old_root.expanduser().resolve()
-    )
+    simplece_new_root = simnpo_root if args.simplece_new_root is None else args.simplece_new_root.expanduser().resolve()
+    simplece_old_root = None if args.simplece_old_root is None else args.simplece_old_root.expanduser().resolve()
     output_simplece_file = (
         None if args.output_simplece_file is None else args.output_simplece_file.expanduser().resolve()
     )
     output_simplece_slides_tex = (
-        None
-        if args.output_simplece_slides_tex is None
-        else args.output_simplece_slides_tex.expanduser().resolve()
+        None if args.output_simplece_slides_tex is None else args.output_simplece_slides_tex.expanduser().resolve()
     )
     wrong_generations_root = (
-        None
-        if args.wrong_generations_root is None
-        else args.wrong_generations_root.expanduser().resolve()
+        None if args.wrong_generations_root is None else args.wrong_generations_root.expanduser().resolve()
     )
 
     if variant_roots:
@@ -1174,11 +1138,11 @@ def main() -> None:
         if output_simplece_file is not None or output_simplece_slides_tex is not None:
             raise ValueError("SimpleCE-only outputs are not supported with --variant-root")
 
-        variant_sources = [
-            ("variant", variant_roots[0])
-        ] if len(variant_roots) == 1 else [
-            (f"variant{index + 1}", root) for index, root in enumerate(variant_roots)
-        ]
+        variant_sources = (
+            [("variant", variant_roots[0])]
+            if len(variant_roots) == 1
+            else [(f"variant{index + 1}", root) for index, root in enumerate(variant_roots)]
+        )
         selected_algorithms = (
             None
             if not args.variant_algorithm
@@ -1192,22 +1156,21 @@ def main() -> None:
         display_name_overrides: dict[str, str] = {}
         for raw_value in args.variant_display_name or []:
             if "=" not in raw_value:
-                raise ValueError(
-                    f"Invalid --variant-display-name value {raw_value!r}; expected METHOD=DISPLAY"
-                )
+                raise ValueError(f"Invalid --variant-display-name value {raw_value!r}; expected METHOD=DISPLAY")
             method_name, display_name = raw_value.split("=", 1)
             method_name = method_name.strip()
             display_name = display_name.strip()
             if not method_name or not display_name:
-                raise ValueError(
-                    f"Invalid --variant-display-name value {raw_value!r}; expected METHOD=DISPLAY"
-                )
+                raise ValueError(f"Invalid --variant-display-name value {raw_value!r}; expected METHOD=DISPLAY")
             display_name_overrides[method_name] = display_name
 
-        wrong_generation_index: dict[
-            str,
-            dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]],
-        ] | None = None
+        wrong_generation_index: (
+            dict[
+                str,
+                dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]],
+            ]
+            | None
+        ) = None
         wrong_generation_labels_by_source: dict[str, str | None] | None = None
         available_wrong_generation_labels: set[str] = set()
         if wrong_generations_root is not None:
@@ -1251,11 +1214,7 @@ def main() -> None:
             )
             for split, lr in split_lrs
         }
-        split_lrs = [
-            (split, lr)
-            for split, lr in split_lrs
-            if row_specs_by_split_lr[(split, lr)]
-        ]
+        split_lrs = [(split, lr) for split, lr in split_lrs if row_specs_by_split_lr[(split, lr)]]
         if not split_lrs:
             raise FileNotFoundError("No matching variant rows found for the requested selection.")
 
@@ -1300,15 +1259,16 @@ def main() -> None:
     if simplece_old_root is not None:
         combined_roots["simplece_old"] = simplece_old_root
     available_wrong_generation_labels: set[str] = set()
-    wrong_generation_index: dict[
-        str,
-        dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]],
-    ] | None = None
+    wrong_generation_index: (
+        dict[
+            str,
+            dict[str, dict[str, dict[str, dict[str, dict[str, str]]]]],
+        ]
+        | None
+    ) = None
     wrong_generation_labels_by_source: dict[str, str | None] | None = None
     if wrong_generations_root is not None:
-        wrong_generation_index, available_wrong_generation_labels = load_wrong_generation_index(
-            wrong_generations_root
-        )
+        wrong_generation_index, available_wrong_generation_labels = load_wrong_generation_index(wrong_generations_root)
         wrong_generation_labels_by_source = {
             source_name: resolve_wrong_generation_label(root, available_wrong_generation_labels)
             for source_name, root in combined_roots.items()
@@ -1380,9 +1340,7 @@ def main() -> None:
 
     if output_simplece_file is not None:
         if simplece_new_root is None:
-            raise ValueError(
-                "--simplece-new-root or --simnpo-root is required when writing SimpleCE-only outputs"
-            )
+            raise ValueError("--simplece-new-root or --simnpo-root is required when writing SimpleCE-only outputs")
         output_simplece_file.parent.mkdir(parents=True, exist_ok=True)
         if simplece_old_root is None:
             simplece_source_specs = [("simplece", simplece_new_root, None, "blue!12")]
@@ -1402,8 +1360,7 @@ def main() -> None:
                 "simplece_new": simplece_new_root,
             }
         simplece_row_specs_by_split_lr = {
-            (split, lr): load_simplece_row_specs(simplece_source_specs, split, lr, metrics)
-            for split, lr in split_lrs
+            (split, lr): load_simplece_row_specs(simplece_source_specs, split, lr, metrics) for split, lr in split_lrs
         }
         simplece_slide_row_specs_by_split_lr = {
             (split, lr): load_simplece_row_specs(simplece_slide_source_specs, split, lr, metrics)

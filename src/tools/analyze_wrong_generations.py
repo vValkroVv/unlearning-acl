@@ -173,9 +173,7 @@ def prepare_output_root(path: Path, overwrite: bool) -> Path:
     root = path.expanduser().resolve()
     if root.exists():
         if not overwrite:
-            raise FileExistsError(
-                f"Output directory already exists: {root}. Pass --overwrite to rebuild it."
-            )
+            raise FileExistsError(f"Output directory already exists: {root}. Pass --overwrite to rebuild it.")
         shutil.rmtree(root)
     root.mkdir(parents=True, exist_ok=True)
     return root
@@ -459,18 +457,14 @@ def main() -> None:
             raise FileNotFoundError(root)
         if root.is_file():
             if root.name != args.eval_filename:
-                raise ValueError(
-                    f"Input file {root} does not match --eval-filename={args.eval_filename}."
-                )
+                raise ValueError(f"Input file {root} does not match --eval-filename={args.eval_filename}.")
             eval_logs.append(build_eval_log(root.parent, root))
             continue
         for eval_path in sorted(root.rglob(args.eval_filename)):
             eval_logs.append(build_eval_log(root, eval_path))
 
     if not eval_logs:
-        raise FileNotFoundError(
-            f"No {args.eval_filename} files found under the provided input roots."
-        )
+        raise FileNotFoundError(f"No {args.eval_filename} files found under the provided input roots.")
 
     by_eval: dict[tuple[str, str, str], dict[str, Any]] = defaultdict(new_aggregate)
     by_method_stage: dict[tuple[str, ...], dict[str, Any]] = defaultdict(new_aggregate)

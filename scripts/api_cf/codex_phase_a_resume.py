@@ -34,9 +34,7 @@ def maybe_str(value: str | None) -> str | None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Resolve and verify resume targets for Codex Phase-A launchers."
-    )
+    parser = argparse.ArgumentParser(description="Resolve and verify resume targets for Codex Phase-A launchers.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     common = argparse.ArgumentParser(add_help=False)
@@ -104,26 +102,17 @@ def validate_meta(args: argparse.Namespace, meta_path: Path) -> None:
         if merged_sidecar and key == "model":
             if actual_value == expected_value:
                 continue
-            input_models = {
-                str(value).strip()
-                for value in meta.get("input_models", [])
-                if str(value).strip()
-            }
+            input_models = {str(value).strip() for value in meta.get("input_models", []) if str(value).strip()}
             if actual_value == "multiple" and (not input_models or expected_value in input_models):
                 continue
         if merged_sidecar and key == "dataset_path":
             input_dataset_paths = {
-                str(value).strip()
-                for value in meta.get("input_dataset_paths", [])
-                if str(value).strip()
+                str(value).strip() for value in meta.get("input_dataset_paths", []) if str(value).strip()
             }
             if actual_value == expected_value or expected_value in input_dataset_paths:
                 continue
         if actual_value != expected_value:
-            fail(
-                f"existing sidecar metadata mismatch for {key}: "
-                f"expected {expected_value!r}, found {actual_value!r}"
-            )
+            fail(f"existing sidecar metadata mismatch for {key}: expected {expected_value!r}, found {actual_value!r}")
 
 
 def maybe_bootstrap_meta(
@@ -221,10 +210,7 @@ def load_valid_sidecar_indices(args: argparse.Namespace, dataset_index_set: set[
                 if not isinstance(value, list):
                     fail(f"{sidecar_path}: line {line_no} {key} is not a list")
                 if len(value) != len(alternates):
-                    fail(
-                        f"{sidecar_path}: line {line_no} {key} len={len(value)} "
-                        f"!= alternates len={len(alternates)}"
-                    )
+                    fail(f"{sidecar_path}: line {line_no} {key} len={len(value)} != alternates len={len(alternates)}")
             seen.add(idx)
     return seen
 
@@ -273,10 +259,7 @@ def run_verify(args: argparse.Namespace) -> None:
     missing = [idx for idx in target_indices if idx not in done_indices]
     if missing:
         preview = ", ".join(str(idx) for idx in missing[:10])
-        fail(
-            f"sidecar coverage incomplete for target={len(target_indices)} rows; "
-            f"missing indices: {preview}"
-        )
+        fail(f"sidecar coverage incomplete for target={len(target_indices)} rows; missing indices: {preview}")
 
     emit_shell(
         {

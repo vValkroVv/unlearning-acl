@@ -90,10 +90,7 @@ def compute_unilogit_loss(
             reduction="none",
         ).sum(dim=-1)
     else:
-        raise ValueError(
-            "kl_direction must be one of {'model_to_target', 'target_to_model'}, "
-            f"got {kl_direction!r}."
-        )
+        raise ValueError(f"kl_direction must be one of {{'model_to_target', 'target_to_model'}}, got {kl_direction!r}.")
 
     return token_kl.float().mean() * float(forget_coef), outputs
 

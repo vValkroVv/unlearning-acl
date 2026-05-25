@@ -138,9 +138,7 @@ def main() -> None:
             writer.writerow(row)
 
     trajectory_rows = [
-        row
-        for row in merged_rows
-        if row.get("utility_avg") is not None and row["label"] != "base_model_run"
+        row for row in merged_rows if row.get("utility_avg") is not None and row["label"] != "base_model_run"
     ]
     utility_auc = compute_auc(trajectory_rows)
 
@@ -155,9 +153,7 @@ def main() -> None:
     endpoint_row = trajectory_rows[-1] if trajectory_rows else None
     best_utility = max((row["utility_avg"] for row in trajectory_rows), default=None)
     best_final_gap = (
-        best_utility - endpoint_row["utility_avg"]
-        if endpoint_row is not None and best_utility is not None
-        else None
+        best_utility - endpoint_row["utility_avg"] if endpoint_row is not None and best_utility is not None else None
     )
 
     u_at_forget_tau = None

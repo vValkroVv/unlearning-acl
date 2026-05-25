@@ -100,7 +100,9 @@ def _load_optional_keyed_jsonish(path: str | None, key_field: str):
     return load_keyed_jsonish(path, key_field=key_field)
 
 
-def _add_candidate(candidates, seen, *, text, source, source_rank, raw_weight, relation_score, shared_fact_score, sidecar_row):
+def _add_candidate(
+    candidates, seen, *, text, source, source_rank, raw_weight, relation_score, shared_fact_score, sidecar_row
+):
     if text is None:
         return
     cleaned = str(text).strip()
@@ -377,9 +379,7 @@ def main():
             "alternate_count_min": min(alternate_count_hist) if alternate_count_hist else 0,
             "alternate_count_max": max(alternate_count_hist) if alternate_count_hist else 0,
             "alternate_count_mean": (
-                sum(alternate_count_hist) / float(len(alternate_count_hist))
-                if alternate_count_hist
-                else 0.0
+                sum(alternate_count_hist) / float(len(alternate_count_hist)) if alternate_count_hist else 0.0
             ),
             "pool_counts": pool_counter,
         }

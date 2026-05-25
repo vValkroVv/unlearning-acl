@@ -7,7 +7,7 @@ import random
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, Optional, Sequence
 
 import datasets
 import torch
@@ -66,11 +66,7 @@ def _normalize_optional_arg(value: Optional[str]):
 
 
 def _hf_token():
-    return (
-        os.environ.get("HF_TOKEN")
-        or os.environ.get("HUGGINGFACE_HUB_TOKEN")
-        or os.environ.get("HF_HUB_TOKEN")
-    )
+    return os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN") or os.environ.get("HF_HUB_TOKEN")
 
 
 def _dataset_suffix(path: str) -> Optional[str]:
@@ -250,14 +246,11 @@ def resolve_answer(row: Dict[str, Any], answer_key: str, answer_index: Optional[
     if isinstance(answer, list):
         if answer_index is None:
             raise ValueError(
-                f"Column `{answer_key}` contains a list; pass --answer-index to choose "
-                "the canonical answer."
+                f"Column `{answer_key}` contains a list; pass --answer-index to choose the canonical answer."
             )
         answer = answer[int(answer_index)]
     if not isinstance(answer, str):
-        raise TypeError(
-            f"Resolved answer for key `{answer_key}` must be a string, got {type(answer)}."
-        )
+        raise TypeError(f"Resolved answer for key `{answer_key}` must be a string, got {type(answer)}.")
     return answer
 
 
@@ -359,9 +352,7 @@ def bank_membership_score(candidate: Any, candidate_answers: Sequence[str] | Non
     if not candidate_answers:
         return 0.0
     candidate_norm = normalize_text(candidate)
-    bank_norm = {
-        normalize_text(value) for value in candidate_answers if str(value).strip()
-    }
+    bank_norm = {normalize_text(value) for value in candidate_answers if str(value).strip()}
     return 1.0 if candidate_norm in bank_norm else 0.0
 
 
@@ -433,9 +424,7 @@ def dedupe_candidate_metadata(
             continue
 
         existing_score = _coerce_optional_float(deduped_scores[existing_index])
-        replace = score is not None and (
-            existing_score is None or score > existing_score
-        )
+        replace = score is not None and (existing_score is None or score > existing_score)
         if replace:
             deduped_scores[existing_index] = score
             deduped_relation_scores[existing_index] = relation_score
@@ -447,10 +436,7 @@ def dedupe_candidate_metadata(
             deduped_scores[existing_index] = score
         if deduped_relation_scores[existing_index] is None and relation_score is not None:
             deduped_relation_scores[existing_index] = relation_score
-        if (
-            deduped_shared_fact_scores[existing_index] is None
-            and shared_fact_score is not None
-        ):
+        if deduped_shared_fact_scores[existing_index] is None and shared_fact_score is not None:
             deduped_shared_fact_scores[existing_index] = shared_fact_score
         if deduped_sources[existing_index] is None and candidate_source is not None:
             deduped_sources[existing_index] = candidate_source
@@ -515,13 +501,7 @@ def score_counterfactual_candidate(
     judge = float(external_score) if external_score is not None else 0.0
     relation = _coerce_optional_float(relation_score)
     shared_fact = _coerce_optional_float(shared_fact_score)
-    score = (
-        0.35 * type_match
-        + 0.25 * shortness
-        + 0.25 * bank_score
-        + 0.15 * judge
-        - 0.30 * overlap
-    )
+    score = 0.35 * type_match + 0.25 * shortness + 0.25 * bank_score + 0.15 * judge - 0.30 * overlap
     if relation is not None:
         score += 0.20 * relation
     if shared_fact is not None:
@@ -570,9 +550,7 @@ def counterfactual_invalid_reason(
         return "empty"
     if alternate_norm == answer_norm:
         return "exact_match"
-    if reject_gold_substring and answer_norm and (
-        answer_norm in alternate_norm or alternate_norm in answer_norm
-    ):
+    if reject_gold_substring and answer_norm and (answer_norm in alternate_norm or alternate_norm in answer_norm):
         return "gold_substring"
     if max_overlap_ratio is not None:
         overlap = lexical_overlap_ratio(alternate_clean, answer)
@@ -673,10 +651,7 @@ def pick_best_counterfactual_v3(
 
     if prompt_family == "rwku_shared_fact_safe":
         best_relation = _coerce_optional_float(best_meta.get("relation_score"))
-        if (
-            best_relation is not None
-            and best_relation < RWKU_RELATION_RESCUE_SELECTED_MAX
-        ):
+        if best_relation is not None and best_relation < RWKU_RELATION_RESCUE_SELECTED_MAX:
             rescue_candidates: list[tuple[int, float, str, Dict[str, Any]]] = []
             for idx, score, candidate_text, meta in scored_candidates:
                 relation = _coerce_optional_float(meta.get("relation_score"))
@@ -697,13 +672,9 @@ def pick_best_counterfactual_v3(
                 selected_source = best_meta.get("candidate_source")
                 best_meta["selected_source"] = selected_source
                 best_meta["selected_from_pool"] = selected_source or "candidate_pool"
-                best_meta["used_low_confidence_fallback"] = (
-                    best_meta["selected_from_pool"] == "low_confidence_fallback"
-                )
+                best_meta["used_low_confidence_fallback"] = best_meta["selected_from_pool"] == "low_confidence_fallback"
                 best_meta["rwku_relation_rescue_applied"] = True
-                best_meta["rwku_relation_rescue_threshold"] = (
-                    RWKU_RELATION_RESCUE_CANDIDATE_MIN
-                )
+                best_meta["rwku_relation_rescue_threshold"] = RWKU_RELATION_RESCUE_CANDIDATE_MIN
 
     return best_text, best_meta
 
@@ -915,9 +886,7 @@ def build_artifact_quality_report(
 
         invalid_reason = row.get("cf_invalid_reason")
         if invalid_reason not in (None, "", "null", "None"):
-            invalid_reason_counts[str(invalid_reason)] = (
-                invalid_reason_counts.get(str(invalid_reason), 0) + 1
-            )
+            invalid_reason_counts[str(invalid_reason)] = invalid_reason_counts.get(str(invalid_reason), 0) + 1
         else:
             valid_row_count += 1
 
@@ -948,15 +917,12 @@ def build_artifact_quality_report(
             or row.get("cf_same_relation") not in (None, "", "null", "None")
         ):
             relation_metadata_rows += 1
-        if (
-            _aligned_metadata_coverage(
-                row.get("external_alternate_shared_fact_scores"),
-                len(external_alternates),
-            )
-            or _aligned_metadata_coverage(
-                row.get("candidate_shared_fact_scores"),
-                len(candidate_answers),
-            )
+        if _aligned_metadata_coverage(
+            row.get("external_alternate_shared_fact_scores"),
+            len(external_alternates),
+        ) or _aligned_metadata_coverage(
+            row.get("candidate_shared_fact_scores"),
+            len(candidate_answers),
         ):
             shared_fact_metadata_rows += 1
 
@@ -964,12 +930,8 @@ def build_artifact_quality_report(
         if isinstance(pick_meta, dict):
             selected_source = str(pick_meta.get("selected_source") or "unknown")
             selected_pool = str(pick_meta.get("selected_from_pool") or "unknown")
-            repair_source_counts[selected_source] = (
-                repair_source_counts.get(selected_source, 0) + 1
-            )
-            selected_pool_counts[selected_pool] = (
-                selected_pool_counts.get(selected_pool, 0) + 1
-            )
+            repair_source_counts[selected_source] = repair_source_counts.get(selected_source, 0) + 1
+            selected_pool_counts[selected_pool] = selected_pool_counts.get(selected_pool, 0) + 1
             if bool(pick_meta.get("used_low_confidence_fallback", False)):
                 low_confidence_fallback_rows += 1
             rank_score = _coerce_optional_float(pick_meta.get("rank_score"))
@@ -992,9 +954,7 @@ def build_artifact_quality_report(
         "average_external_candidate_count": (
             float(total_external_candidates) / float(total_rows) if total_rows else 0.0
         ),
-        "average_total_candidate_count": (
-            float(total_candidates) / float(total_rows) if total_rows else 0.0
-        ),
+        "average_total_candidate_count": (float(total_candidates) / float(total_rows) if total_rows else 0.0),
         "duplicate_external_candidate_rows": duplicate_external_candidate_rows,
         "duplicate_candidate_bank_rows": duplicate_candidate_bank_rows,
         "duplicate_external_candidate_total": duplicate_external_candidate_total,
@@ -1114,11 +1074,7 @@ def load_model_bundle(
     if model_subfolder not in (None, "", "null", "None"):
         with open_dict(model_cfg):
             model_cfg.model_args.subfolder = model_subfolder
-    tokenizer_subfolder = (
-        model_subfolder
-        if tokenizer_subfolder in (None, "", "null", "None")
-        else tokenizer_subfolder
-    )
+    tokenizer_subfolder = model_subfolder if tokenizer_subfolder in (None, "", "null", "None") else tokenizer_subfolder
     if tokenizer_subfolder not in (None, "", "null", "None"):
         with open_dict(model_cfg):
             model_cfg.tokenizer_args.subfolder = tokenizer_subfolder

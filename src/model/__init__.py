@@ -20,11 +20,7 @@ def _register_model(model_class):
 
 def _hf_auth_kwargs(config_like=None):
     """Pass the active HF token through to gated model/tokenizer loads."""
-    token = (
-        os.getenv("HF_TOKEN")
-        or os.getenv("HUGGINGFACE_HUB_TOKEN")
-        or os.getenv("HF_HUB_TOKEN")
-    )
+    token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_TOKEN") or os.getenv("HF_HUB_TOKEN")
     if not token:
         return {}
 
@@ -88,9 +84,7 @@ def get_model(model_cfg: DictConfig):
         )
     except Exception as e:
         logger.warning(f"Model {model_path} requested with {model_cfg.model_args}")
-        raise ValueError(
-            f"Error {e} while fetching model using {model_handler}.from_pretrained()."
-        )
+        raise ValueError(f"Error {e} while fetching model using {model_handler}.from_pretrained().")
     tokenizer = get_tokenizer(tokenizer_args)
     return model, tokenizer
 

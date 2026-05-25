@@ -26,9 +26,7 @@ class RMU(GradDiff):
     def __init__(
         self,
         module_regex: str = r"model\.layers\.7",
-        trainable_params_regex: Sequence[str] | str = (
-            r"model\.layers\.(5|6|7)\.mlp\.down_proj\.weight",
-        ),
+        trainable_params_regex: Sequence[str] | str = (r"model\.layers\.(5|6|7)\.mlp\.down_proj\.weight",),
         steering_coeff: float = 20.0,
         *args,
         **kwargs,
@@ -100,17 +98,10 @@ class RMU(GradDiff):
         """
         model = self._unwrap_model(model)
         pattern = re.compile(module_regex)
-        matched_modules = {
-            name: module
-            for name, module in model.named_modules()
-            if pattern.fullmatch(name)
-        }
+        matched_modules = {name: module for name, module in model.named_modules() if pattern.fullmatch(name)}
 
         if len(matched_modules) > 1:
-            raise ValueError(
-                f"[RMU] More than one module matched {module_regex}: "
-                f"{list(matched_modules.keys())[:20]}"
-            )
+            raise ValueError(f"[RMU] More than one module matched {module_regex}: {list(matched_modules.keys())[:20]}")
         if not matched_modules:
             layer_like = [name for name, _ in model.named_modules() if "layers" in name]
             hint = ", ".join(layer_like[:20])
@@ -254,9 +245,7 @@ class RMU(GradDiff):
                     "rmu_forget_loss": float(forget_loss.detach().item()),
                     "rmu_retain_loss": float(retain_loss.detach().item()),
                     "rmu_total_loss": float(loss.detach().item()),
-                    "rmu_activation_norm": float(
-                        model_forget_activations.detach().norm(dim=-1).mean().item()
-                    ),
+                    "rmu_activation_norm": float(model_forget_activations.detach().norm(dim=-1).mean().item()),
                     "rmu_control_norm": float(control_vec.detach().norm(dim=-1).mean().item()),
                     "rmu_steering_coeff": float(self.steering_coeff),
                 }

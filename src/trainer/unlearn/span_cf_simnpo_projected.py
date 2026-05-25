@@ -33,9 +33,7 @@ class SpanCFSimNPOProjected(ManualGradMixin, SpanCFSimNPO):
             retain_norm_sq = retain_norm_sq + (retain_fp32 * retain_fp32).sum()
 
         eps = float(self.projection_eps)
-        cos = dot / (
-            torch.sqrt(neg_norm_sq + eps) * torch.sqrt(retain_norm_sq + eps) + eps
-        )
+        cos = dot / (torch.sqrt(neg_norm_sq + eps) * torch.sqrt(retain_norm_sq + eps) + eps)
         cos_value = float(cos.detach().item())
         has_retain_grad = float(retain_norm_sq.detach().item()) > 0.0
         conflict = bool(cos_value < self.projection_cos_threshold and has_retain_grad)
@@ -44,9 +42,7 @@ class SpanCFSimNPOProjected(ManualGradMixin, SpanCFSimNPO):
 
     def training_step(self, model: torch.nn.Module, inputs) -> torch.Tensor:
         if self.is_deepspeed_enabled:
-            raise NotImplementedError(
-                "[SpanCFSimNPOProjected] DeepSpeed is not supported in this integration."
-            )
+            raise NotImplementedError("[SpanCFSimNPOProjected] DeepSpeed is not supported in this integration.")
         if getattr(self.accelerator, "num_processes", 1) > 1:
             raise NotImplementedError(
                 "[SpanCFSimNPOProjected] Multi-process training is not supported in this integration."
@@ -115,17 +111,24 @@ class SpanCFSimNPOProjected(ManualGradMixin, SpanCFSimNPO):
                 grad = self.gamma * g_cf
             if g_neg is not None:
                 if conflict and proj_coeff is not None and g_retain is not None:
-                    g_neg = g_neg - proj_coeff.to(
-                        device=g_neg.device,
-                        dtype=g_neg.dtype,
-                    ) * g_retain
+                    g_neg = (
+                        g_neg
+                        - proj_coeff.to(
+                            device=g_neg.device,
+                            dtype=g_neg.dtype,
+                        )
+                        * g_retain
+                    )
                 neg_component = self.gamma * g_neg
                 grad = neg_component if grad is None else grad + neg_component
             if g_retain is not None:
-                retain_component = retain_weight.to(
-                    device=g_retain.device,
-                    dtype=g_retain.dtype,
-                ) * g_retain
+                retain_component = (
+                    retain_weight.to(
+                        device=g_retain.device,
+                        dtype=g_retain.dtype,
+                    )
+                    * g_retain
+                )
                 grad = retain_component if grad is None else grad + retain_component
             combined_grads.append(grad)
 

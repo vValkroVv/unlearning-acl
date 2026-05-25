@@ -24,9 +24,7 @@ class DataCollatorForSupervisedDataset(object):
 
     def _pad_tokens(self, input_ids, padding_value):
         if self.padding_side == "right":
-            input_ids = torch.nn.utils.rnn.pad_sequence(
-                input_ids, batch_first=True, padding_value=padding_value
-            )
+            input_ids = torch.nn.utils.rnn.pad_sequence(input_ids, batch_first=True, padding_value=padding_value)
         else:
             input_ids = torch.nn.utils.rnn.pad_sequence(
                 [torch.flip(i, dims=[0]) for i in input_ids],
@@ -50,9 +48,7 @@ class DataCollatorForSupervisedDataset(object):
         return_dct = {}
         if "input_ids" not in first_instance:
             for key in first_instance.keys():
-                key_instances = self.get_instances_from_key(
-                    instances=instances, key=key
-                )
+                key_instances = self.get_instances_from_key(instances=instances, key=key)
                 return_dct[key] = self(key_instances)
         else:
             input_ids = [instance["input_ids"] for instance in instances]
@@ -76,13 +72,7 @@ class DataCollatorForSupervisedDataset(object):
                 )
             if self.index:
                 if self.index in first_instance:
-                    return_dct.update(
-                        {
-                            self.index: torch.tensor(
-                                [example[self.index] for example in instances]
-                            )
-                        }
-                    )
+                    return_dct.update({self.index: torch.tensor([example[self.index] for example in instances])})
                 else:
                     raise Warning(f"{self.index} not found in dataset")
         return return_dct
@@ -93,9 +83,7 @@ class DataCollatorForMultiCF(DataCollatorForSupervisedDataset):
 
     def __init__(self, max_alternates=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.max_alternates = (
-            None if max_alternates in (None, "", "null", "None") else int(max_alternates)
-        )
+        self.max_alternates = None if max_alternates in (None, "", "null", "None") else int(max_alternates)
 
     def _empty_alternate_sample(self) -> Dict[str, torch.Tensor]:
         pad_token_id = self.tokenizer.pad_token_id
@@ -137,9 +125,7 @@ class DataCollatorForMultiCF(DataCollatorForSupervisedDataset):
 
             batch_size = len(instances)
             alternate_mask = torch.zeros((batch_size, max_alternates), dtype=torch.bool)
-            alternate_weights = torch.zeros(
-                (batch_size, max_alternates), dtype=torch.float32
-            )
+            alternate_weights = torch.zeros((batch_size, max_alternates), dtype=torch.float32)
             for row_idx, instance in enumerate(instances):
                 raw_mask = list(instance.get("alternate_mask", []))[:max_alternates]
                 raw_weights = list(instance.get("alternate_weights", []))[:max_alternates]

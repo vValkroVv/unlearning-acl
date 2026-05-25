@@ -60,9 +60,7 @@ class FLAT(GradDiff):
                 token_ids.append(eos_token_id)
 
         if not token_ids:
-            raise ValueError(
-                "FLAT template_text produced no tokens. Set trainer.method_args.template_text."
-            )
+            raise ValueError("FLAT template_text produced no tokens. Set trainer.method_args.template_text.")
 
         self._template_token_ids_cache = list(token_ids)
         return self._template_token_ids_cache
@@ -127,9 +125,7 @@ class FLAT(GradDiff):
 
             supervised_len = max(0, seq_len - prefix_len)
             if supervised_len > 0:
-                template_labels[row_idx, prefix_len:seq_len] = template_input_ids[
-                    row_idx, prefix_len:seq_len
-                ]
+                template_labels[row_idx, prefix_len:seq_len] = template_input_ids[row_idx, prefix_len:seq_len]
 
         return {
             "input_ids": template_input_ids,
@@ -176,9 +172,7 @@ class FLAT(GradDiff):
             loss_peer = -torch.mean(-1.0 - x_unlearn)
         elif div == "Jeffrey":
             loss_regular = -torch.mean(x_good)
-            loss_peer = -torch.mean(
-                x_unlearn + x_unlearn.pow(2) / 4.0 + x_unlearn.pow(3) / 16.0
-            )
+            loss_peer = -torch.mean(x_unlearn + x_unlearn.pow(2) / 4.0 + x_unlearn.pow(3) / 16.0)
         elif div == "Squared-Hellinger":
             exp_good = torch.exp(x_good)
             exp_unlearn = torch.exp(x_unlearn)
@@ -189,9 +183,7 @@ class FLAT(GradDiff):
             loss_peer = -torch.mean(x_unlearn.pow(2) / 4.0 + x_unlearn)
         elif div == "Neyman":
             loss_regular = -torch.mean(1.0 - torch.exp(x_good))
-            loss_peer = -torch.mean(
-                2.0 - 2.0 * torch.sqrt((1.0 - x_unlearn).clamp_min(self.eps))
-            )
+            loss_peer = -torch.mean(2.0 - 2.0 * torch.sqrt((1.0 - x_unlearn).clamp_min(self.eps)))
         elif div in {"Jenson-Shannon", "Jensen-Shannon"}:
             loss_regular = -torch.mean(-torch.log1p(torch.exp(-x_good))) - two_log
             loss_peer = -torch.mean(x_unlearn + torch.log1p(torch.exp(-x_unlearn))) + two_log

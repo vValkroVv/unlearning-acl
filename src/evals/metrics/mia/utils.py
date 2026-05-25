@@ -55,16 +55,10 @@ def mia_auc(attack_cls, model, data, collator, batch_size, **kwargs):
         "forget": attack_cls(data=data["forget"], **attack_args).attack(),
         "holdout": attack_cls(data=data["holdout"], **attack_args).attack(),
     }
-    forget_scores = [
-        elem["score"] for elem in output["forget"]["value_by_index"].values()
-    ]
-    holdout_scores = [
-        elem["score"] for elem in output["holdout"]["value_by_index"].values()
-    ]
+    forget_scores = [elem["score"] for elem in output["forget"]["value_by_index"].values()]
+    holdout_scores = [elem["score"] for elem in output["holdout"]["value_by_index"].values()]
     scores = np.array(forget_scores + holdout_scores)
-    labels = np.array(
-        [0] * len(forget_scores) + [1] * len(holdout_scores)
-    )  # see note above
+    labels = np.array([0] * len(forget_scores) + [1] * len(holdout_scores))  # see note above
     auc_value = roc_auc_score(labels, scores)
     output["auc"], output["agg_value"] = auc_value, auc_value
     return output

@@ -83,13 +83,9 @@ class SpanCFSAMNPO(SAMMixin, SpanCF):
 
     def training_step(self, model: torch.nn.Module, inputs) -> torch.Tensor:
         if self.is_deepspeed_enabled:
-            raise NotImplementedError(
-                "[SpanCFSAMNPO] DeepSpeed is not supported in this integration."
-            )
+            raise NotImplementedError("[SpanCFSAMNPO] DeepSpeed is not supported in this integration.")
         if getattr(self.accelerator, "num_processes", 1) > 1:
-            raise NotImplementedError(
-                "[SpanCFSAMNPO] Multi-process training is not supported in this integration."
-            )
+            raise NotImplementedError("[SpanCFSAMNPO] Multi-process training is not supported in this integration.")
 
         model.train()
         if hasattr(self.optimizer, "train") and callable(self.optimizer.train):
@@ -162,9 +158,7 @@ class SpanCFSAMNPO(SAMMixin, SpanCF):
 
         retain_weight = self._manual_retain_weight(inputs=inputs, components=components)
         retain_weight_value = (
-            float(retain_weight.detach().item())
-            if torch.is_tensor(retain_weight)
-            else float(retain_weight)
+            float(retain_weight.detach().item()) if torch.is_tensor(retain_weight) else float(retain_weight)
         )
 
         combined_grads = []

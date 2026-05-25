@@ -18,6 +18,7 @@ from omegaconf import OmegaConf
 from tqdm.auto import tqdm
 
 import sys
+
 repo_root = None
 for parent in Path(__file__).resolve().parents:
     if (parent / "configs").exists() and (parent / "src").exists():
@@ -118,9 +119,19 @@ def _build_examples(
 
 
 def _collate(batch: List[Example]) -> Dict[str, torch.Tensor]:
-    input_ids = [ex.input_ids if isinstance(ex.input_ids, torch.Tensor) else torch.tensor(ex.input_ids, dtype=torch.long) for ex in batch]
-    labels = [ex.labels if isinstance(ex.labels, torch.Tensor) else torch.tensor(ex.labels, dtype=torch.long) for ex in batch]
-    attention_mask = [ex.attention_mask if isinstance(ex.attention_mask, torch.Tensor) else torch.tensor(ex.attention_mask, dtype=torch.long) for ex in batch]
+    input_ids = [
+        ex.input_ids if isinstance(ex.input_ids, torch.Tensor) else torch.tensor(ex.input_ids, dtype=torch.long)
+        for ex in batch
+    ]
+    labels = [
+        ex.labels if isinstance(ex.labels, torch.Tensor) else torch.tensor(ex.labels, dtype=torch.long) for ex in batch
+    ]
+    attention_mask = [
+        ex.attention_mask
+        if isinstance(ex.attention_mask, torch.Tensor)
+        else torch.tensor(ex.attention_mask, dtype=torch.long)
+        for ex in batch
+    ]
     input_ids = pad_sequence(input_ids, batch_first=True, padding_value=0)
     attention_mask = pad_sequence(attention_mask, batch_first=True, padding_value=0)
     labels = pad_sequence(labels, batch_first=True, padding_value=-100)
@@ -253,7 +264,6 @@ def evaluate(
             if getattr(model_cfg.model_args, "low_cpu_mem_usage", None) is None:
                 model_cfg.model_args.low_cpu_mem_usage = True
     print(f"[forget_metrics] device_map={getattr(model_cfg.model_args, 'device_map', None)}")
-    tokenizer_args = model_cfg.tokenizer_args
     template_args = model_cfg.template_args
 
     base_cfg = OmegaConf.merge(model_cfg, {})

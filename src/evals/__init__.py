@@ -17,9 +17,7 @@ def get_evaluator(name: str, eval_cfg: DictConfig, **kwargs):
     assert evaluator_handler_name is not None, ValueError(f"{name} handler not set")
     eval_handler = EVALUATOR_REGISTRY.get(evaluator_handler_name)
     if eval_handler is None:
-        raise NotImplementedError(
-            f"{evaluator_handler_name} not implemented or not registered"
-        )
+        raise NotImplementedError(f"{evaluator_handler_name} not implemented or not registered")
     return eval_handler(eval_cfg, **kwargs)
 
 

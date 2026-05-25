@@ -8,9 +8,7 @@ MODEL_INPUT_KEYS = {"input_ids", "attention_mask", "labels"}
 
 
 def filter_model_inputs(inputs):
-    model_inputs = {
-        key: value for key, value in inputs.items() if key in MODEL_INPUT_KEYS
-    }
+    model_inputs = {key: value for key, value in inputs.items() if key in MODEL_INPUT_KEYS}
     if "labels" not in model_inputs:
         raise KeyError("CE-U requires `labels` in the forget batch.")
     return model_inputs
@@ -81,16 +79,12 @@ def compute_batch_ceu(model, inputs, ignore_first_n_answer_tokens=1):
 
     # Implement the trick to ignore the first n answer tokens mentioned in the footnote in the Training Settings section of arXiv:2503.01224
     valid_mask = labels != -100
-    update_mask = (
-        valid_mask.cumsum(dim=-1) <= ignore_first_n_answer_tokens
-    ) & valid_mask
+    update_mask = (valid_mask.cumsum(dim=-1) <= ignore_first_n_answer_tokens) & valid_mask
     labels_without_first_n_answer_tokens = labels.masked_fill(update_mask, -100)
 
     shifted_labels = labels_without_first_n_answer_tokens[..., 1:].contiguous()
     shifted_logits = logits[..., :-1, :].contiguous()
-    loss = cross_entropy_unlearning_loss(
-        shifted_logits, shifted_labels, ignore_index=-100
-    )
+    loss = cross_entropy_unlearning_loss(shifted_logits, shifted_labels, ignore_index=-100)
     return loss, outputs
 
 

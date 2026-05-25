@@ -53,9 +53,7 @@ class _SpanCFLocalRetainMixin:
         margin = 1.0 + self.boundary_margin_weight * boundary_score.clamp_min(0.0)
         payload["per_sample_cf_loss"] = payload["per_sample_cf_loss"] * margin
         payload["per_sample_neg_loss"] = payload["per_sample_neg_loss"] * margin
-        payload["per_sample_forget_loss"] = (
-            payload["per_sample_cf_loss"] + payload["per_sample_neg_loss"]
-        )
+        payload["per_sample_forget_loss"] = payload["per_sample_cf_loss"] + payload["per_sample_neg_loss"]
         payload["cf_loss"] = payload["per_sample_cf_loss"].mean()
         payload["neg_loss"] = payload["per_sample_neg_loss"].mean()
         payload["forget_loss"] = payload["per_sample_forget_loss"].mean()
@@ -85,22 +83,14 @@ class _SpanCFLocalRetainMixin:
             batch_size=batch_size,
         )
         if boundary_score is not None:
-            payload[f"{self.log_prefix}_score_mean"] = float(
-                boundary_score.mean().detach().item()
-            )
+            payload[f"{self.log_prefix}_score_mean"] = float(boundary_score.mean().detach().item())
             payload[f"{self.log_prefix}_margin_factor_mean"] = float(
-                (
-                    1.0 + self.boundary_margin_weight * boundary_score.clamp_min(0.0)
-                ).mean().detach().item()
+                (1.0 + self.boundary_margin_weight * boundary_score.clamp_min(0.0)).mean().detach().item()
             )
         if relation is not None:
-            payload[f"{self.log_prefix}_relation_mean"] = float(
-                relation.mean().detach().item()
-            )
+            payload[f"{self.log_prefix}_relation_mean"] = float(relation.mean().detach().item())
         if overlap is not None:
-            payload[f"{self.log_prefix}_overlap_mean"] = float(
-                overlap.mean().detach().item()
-            )
+            payload[f"{self.log_prefix}_overlap_mean"] = float(overlap.mean().detach().item())
         return payload
 
     def compute_loss(self, model, inputs, return_outputs=False):
@@ -123,9 +113,7 @@ class _SpanCFLocalRetainMixin:
             retain_loss=retain_loss,
             loss=loss,
             extra_logs={
-                f"{self.log_prefix}_local_retain_loss": float(
-                    local_retain_loss.detach().item()
-                ),
+                f"{self.log_prefix}_local_retain_loss": float(local_retain_loss.detach().item()),
                 f"{self.log_prefix}_local_retain_weight": self.local_retain_weight,
             },
         )

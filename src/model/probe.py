@@ -33,9 +33,7 @@ class ProbedLlamaForCausalLM(LlamaForCausalLM):
             pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
         )
         config.tie_word_embeddings = False
-        model: LlamaForCausalLM = super().from_pretrained(
-            pretrained_model_name_or_path, config=config, **unused_kwargs
-        )
+        model: LlamaForCausalLM = super().from_pretrained(pretrained_model_name_or_path, config=config, **unused_kwargs)
 
         # Limit number of transformer layers
         n_layers = min(n_layers, model.config.num_hidden_layers)
@@ -46,9 +44,7 @@ class ProbedLlamaForCausalLM(LlamaForCausalLM):
         ref_params = list(model.model.layers[-1].parameters())[0]
         device = ref_params.device
         if head_pretrained_model_name_or_path is not None:
-            logger.info(
-                f"Initialising lm_head from {head_pretrained_model_name_or_path}"
-            )
+            logger.info(f"Initialising lm_head from {head_pretrained_model_name_or_path}")
             head_model: LlamaForCausalLM = AutoModelForCausalLM.from_pretrained(
                 head_pretrained_model_name_or_path, config=config, **unused_kwargs
             )
@@ -65,7 +61,5 @@ class ProbedLlamaForCausalLM(LlamaForCausalLM):
         # Set trainable params
         for name, p in model.named_parameters():
             p.requires_grad = not freeze_base_model or name.startswith("lm_head")
-        logger.info(
-            f"Initialised a ProbedLlamaForCausalLM model with {n_layers} layers"
-        )
+        logger.info(f"Initialised a ProbedLlamaForCausalLM model with {n_layers} layers")
         return model

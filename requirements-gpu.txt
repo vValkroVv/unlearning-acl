@@ -1,0 +1,9 @@
+# GPU/runtime pins mirrored from setup_vast_env.sh.
+# Install CUDA torch with:
+#   pip install --force-reinstall torch==2.4.1 --index-url https://download.pytorch.org/whl/cu124
+# Install flash-attn after torch with:
+#   MAX_JOBS=8 pip install --no-build-isolation flash-attn==2.6.3
+-r requirements.txt
+bitsandbytes==0.44.1
+tensorboard==2.20.0
+wandb==0.21.0

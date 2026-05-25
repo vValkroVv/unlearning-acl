@@ -108,9 +108,7 @@ def main():
                     )
                 )
             scored.sort(key=lambda item: item[0], reverse=True)
-            selected_templates = [
-                template for _, template in scored[: int(args.fallback_top_k)] if template
-            ]
+            selected_templates = [template for _, template in scored[: int(args.fallback_top_k)] if template]
             retain_indices = []
             for selected_template in selected_templates:
                 retain_indices.extend(retain_by_template.get(selected_template, []))
@@ -138,11 +136,7 @@ def main():
             "fallback_matches": fallback_matches,
             "candidate_size_min": min(candidate_sizes) if candidate_sizes else 0,
             "candidate_size_max": max(candidate_sizes) if candidate_sizes else 0,
-            "candidate_size_mean": (
-                sum(candidate_sizes) / float(len(candidate_sizes))
-                if candidate_sizes
-                else 0.0
-            ),
+            "candidate_size_mean": (sum(candidate_sizes) / float(len(candidate_sizes)) if candidate_sizes else 0.0),
         }
         with open(args.sidecar_path, "w", encoding="utf-8") as handle:
             json.dump(sidecar, handle, indent=2, ensure_ascii=True)

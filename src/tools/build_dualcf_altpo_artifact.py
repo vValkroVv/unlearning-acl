@@ -61,9 +61,7 @@ def parse_int(value: Any, *, path: Path, line_no: int, key: str) -> int:
     try:
         return int(value)
     except (TypeError, ValueError) as exc:
-        raise ValueError(
-            f"{path}:{line_no}: key {key!r} must be integer-like, got {value!r}"
-        ) from exc
+        raise ValueError(f"{path}:{line_no}: key {key!r} must be integer-like, got {value!r}") from exc
 
 
 def clean_text(value: Any) -> str:
@@ -251,9 +249,7 @@ def update_range(ranges: dict[str, list[float]], key: str, value: Any) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Replace DualCF alternates with matched AltPO alternates."
-    )
+    parser = argparse.ArgumentParser(description="Replace DualCF alternates with matched AltPO alternates.")
     parser.add_argument("--dualcf-path", required=True, type=Path)
     parser.add_argument("--altpo-path", required=True, type=Path)
     parser.add_argument("--output-path", required=True, type=Path)
@@ -373,11 +369,7 @@ def main() -> int:
         "selected_repeat_counts": dict(sorted(repeat_counts.items())),
         "fallback_selected_count": fallback_count,
         "invalid_candidate_counts": dict(sorted(invalid_counts.items())),
-        "score_ranges": {
-            key: tuple(value)
-            for key, value in ranges.items()
-            if value[0] != float("inf")
-        },
+        "score_ranges": {key: tuple(value) for key, value in ranges.items() if value[0] != float("inf")},
     }
     summary_path = args.output_path.with_suffix(args.output_path.suffix + ".summary.json")
     summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n")

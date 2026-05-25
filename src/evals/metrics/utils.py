@@ -22,13 +22,7 @@ def dict_transpose(evals):
     all_iidxs = list(evals.keys())
     all_idxs = list(evals[all_iidxs[0]].keys())
     all_stat_names = list(evals[all_iidxs[0]][all_idxs[0]].keys())
-    evals = {
-        idx: {
-            stat: [evals[iidx][idx][stat] for iidx in all_iidxs]
-            for stat in all_stat_names
-        }
-        for idx in all_idxs
-    }
+    evals = {idx: {stat: [evals[iidx][idx][stat] for iidx in all_iidxs] for stat in all_stat_names} for idx in all_idxs}
     return evals
 
 
@@ -52,20 +46,14 @@ def run_batchwise_evals(model, dataloader, batch_eval_fn, batch_eval_fn_args, ev
             batch = {"0": batch}
         # Assume batch like {"0": {"input_ids": [[]]..., "index": [453, 454..]},
         #                    "1": {"input_ids": [[]]..., "index": [453, 454..]}..}
-        assert isinstance(next(iter(batch.values())), dict) and "input_ids" in next(
-            iter(batch.values())
-        )
+        assert isinstance(next(iter(batch.values())), dict) and "input_ids" in next(iter(batch.values()))
         for intra_item_idx, mini_batch in batch.items():
-            data_indices = (
-                mini_batch.pop("index").cpu().numpy().tolist()
-            )  # data item indices
-            batch_evals = batch_eval_fn(
-                model=model, batch=mini_batch, **batch_eval_fn_args
-            )
+            data_indices = mini_batch.pop("index").cpu().numpy().tolist()  # data item indices
+            batch_evals = batch_eval_fn(model=model, batch=mini_batch, **batch_eval_fn_args)
             indexwise_batch_evals = dict(zip(data_indices, batch_evals))
-            assert not (
-                evals[intra_item_idx].keys() & indexwise_batch_evals.keys()
-            ), "Data indices repeated while iterating dataloader"
+            assert not (evals[intra_item_idx].keys() & indexwise_batch_evals.keys()), (
+                "Data indices repeated while iterating dataloader"
+            )
             evals[intra_item_idx] |= indexwise_batch_evals
     # evals looks like {iidx0: {idx453: {prob: 0.1, loss: 1}},
     #                   iidx1: {idx453: {prob: 0.2, loss: 2}}}
@@ -97,10 +85,7 @@ def evaluate_probability(model, batch):
 
     avg_losses = avg_losses.cpu().numpy().tolist()
     normalized_probs = normalized_probs.cpu().numpy().tolist()
-    return [
-        {"prob": prob, "avg_loss": avg_loss}
-        for prob, avg_loss in zip(normalized_probs, avg_losses)
-    ]
+    return [{"prob": prob, "avg_loss": avg_loss} for prob, avg_loss in zip(normalized_probs, avg_losses)]
 
 
 def tokenwise_logprobs(model, batch, grad=False, return_labels=False):
@@ -126,9 +111,7 @@ def tokenwise_logprobs(model, batch, grad=False, return_labels=False):
     for i in range(bsz):
         labels = batch["labels"][i]
         # only focus on tokens which have loss on them (i.e. used in labels)
-        actual_indices = (labels != IGNORE_INDEX).nonzero(as_tuple=True)[0][
-            :-1
-        ]  # -1 to ignore eos prediction
+        actual_indices = (labels != IGNORE_INDEX).nonzero(as_tuple=True)[0][:-1]  # -1 to ignore eos prediction
         num_actual_tokens = actual_indices.numel()
         if num_actual_tokens == 0:
             labels_batch.append(torch.tensor([], device=labels.device))
@@ -160,9 +143,7 @@ def tokenwise_vocab_logprobs(model, batch, grad=False, return_labels=False):
 
     logits = output.logits
     bsz, seq_len, V = logits.shape
-    log_probs = torch.nn.functional.log_softmax(logits, dim=-1)[
-        :, :-1, :
-    ]  # Don't predict for last token
+    log_probs = torch.nn.functional.log_softmax(logits, dim=-1)[:, :-1, :]  # Don't predict for last token
 
     # Process each sequence in batch separately
     log_probs_batch = []
@@ -170,9 +151,7 @@ def tokenwise_vocab_logprobs(model, batch, grad=False, return_labels=False):
     for i in range(bsz):
         labels = batch["labels"][i]
         # Only include positions that have labels
-        actual_indices = (labels != IGNORE_INDEX).nonzero(as_tuple=True)[0][
-            :-1
-        ]  # -1 to ignore eos prediction
+        actual_indices = (labels != IGNORE_INDEX).nonzero(as_tuple=True)[0][:-1]  # -1 to ignore eos prediction
         if len(actual_indices) == 0:
             labels_batch.append(torch.tensor([], device=labels.device))
             log_probs_batch.append(torch.zeros(0, V, device=labels.device))
@@ -239,9 +218,7 @@ def stop_sequences_criteria(
     return StoppingCriteriaList(
         [
             *[
-                MultiTokenEOSCriteria(
-                    sequence, tokenizer, initial_decoder_input_length, batch_size
-                )
+                MultiTokenEOSCriteria(sequence, tokenizer, initial_decoder_input_length, batch_size)
                 for sequence in stop_sequences
             ],
         ]
@@ -268,16 +245,11 @@ def eval_text_similarity(model, tokenizer, batch, generation_args):
     batch = {k: v.to(model.device) for k, v in batch.items()}
     input_ids = batch["input_ids"]
     labels = batch["labels"]
-    input_texts = tokenizer.batch_decode(
-        input_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True
-    )
+    input_texts = tokenizer.batch_decode(input_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
     tokens = [label[label != IGNORE_INDEX] for label in labels]
-    full_texts = tokenizer.batch_decode(
-        tokens, skip_special_tokens=True, clean_up_tokenization_spaces=True
-    )
+    full_texts = tokenizer.batch_decode(tokens, skip_special_tokens=True, clean_up_tokenization_spaces=True)
     ground_truths = [
-        full_text.replace(input_text, "").strip()
-        for input_text, full_text in zip(input_texts, full_texts)
+        full_text.replace(input_text, "").strip() for input_text, full_text in zip(input_texts, full_texts)
     ]
 
     attention_mask = batch["attention_mask"]
@@ -287,9 +259,7 @@ def eval_text_similarity(model, tokenizer, batch, generation_args):
     stopwords = generation_args.pop("stopwords", None)
     if stopwords is not None:
         assert isinstance(stopwords, list)
-        sc = stop_sequences_criteria(
-            tokenizer, stopwords, input_ids.shape[1], input_ids.shape[0]
-        )
+        sc = stop_sequences_criteria(tokenizer, stopwords, input_ids.shape[1], input_ids.shape[0])
         generation_args["stopping_criteria"] = sc
     output = model.generate(
         input_ids,
@@ -323,9 +293,7 @@ def eval_text_similarity(model, tokenizer, batch, generation_args):
             "ground_truth": ground_truth,
             "generation": gen_text,
         }
-        for rouge_evals, input_text, ground_truth, gen_text in zip(
-            scores, input_texts, ground_truths, gen_texts
-        )
+        for rouge_evals, input_text, ground_truth, gen_text in zip(scores, input_texts, ground_truths, gen_texts)
     ]
     return scores
 
@@ -334,7 +302,5 @@ def extract_target_texts_from_processed_data(tokenizer, batch):
     """Extract and detokenize text from activated positions in the batch."""
     labels = batch["labels"]
     labels = [elem[elem != -100] for elem in labels]
-    texts = [
-        tokenizer.decode(elem.tolist(), skip_special_tokens=True) for elem in labels
-    ]
+    texts = [tokenizer.decode(elem.tolist(), skip_special_tokens=True) for elem in labels]
     return texts

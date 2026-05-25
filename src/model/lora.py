@@ -13,11 +13,7 @@ logger = logging.getLogger(__name__)
 
 def _hf_auth_kwargs(config_like=None):
     """Pass the active HF token through to gated model/tokenizer loads."""
-    token = (
-        os.getenv("HF_TOKEN")
-        or os.getenv("HUGGINGFACE_HUB_TOKEN")
-        or os.getenv("HF_HUB_TOKEN")
-    )
+    token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_TOKEN") or os.getenv("HF_HUB_TOKEN")
     if not token:
         return {}
 
@@ -135,10 +131,7 @@ class LoRAModelForCausalLM:
                 if isinstance(obj._content, list):
                     return [convert_omegaconf_to_python(item) for item in obj._content]
                 elif isinstance(obj._content, dict):
-                    return {
-                        k: convert_omegaconf_to_python(v)
-                        for k, v in obj._content.items()
-                    }
+                    return {k: convert_omegaconf_to_python(v) for k, v in obj._content.items()}
                 else:
                     return obj._content
             else:
@@ -226,14 +219,10 @@ def get_lora_model(model_cfg: DictConfig):
         device_map = model_args.pop("device_map", None)
 
     adapter_config_path = (
-        os.path.join(model_path, "adapter_config.json")
-        if model_path and os.path.isdir(model_path)
-        else None
+        os.path.join(model_path, "adapter_config.json") if model_path and os.path.isdir(model_path) else None
     )
     adapter_weights_path = (
-        os.path.join(model_path, "adapter_model.safetensors")
-        if model_path and os.path.isdir(model_path)
-        else None
+        os.path.join(model_path, "adapter_model.safetensors") if model_path and os.path.isdir(model_path) else None
     )
     is_adapter = bool(adapter_config_path and os.path.exists(adapter_config_path))
     has_adapter_weights = bool(adapter_weights_path and os.path.exists(adapter_weights_path))
@@ -249,12 +238,8 @@ def get_lora_model(model_cfg: DictConfig):
         if is_adapter:
             adapter_path = model_path
             if base_model_path is None:
-                raise ValueError(
-                    "When loading a saved LoRA adapter pass `model.model_args.base_model_name_or_path`."
-                )
-            logger.info(
-                f"Loading base model {base_model_path} with adapter from {adapter_path}"
-            )
+                raise ValueError("When loading a saved LoRA adapter pass `model.model_args.base_model_name_or_path`.")
+            logger.info(f"Loading base model {base_model_path} with adapter from {adapter_path}")
             base_model = AutoModelForCausalLM.from_pretrained(
                 pretrained_model_name_or_path=base_model_path,
                 torch_dtype=torch_dtype,
@@ -304,9 +289,7 @@ def get_lora_model(model_cfg: DictConfig):
             )
     except Exception as e:
         logger.warning(f"Model {model_path} requested with {model_cfg.model_args}")
-        raise ValueError(
-            f"Error {e} while fetching LoRA model using LoRAModelForCausalLM.from_pretrained()."
-        )
+        raise ValueError(f"Error {e} while fetching LoRA model using LoRAModelForCausalLM.from_pretrained().")
 
     if hasattr(model, "print_trainable_parameters") and not is_adapter:
         model.print_trainable_parameters()

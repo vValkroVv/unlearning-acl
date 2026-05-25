@@ -16,19 +16,13 @@ class LMEvalEvaluator(Evaluator):
     def __init__(self, eval_cfg, **kwargs):
         self.name = "LMEval"
         self.eval_cfg = eval_cfg
-        self.tasks = OmegaConf.to_container(
-            self.eval_cfg.tasks, resolve=True, throw_on_missing=True
-        )
+        self.tasks = OmegaConf.to_container(self.eval_cfg.tasks, resolve=True, throw_on_missing=True)
         self.simple_evaluate_args = dict(kwargs.get("simple_evaluate_args", {}))
-        self.include_subtask_metrics = bool(
-            self.eval_cfg.get("include_subtask_metrics", False)
-        )
+        self.include_subtask_metrics = bool(self.eval_cfg.get("include_subtask_metrics", False))
         include_path = self.eval_cfg.get("include_path", None)
         if include_path is not None and OmegaConf.is_config(include_path):
             include_path = OmegaConf.to_container(include_path, resolve=True)
-        self.task_manager = (
-            TaskManager(include_path=include_path) if include_path else TaskManager()
-        )
+        self.task_manager = TaskManager(include_path=include_path) if include_path else TaskManager()
 
     @contextmanager
     def _skip_peft_tie_weights(self, model):
@@ -143,9 +137,7 @@ class LMEvalEvaluator(Evaluator):
 
         logger.info(f"***** Running {self.name} evaluation suite *****")
         logger.info(f"Fine-grained evaluations will be saved to: {logs_file_path}")
-        logger.info(
-            f"Aggregated evaluations will be summarised in: {summary_file_path}"
-        )
+        logger.info(f"Aggregated evaluations will be summarised in: {summary_file_path}")
 
         for task in self.tasks:
             task_name = self.get_task_name(task)

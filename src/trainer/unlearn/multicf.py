@@ -25,13 +25,9 @@ class MultiCF(DualCF):
         if self.max_alternates_used <= 0:
             raise ValueError("MultiCF requires max_alternates_used > 0.")
         if self.alt_agg_mode not in {"weighted_mean", "mean", "top1"}:
-            raise ValueError(
-                "MultiCF alt_agg_mode must be one of weighted_mean, mean, or top1."
-            )
+            raise ValueError("MultiCF alt_agg_mode must be one of weighted_mean, mean, or top1.")
         if self.alt_weight_mode not in {"rerank", "uniform"}:
-            raise ValueError(
-                "MultiCF alt_weight_mode must be one of rerank or uniform."
-            )
+            raise ValueError("MultiCF alt_weight_mode must be one of rerank or uniform.")
         if self.alt_set_temperature <= 0.0:
             raise ValueError("MultiCF requires alt_set_temperature > 0.")
 
@@ -68,8 +64,7 @@ class MultiCF(DualCF):
     def _compute_cf_term(self, model, forget_inputs):
         if "alternates" not in forget_inputs:
             raise KeyError(
-                "MultiCF expected `inputs['forget']['alternates']` from "
-                "QAMultiCFDataset/DataCollatorForMultiCF."
+                "MultiCF expected `inputs['forget']['alternates']` from QAMultiCFDataset/DataCollatorForMultiCF."
             )
 
         all_alternates = list(forget_inputs["alternates"])
@@ -99,9 +94,7 @@ class MultiCF(DualCF):
 
         entropy = -(weights.clamp_min(1e-8).log() * weights).sum(dim=1)
         payload = {
-            f"{self.log_prefix}_num_alts_mean": float(
-                alt_mask.float().sum(dim=1).mean().detach().item()
-            ),
+            f"{self.log_prefix}_num_alts_mean": float(alt_mask.float().sum(dim=1).mean().detach().item()),
             f"{self.log_prefix}_weight_entropy": float(entropy.mean().detach().item()),
             f"{self.log_prefix}_top1_share": float(weights[:, 0].mean().detach().item()),
         }

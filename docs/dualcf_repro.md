@@ -23,6 +23,11 @@ bash setup_vast_env.sh
 source .venv/bin/activate
 ```
 
+For manual installation, `requirements.txt` contains the clean public core
+dependencies and `requirements-gpu.txt` lists the GPU/runtime pins used by
+`setup_vast_env.sh`. Install CUDA `torch` and `flash-attn` according to your
+machine before running full campaigns.
+
 Use placeholders for local data and model mirrors:
 
 ```bash

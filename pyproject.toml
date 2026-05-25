@@ -1,0 +1,7 @@
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# Many runnable scripts add repo-local `src/` to `sys.path` before importing
+# package modules. Keep that portable bootstrap pattern lint-clean.
+ignore = ["E402"]

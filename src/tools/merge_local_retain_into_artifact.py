@@ -61,9 +61,7 @@ def main():
         key = str(row[args.mapping_key])
         boundary_row = boundary_by_key.get(key)
         if boundary_row is None:
-            raise KeyError(
-                f"Missing boundary artifact row for `{args.mapping_key}`={key}."
-            )
+            raise KeyError(f"Missing boundary artifact row for `{args.mapping_key}`={key}.")
 
         updated = dict(row)
         for field in (
@@ -72,9 +70,7 @@ def main():
             "local_retain_index",
         ):
             if field not in boundary_row:
-                raise KeyError(
-                    f"boundary artifact row `{args.mapping_key}`={key} is missing `{field}`."
-                )
+                raise KeyError(f"boundary artifact row `{args.mapping_key}`={key} is missing `{field}`.")
             updated[field] = boundary_row[field]
 
         if args.copy_boundary_score:

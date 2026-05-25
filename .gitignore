@@ -190,8 +190,7 @@ cython_debug/
 
 .vscode/
 
-# Local agent notes and local analysis scripts/notebooks (ignore)
-AGENTS.md
+# Local analysis scripts/notebooks (ignore)
 metrics-ep5-all-v2/
 metrics-new/
 experiments_visualization.ipynb

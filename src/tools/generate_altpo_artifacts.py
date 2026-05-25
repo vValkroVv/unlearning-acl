@@ -27,14 +27,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
 
 # Llama-2 AltPO prompt.
 INST_QAS_INSTR = (
-    "Now write another version of the answer with some alternate plausible facts "
-    "that change answer details.\n"
+    "Now write another version of the answer with some alternate plausible facts that change answer details.\n"
 )
 INST_QAS_TEMPLATE_QUERY = (
-    "[INST] Question: {question}\nAnswer:{answer}\n"
-    + INST_QAS_INSTR
-    + " [/INST]"
-    + " Alternate Answer :"
+    "[INST] Question: {question}\nAnswer:{answer}\n" + INST_QAS_INSTR + " [/INST]" + " Alternate Answer :"
 )
 
 # Llama-3 AltPO prompt. Use this for Llama-3.1-8B-Instruct too.
@@ -51,9 +47,7 @@ INST_QAS_LLAMA3_TEMPLATE_QUERY = (
     "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
     "You are a helpful AI assistant<|eot_id|>\n"
     "<|start_header_id|>user<|end_header_id|>\n\n"
-    "Question: {question}\nAnswer: {answer}\n"
-    + INST_QAS_LLAMA3_INSTR
-    + "<|eot_id|>\n"
+    "Question: {question}\nAnswer: {answer}\n" + INST_QAS_LLAMA3_INSTR + "<|eot_id|>\n"
     "<|start_header_id|>assistant<|end_header_id|> \n\n"
     "Alternate Answer :"
 )
@@ -149,10 +143,7 @@ def stop_sequences_criteria(
     batch_size: int,
 ) -> transformers.StoppingCriteriaList:
     return transformers.StoppingCriteriaList(
-        [
-            MultiTokenEOSCriteria(seq, tokenizer, initial_decoder_input_length, batch_size)
-            for seq in stop_sequences
-        ]
+        [MultiTokenEOSCriteria(seq, tokenizer, initial_decoder_input_length, batch_size) for seq in stop_sequences]
     )
 
 
@@ -320,9 +311,7 @@ def main() -> None:
         "do_sample": args.do_sample,
         "temperature": args.temperature if args.do_sample else None,
     }
-    generation_kwargs = {
-        key: value for key, value in generation_kwargs.items() if value is not None
-    }
+    generation_kwargs = {key: value for key, value in generation_kwargs.items() if value is not None}
 
     rows_written = 0
     data_loader = DataLoader(
@@ -345,9 +334,7 @@ def main() -> None:
             batch_size = input_ids.shape[0]
 
             for repeat in range(args.repeats):
-                stopping_criteria = stop_sequences_criteria(
-                    tokenizer, args.until, input_ids.shape[1], batch_size
-                )
+                stopping_criteria = stop_sequences_criteria(tokenizer, args.until, input_ids.shape[1], batch_size)
                 with torch.no_grad():
                     output = model.generate(
                         input_ids=input_ids.to(args.device),
@@ -362,16 +349,12 @@ def main() -> None:
                 out_toks_list = output.tolist()
                 for batch_index, continuation_tokens in enumerate(out_toks_list):
                     continuation_tokens = continuation_tokens[input_ids.shape[1] :]
-                    sub_answer = clean_stop_terms(
-                        tok_decode(continuation_tokens, tokenizer), args.until
-                    )
+                    sub_answer = clean_stop_terms(tok_decode(continuation_tokens, tokenizer), args.until)
 
                     question = str(batch[args.question_key][batch_index])
                     answer = str(batch[args.answer_key][batch_index])
                     source_row_id = int(batch["__source_row_id"][batch_index])
-                    source_index_raw = batch.get(args.index_key, [None] * batch_size)[
-                        batch_index
-                    ]
+                    source_index_raw = batch.get(args.index_key, [None] * batch_size)[batch_index]
                     try:
                         source_index = int(source_index_raw)
                     except Exception:
@@ -383,8 +366,7 @@ def main() -> None:
                         row = {
                             key: batch[key][batch_index]
                             for key in batch.keys()
-                            if not key.startswith("__")
-                            and key not in {args.question_key, args.answer_key}
+                            if not key.startswith("__") and key not in {args.question_key, args.answer_key}
                         }
                     else:
                         row = {}
@@ -402,9 +384,7 @@ def main() -> None:
                             "altpo_seed": args.seed,
                             "altpo_prompt_template": args.prompt_template,
                             "altpo_generation_model": args.model_path,
-                            "altpo_generation_model_subfolder": str_or_none(
-                                args.model_subfolder
-                            ),
+                            "altpo_generation_model_subfolder": str_or_none(args.model_subfolder),
                         }
                     )
 

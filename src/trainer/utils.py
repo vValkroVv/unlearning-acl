@@ -40,9 +40,7 @@ def compute_kl_divergence(model, target_model, inputs):
     current_probs = current_probs.view(-1, outputs.logits.shape[-1])
 
     # minimum KL divergence
-    return nn.functional.kl_div(
-        current_probs, ref_probs, reduction="batchmean", log_target=True
-    ), outputs
+    return nn.functional.kl_div(current_probs, ref_probs, reduction="batchmean", log_target=True), outputs
 
 
 def compute_batch_nll(model, inputs):
@@ -125,13 +123,9 @@ def compute_npo_per_sample(
     beta: float = 1.0,
     normalize_by_tokens: bool = True,
 ):
-    lose_loss, lose_outputs = compute_nll_per_sample(
-        model, lose_inputs, normalize_by_tokens=normalize_by_tokens
-    )
+    lose_loss, lose_outputs = compute_nll_per_sample(model, lose_inputs, normalize_by_tokens=normalize_by_tokens)
     with torch.no_grad():
-        lose_ref_loss, _ = compute_nll_per_sample(
-            ref_model, lose_inputs, normalize_by_tokens=normalize_by_tokens
-        )
+        lose_ref_loss, _ = compute_nll_per_sample(ref_model, lose_inputs, normalize_by_tokens=normalize_by_tokens)
 
     lose_log_ratio = -(lose_loss - lose_ref_loss)
     loss = -2.0 / beta * F.logsigmoid(beta * (-lose_log_ratio))
@@ -218,9 +212,7 @@ def compute_undial_loss(model, ref_model, inputs, beta):
         if ref_model is None:
             disable_adapter = getattr(model, "disable_adapter", None)
             if disable_adapter is None:
-                raise ValueError(
-                    "Reference model is required for UNDIAL when adapters cannot be disabled."
-                )
+                raise ValueError("Reference model is required for UNDIAL when adapters cannot be disabled.")
             with disable_adapter():
                 teacher_logits = model(**inputs).logits
         else:
@@ -229,9 +221,7 @@ def compute_undial_loss(model, ref_model, inputs, beta):
 
     # Identify valid positions (ignore labels marked as -100)
     valid_mask = shift_labels != -100
-    beta_tensor = torch.tensor(
-        beta, dtype=shift_teacher_logits.dtype, device=shift_teacher_logits.device
-    )
+    beta_tensor = torch.tensor(beta, dtype=shift_teacher_logits.dtype, device=shift_teacher_logits.device)
 
     if valid_mask.any():
         positions = valid_mask.nonzero(as_tuple=False)
@@ -323,12 +313,13 @@ def _repetition_penalty_from_logits(shift_logits, shift_labels):
     """
     # shift_logits: [B, T, V], shift_labels: [B, T]
     import torch.nn.functional as F
+
     B, T, V = shift_logits.shape
     if T <= 1:
         return torch.zeros((), device=shift_logits.device, dtype=shift_logits.dtype)
     # current positions t=1..T-1
     cur_logits = shift_logits[:, 1:, :]  # [B, T-1, V]
-    prev_labels = shift_labels[:, :-1]   # [B, T-1]
+    prev_labels = shift_labels[:, :-1]  # [B, T-1]
     valid = (prev_labels != -100) & (shift_labels[:, 1:] != -100)
     cur_log_probs = F.log_softmax(cur_logits, dim=-1)
     # gather log prob of previous label
@@ -353,9 +344,7 @@ def compute_satimp_loss(model, inputs, beta1, beta2):
     )
     weight_sat = ((-lm_loss).exp().detach()) ** beta1
     weight_imp = (1 - (-lm_loss).exp().detach()) ** beta2
-    forget_loss = -((weight_sat * weight_imp) * lm_loss)[
-        shift_labels.view(-1) != -100
-    ].mean()
+    forget_loss = -((weight_sat * weight_imp) * lm_loss)[shift_labels.view(-1) != -100].mean()
     return forget_loss, outputs
 
 

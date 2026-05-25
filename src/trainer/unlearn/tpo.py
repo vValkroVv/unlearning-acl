@@ -138,9 +138,7 @@ class TPO(GradDiff):
         self.beta = float(beta)
         self.pl_coeff = float(pl_coeff)
         self.identifier_mode = str(identifier_mode)
-        self.preserve_token_ids = {
-            int(token_id) for token_id in (preserve_token_ids or []) if token_id is not None
-        }
+        self.preserve_token_ids = {int(token_id) for token_id in (preserve_token_ids or []) if token_id is not None}
         self.normalize_lpl_by_tokens = bool(normalize_lpl_by_tokens)
         self.normalize_pl_by_tokens = bool(normalize_pl_by_tokens)
 
@@ -212,11 +210,7 @@ class TPO(GradDiff):
             preserve_mask = valid_mask.clone()
         else:
             unique_ids = input_ids[valid_mask].detach().unique().tolist()
-            general_ids = [
-                int(token_id)
-                for token_id in unique_ids
-                if self._is_general_token_id(int(token_id))
-            ]
+            general_ids = [int(token_id) for token_id in unique_ids if self._is_general_token_id(int(token_id))]
             if general_ids:
                 general_tensor = torch.tensor(
                     general_ids,
@@ -273,9 +267,7 @@ class TPO(GradDiff):
         student_true_logits = student_logits[..., :-1, :].gather(-1, gathered_ids).squeeze(-1)
         ref_true_logits = ref_logits[..., :-1, :].gather(-1, gathered_ids).squeeze(-1)
 
-        logit_gap = (ref_true_logits - student_true_logits) * shifted_mask.to(
-            dtype=student_logits.dtype
-        )
+        logit_gap = (ref_true_logits - student_true_logits) * shifted_mask.to(dtype=student_logits.dtype)
         per_sample = logit_gap.sum(dim=-1)
         if self.normalize_lpl_by_tokens:
             denom = shifted_mask.sum(dim=-1).clamp_min(1).to(dtype=per_sample.dtype)
@@ -334,9 +326,7 @@ class TPO(GradDiff):
                     "tpo_total_loss": float(loss.detach().item()),
                     "tpo_target_tokens_mean": float(target_counts.mean().detach().item()),
                     "tpo_preserve_tokens_mean": float(preserve_counts.mean().detach().item()),
-                    "tpo_preserve_token_frac": float(
-                        (preserve_counts / valid_counts).mean().detach().item()
-                    ),
+                    "tpo_preserve_token_frac": float((preserve_counts / valid_counts).mean().detach().item()),
                     "tpo_beta": self.beta,
                     "tpo_pl_coeff": self.pl_coeff,
                     "tpo_alpha": float(self.alpha),

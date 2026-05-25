@@ -114,9 +114,7 @@ class SAMMixin(ManualGradMixin):
         return _SAMState(e_ws=e_ws)
 
     @torch.no_grad()
-    def _restore_weights(
-        self, params: List[torch.nn.Parameter], state: _SAMState
-    ) -> None:
+    def _restore_weights(self, params: List[torch.nn.Parameter], state: _SAMState) -> None:
         for p, e_w in zip(params, state.e_ws):
             if e_w is None:
                 continue
@@ -124,9 +122,7 @@ class SAMMixin(ManualGradMixin):
 
     def training_step(self, model: torch.nn.Module, inputs) -> torch.Tensor:
         if self.is_deepspeed_enabled:
-            raise NotImplementedError(
-                f"[{self.__class__.__name__}] DeepSpeed is not supported in this integration."
-            )
+            raise NotImplementedError(f"[{self.__class__.__name__}] DeepSpeed is not supported in this integration.")
         if getattr(self.accelerator, "num_processes", 1) > 1:
             raise NotImplementedError(
                 f"[{self.__class__.__name__}] Multi-process training is not supported in this integration."
@@ -191,9 +187,7 @@ class SAMMixin(ManualGradMixin):
             components=getattr(self, "_last_manual_components", None),
         )
         retain_weight_value = (
-            float(retain_weight.detach().item())
-            if torch.is_tensor(retain_weight)
-            else float(retain_weight)
+            float(retain_weight.detach().item()) if torch.is_tensor(retain_weight) else float(retain_weight)
         )
 
         combined_grads: List[Optional[torch.Tensor]] = []

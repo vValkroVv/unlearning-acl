@@ -129,18 +129,14 @@ def main():
                     if key not in row:
                         bad_rows.append((line_no, f"missing local retain key: {key}"))
                 if "local_retain_question" in row and (
-                    not isinstance(row["local_retain_question"], str)
-                    or not row["local_retain_question"].strip()
+                    not isinstance(row["local_retain_question"], str) or not row["local_retain_question"].strip()
                 ):
                     bad_rows.append((line_no, "empty or non-string local_retain_question"))
                 if "local_retain_answer" in row and (
-                    not isinstance(row["local_retain_answer"], str)
-                    or not row["local_retain_answer"].strip()
+                    not isinstance(row["local_retain_answer"], str) or not row["local_retain_answer"].strip()
                 ):
                     bad_rows.append((line_no, "empty or non-string local_retain_answer"))
-                if "local_retain_index" in row and not isinstance(
-                    row["local_retain_index"], (int, float)
-                ):
+                if "local_retain_index" in row and not isinstance(row["local_retain_index"], (int, float)):
                     bad_rows.append(
                         (
                             line_no,
@@ -158,9 +154,7 @@ def main():
             )
             if invalid_reason is not None:
                 bad_rows.append((line_no, f"invalid alternate: {invalid_reason}"))
-                invalid_reason_counts[invalid_reason] = (
-                    invalid_reason_counts.get(invalid_reason, 0) + 1
-                )
+                invalid_reason_counts[invalid_reason] = invalid_reason_counts.get(invalid_reason, 0) + 1
 
             alternate_lower = row["alternate"].strip().lower()
             for prefix in BAD_CF_PREFIXES:
@@ -179,10 +173,7 @@ def main():
     print(f"bad_rows_count={len(bad_rows)}")
     print(f"bad_rows_sample={bad_rows[: max(0, int(args.max_bad_rows))]}")
     print(f"invalid_reason_counts={invalid_reason_counts}")
-    print(
-        "ranges="
-        + str({key: tuple(value) for key, value in ranges.items() if value[0] != float("inf")})
-    )
+    print("ranges=" + str({key: tuple(value) for key, value in ranges.items() if value[0] != float("inf")}))
 
     if duplicate_indices or bad_rows:
         return 1

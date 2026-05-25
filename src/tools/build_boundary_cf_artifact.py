@@ -229,7 +229,9 @@ def build_legacy_candidate_pool(row, bank_row, candidate_field: str, alternate_k
             candidates,
             seen,
             text=text,
-            source=bank_sources[idx] if idx < len(bank_sources) and bank_sources[idx] not in (None, "") else "candidate_bank",
+            source=bank_sources[idx]
+            if idx < len(bank_sources) and bank_sources[idx] not in (None, "")
+            else "candidate_bank",
             source_rank=idx,
             relation_score=bank_relation_scores[idx] if idx < len(bank_relation_scores) else None,
             shared_fact_score=bank_shared_fact_scores[idx] if idx < len(bank_shared_fact_scores) else None,
@@ -252,10 +254,7 @@ def score_boundary_candidate(candidate, gold_answer: str):
         relation_score = shared_fact
     type_match = 1.0 if infer_answer_type(candidate["text"]) == infer_answer_type(gold_answer) else 0.0
     boundary_score = (
-        0.35 * float(relation_score)
-        + 0.20 * float(shared_fact)
-        + 0.15 * type_match
-        + 0.30 * lexical_overlap
+        0.35 * float(relation_score) + 0.20 * float(shared_fact) + 0.15 * type_match + 0.30 * lexical_overlap
     )
     payload = {
         "boundary_score": boundary_score,
@@ -322,8 +321,7 @@ def select_boundary_candidate(row, candidates, args):
 
     if not valid_scored:
         raise ValueError(
-            f"No boundary candidate survived for index={row.get('index')} "
-            f"question={row.get(args.question_key)!r}"
+            f"No boundary candidate survived for index={row.get('index')} question={row.get(args.question_key)!r}"
         )
     raise RuntimeError("Boundary candidate selection reached an unexpected empty state.")
 
@@ -342,8 +340,7 @@ def select_from_candidate_sources(row, *, external_candidates, legacy_candidates
     if selection_errors:
         raise ValueError("; ".join(selection_errors))
     raise ValueError(
-        f"No candidate sources available for index={row.get('index')} "
-        f"question={row.get(args.question_key)!r}"
+        f"No candidate sources available for index={row.get('index')} question={row.get(args.question_key)!r}"
     )
 
 
@@ -388,9 +385,7 @@ def main():
             raise ValueError(f"Proxy map row has no retain_indices for {row_key}")
         local_retain_index = int(retain_indices[0])
         if local_retain_index not in retain_by_index:
-            raise KeyError(
-                f"Retain index {local_retain_index} from proxy map is missing from retain dataset."
-            )
+            raise KeyError(f"Retain index {local_retain_index} from proxy map is missing from retain dataset.")
 
         external_candidates = build_external_candidate_pool(
             updated,

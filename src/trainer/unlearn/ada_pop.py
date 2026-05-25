@@ -108,9 +108,7 @@ class AdaPop(GradDiff):
 
         finputs_full = inputs["forget"]
         forget_inputs = {
-            k: finputs_full[k]
-            for k in ("input_ids", "attention_mask", "labels", "pop_sum")
-            if k in finputs_full
+            k: finputs_full[k] for k in ("input_ids", "attention_mask", "labels", "pop_sum") if k in finputs_full
         }
         forget_loss, forget_outputs = compute_wga_loss_dynamic_beta(
             model=model,
@@ -184,9 +182,7 @@ class AdaPop(GradDiff):
         delta = max(0.0, (float(self._retain_ema) - self._ret_baseline) / base)
 
         if self.alpha_const is None:
-            self.lambda_k = float(
-                max(0.0, min(self.lambda_max, self.lambda_k + self.dual_lr * (delta - self.eps)))
-            )
+            self.lambda_k = float(max(0.0, min(self.lambda_max, self.lambda_k + self.dual_lr * (delta - self.eps))))
             self.alpha_k = float(max(0.0, min(self.gamma_k, self.alpha0 + self.lambda_k)))
 
         self.log(

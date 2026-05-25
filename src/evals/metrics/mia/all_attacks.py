@@ -52,10 +52,7 @@ class Attack:
             all_scores.extend(scores)
             all_indices.extend(indices)
 
-        scores_by_index = {
-            str(idx): {"score": float(score)}
-            for idx, score in zip(all_indices, all_scores)
-        }
+        scores_by_index = {str(idx): {"score": float(score)} for idx, score in zip(all_indices, all_scores)}
 
         return {
             "agg_value": float(np.mean(all_scores)),

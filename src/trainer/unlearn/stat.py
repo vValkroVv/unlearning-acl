@@ -49,10 +49,7 @@ class STAT(GradDiff):
         self._valid_token_cache: dict[tuple[str, int, tuple[int, ...]], torch.Tensor] = {}
 
         if self.synthetic_mode != "uniform":
-            raise ValueError(
-                "STAT currently supports synthetic_mode='uniform' only; "
-                f"got {self.synthetic_mode!r}."
-            )
+            raise ValueError(f"STAT currently supports synthetic_mode='uniform' only; got {self.synthetic_mode!r}.")
 
     @staticmethod
     def _as_model_inputs(batch: dict[str, Any]) -> dict[str, torch.Tensor]:
@@ -184,10 +181,7 @@ class STAT(GradDiff):
         retain_inputs = self._as_model_inputs(inputs["retain"])
         retain_loss = self.compute_retain_loss(model=model, retain_inputs=retain_inputs)
 
-        loss = (
-            self.stat_forget_weight * stat_forget_loss
-            + self.stat_retain_weight * retain_loss
-        )
+        loss = self.stat_forget_weight * stat_forget_loss + self.stat_retain_weight * retain_loss
 
         try:
             target_tokens_per_sample = target_mask.sum(dim=-1).float().mean()

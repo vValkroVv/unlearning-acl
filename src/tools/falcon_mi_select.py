@@ -246,9 +246,7 @@ def _collect_layer_representations(
             break
 
         model_inputs = {
-            key: value.to(device)
-            for key, value in batch.items()
-            if key in {"input_ids", "attention_mask", "labels"}
+            key: value.to(device) for key, value in batch.items() if key in {"input_ids", "attention_mask", "labels"}
         }
         outputs = model(
             **model_inputs,
@@ -261,9 +259,7 @@ def _collect_layer_representations(
         if hidden_states is None:
             raise RuntimeError("Model did not return hidden_states.")
         if len(hidden_states) < num_layers + 1:
-            raise RuntimeError(
-                f"Expected >= {num_layers + 1} hidden states, got {len(hidden_states)}."
-            )
+            raise RuntimeError(f"Expected >= {num_layers + 1} hidden states, got {len(hidden_states)}.")
 
         labels = model_inputs.get("labels")
         attention_mask = model_inputs.get("attention_mask")
@@ -336,8 +332,7 @@ def main():
         args.device = "cpu"
 
     _log_progress(
-        "Starting MI selection "
-        f"(seed={args.seed}, device={args.device}, max_examples={args.max_examples})",
+        f"Starting MI selection (seed={args.seed}, device={args.device}, max_examples={args.max_examples})",
         quiet=args.quiet,
     )
 

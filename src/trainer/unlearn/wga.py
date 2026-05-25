@@ -16,9 +16,7 @@ class WGA(GradDiff):
             self._ensure_trainable_lora_adapter()
 
     def _prepare_lora_for_gradient_checkpointing(self):
-        enable_input_require_grads = getattr(
-            self.model, "enable_input_require_grads", None
-        )
+        enable_input_require_grads = getattr(self.model, "enable_input_require_grads", None)
         if callable(enable_input_require_grads):
             enable_input_require_grads()
             return
@@ -33,14 +31,10 @@ class WGA(GradDiff):
         def make_inputs_require_grad(_module, _inputs, output):
             output.requires_grad_(True)
 
-        self._input_require_grads_handle = input_embeddings.register_forward_hook(
-            make_inputs_require_grad
-        )
+        self._input_require_grads_handle = input_embeddings.register_forward_hook(make_inputs_require_grad)
 
     def _trainable_param_count(self):
-        return sum(
-            param.numel() for param in self.model.parameters() if param.requires_grad
-        )
+        return sum(param.numel() for param in self.model.parameters() if param.requires_grad)
 
     def _ensure_trainable_lora_adapter(self):
         if self._trainable_param_count() > 0:
@@ -66,9 +60,7 @@ class WGA(GradDiff):
             "attention_mask": forget_inputs["attention_mask"],
             "labels": forget_inputs["labels"],
         }
-        forget_loss, forget_outputs = compute_wga_loss(
-            model=model, inputs=forget_inputs, beta=self.beta
-        )
+        forget_loss, forget_outputs = compute_wga_loss(model=model, inputs=forget_inputs, beta=self.beta)
 
         retain_inputs = inputs["retain"]
         retain_inputs = {

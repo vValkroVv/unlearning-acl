@@ -31,6 +31,7 @@ from tools.dual_cf_artifact_utils import (
     select_device,
 )
 
+
 def log(message: str) -> None:
     print(f"[score_difficulty] {message}", flush=True)
 
@@ -156,14 +157,10 @@ def collect_confidence_and_stability_scores(args, dataset):
     else:
         confidence_scores = {}
 
-    need_model = bool(args.model_cfg) and (
-        not confidence_scores or args.stability_mode != "none"
-    )
+    need_model = bool(args.model_cfg) and (not confidence_scores or args.stability_mode != "none")
     if not need_model:
         if args.stability_mode != "none":
-            raise ValueError(
-                "Stability scoring requires --model-cfg/--model-path because it is model-based."
-            )
+            raise ValueError("Stability scoring requires --model-cfg/--model-path because it is model-based.")
         if not confidence_scores:
             log("No model config provided, skipping confidence scoring")
         return confidence_scores, {}
@@ -200,9 +197,7 @@ def collect_confidence_and_stability_scores(args, dataset):
             data_files=args.data_files,
         )
         if args.max_examples and args.max_examples > 0:
-            qa_dataset = Subset(
-                qa_dataset, range(min(int(args.max_examples), len(qa_dataset)))
-            )
+            qa_dataset = Subset(qa_dataset, range(min(int(args.max_examples), len(qa_dataset))))
         qa_size = len(qa_dataset) if hasattr(qa_dataset, "__len__") else None
         collator = DataCollatorForSupervisedDataset(tokenizer, index="index")
         dataloader = DataLoader(
@@ -230,22 +225,15 @@ def collect_confidence_and_stability_scores(args, dataset):
                     "labels": batch["labels"],
                 }
                 if move_to_device:
-                    model_inputs = {
-                        key: value.to(device) for key, value in model_inputs.items()
-                    }
-                losses, _ = compute_nll_per_sample(
-                    model, model_inputs, normalize_by_tokens=True
-                )
+                    model_inputs = {key: value.to(device) for key, value in model_inputs.items()}
+                losses, _ = compute_nll_per_sample(model, model_inputs, normalize_by_tokens=True)
                 for sample_index, loss in zip(batch["index"].tolist(), losses.tolist()):
                     confidence_scores[int(sample_index)] = float(-loss)
         log(f"Collected confidence scores for {len(confidence_scores)} rows")
 
     stability_scores: Dict[int, float] = {}
     if args.stability_mode == "prompt_perturb":
-        log(
-            "Scoring stability with prompt perturbations "
-            f"variants={args.stability_num_variants}"
-        )
+        log(f"Scoring stability with prompt perturbations variants={args.stability_num_variants}")
         row_iter = tqdm(dataset, total=len(dataset), desc="stability", dynamic_ncols=True)
         for row in row_iter:
             answer = resolve_answer(
@@ -264,14 +252,10 @@ def collect_confidence_and_stability_scores(args, dataset):
                     device=device,
                     move_to_device=move_to_device,
                 )
-                for variant_question in _question_variants(
-                    str(row[args.question_key]), args.stability_num_variants
-                )
+                for variant_question in _question_variants(str(row[args.question_key]), args.stability_num_variants)
             ]
             mean_score = sum(scores) / float(len(scores))
-            variance = sum((score - mean_score) ** 2 for score in scores) / float(
-                len(scores)
-            )
+            variance = sum((score - mean_score) ** 2 for score in scores) / float(len(scores))
             stability_scores[int(row["index"])] = float(1.0 / (1.0 + variance))
         log(f"Collected stability scores for {len(stability_scores)} rows")
 
@@ -322,23 +306,15 @@ def main():
     active_weights = []
 
     has_mrd = bool(args.mrd_column) and any(args.mrd_column in row for row in rows)
-    has_pop = bool(args.popularity_column) and any(
-        args.popularity_column in row for row in rows
-    )
+    has_pop = bool(args.popularity_column) and any(args.popularity_column in row for row in rows)
     has_stage = bool(args.stage_column) and any(args.stage_column in row for row in rows)
 
     if has_mrd:
-        mrd_raw = [
-            float(row[args.mrd_column]) if row.get(args.mrd_column) is not None else 0.0
-            for row in rows
-        ]
+        mrd_raw = [float(row[args.mrd_column]) if row.get(args.mrd_column) is not None else 0.0 for row in rows]
         active_weights.append(float(args.w_mrd))
     if has_pop:
         pop_raw = [
-            float(row[args.popularity_column])
-            if row.get(args.popularity_column) is not None
-            else 0.0
-            for row in rows
+            float(row[args.popularity_column]) if row.get(args.popularity_column) is not None else 0.0 for row in rows
         ]
         active_weights.append(float(args.w_pop))
     if confidence_scores:
@@ -349,18 +325,14 @@ def main():
         active_weights.append(float(args.w_stability))
     if has_stage or args.stage_prior_constant is not None:
         if has_stage and stage_map is not None:
-            stage_raw = [
-                float(stage_map.get(str(row.get(args.stage_column)), 0.0)) for row in rows
-            ]
+            stage_raw = [float(stage_map.get(str(row.get(args.stage_column)), 0.0)) for row in rows]
         else:
             stage_value = float(args.stage_prior_constant or 0.0)
             stage_raw = [stage_value for _ in rows]
         active_weights.append(float(args.w_stage))
 
     if not any(weight > 0.0 for weight in active_weights):
-        raise ValueError(
-            "No active difficulty components. Provide at least one positive weight and source."
-        )
+        raise ValueError("No active difficulty components. Provide at least one positive weight and source.")
 
     active_components = []
     if has_mrd and args.w_mrd > 0.0:
@@ -370,9 +342,7 @@ def main():
     if confidence_scores and args.w_conf > 0.0:
         active_components.append(f"confidence(w={args.w_conf})")
     if stability_scores and args.w_stability > 0.0:
-        active_components.append(
-            f"stability[{args.stability_mode}](w={args.w_stability})"
-        )
+        active_components.append(f"stability[{args.stability_mode}](w={args.w_stability})")
     if stage_raw and args.w_stage > 0.0:
         active_components.append(f"stage(w={args.w_stage})")
     log("Active difficulty components: " + ", ".join(active_components))
@@ -454,17 +424,12 @@ def main():
             }
             output_rows.append(updated)
         except Exception as exc:
-            raise RuntimeError(
-                f"Failed processing difficulty row index={row_index} at position={idx}"
-            ) from exc
+            raise RuntimeError(f"Failed processing difficulty row index={row_index} at position={idx}") from exc
 
     difficulty_scores = [row["difficulty_score"] for row in output_rows]
     log(f"Saving {len(output_rows)} rows to {args.output_path}")
     save_jsonl(output_rows, args.output_path)
-    log(
-        "Done. "
-        f"difficulty_score_range=({min(difficulty_scores):.6f}, {max(difficulty_scores):.6f})"
-    )
+    log(f"Done. difficulty_score_range=({min(difficulty_scores):.6f}, {max(difficulty_scores):.6f})")
 
 
 if __name__ == "__main__":

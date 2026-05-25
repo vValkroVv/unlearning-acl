@@ -24,9 +24,7 @@ def main(cfg: DictConfig):
 
     # Load Dataset
     data_cfg = cfg.data
-    data = get_data(
-        data_cfg, mode=mode, tokenizer=tokenizer, template_args=template_args
-    )
+    data = get_data(data_cfg, mode=mode, tokenizer=tokenizer, template_args=template_args)
 
     # Load collator
     collator_cfg = cfg.collator

@@ -49,21 +49,14 @@ class UnlearnTrainer(FinetuneTrainer):
                     if getattr(model.config, "hidden_sizes", None)
                     else getattr(model.config, "hidden_size", None)
                 )
-                if (
-                    hidden_size is not None
-                    and config_kwargs["zero_optimization"]["stage"] == 3
-                ):
+                if hidden_size is not None and config_kwargs["zero_optimization"]["stage"] == 3:
                     # Note that `stage3_prefetch_bucket_size` can produce DeepSpeed messages like: `Invalidate trace cache @ step 0: expected module 1, but got module 0`
                     # This is expected and is not an error, see: https://github.com/microsoft/DeepSpeed/discussions/4081
                     config_kwargs.update(
                         {
-                            "zero_optimization.reduce_bucket_size": hidden_size
-                            * hidden_size,
-                            "zero_optimization.stage3_param_persistence_threshold": 10
-                            * hidden_size,
-                            "zero_optimization.stage3_prefetch_bucket_size": 0.9
-                            * hidden_size
-                            * hidden_size,
+                            "zero_optimization.reduce_bucket_size": hidden_size * hidden_size,
+                            "zero_optimization.stage3_param_persistence_threshold": 10 * hidden_size,
+                            "zero_optimization.stage3_prefetch_bucket_size": 0.9 * hidden_size * hidden_size,
                         }
                     )
 
@@ -85,27 +78,19 @@ class UnlearnTrainer(FinetuneTrainer):
         """
         The only change to this function is calling the Trainer's compute_loss, as it's often overridden by unlearning methods, and we want to maintain the Trainer's evaluation setup.
         """
-        has_labels = (
-            False
-            if len(self.label_names) == 0
-            else all(inputs.get(k) is not None for k in self.label_names)
-        )
+        has_labels = False if len(self.label_names) == 0 else all(inputs.get(k) is not None for k in self.label_names)
         # For CLIP-like models capable of returning loss values.
         # If `return_loss` is not specified or being `None` in `inputs`, we check if the default value of `return_loss`
         # is `True` in `model.forward`.
         return_loss = inputs.get("return_loss", None)
         if return_loss is None:
             return_loss = self.can_return_loss
-        loss_without_labels = (
-            True if len(self.label_names) == 0 and return_loss else False
-        )
+        loss_without_labels = True if len(self.label_names) == 0 and return_loss else False
 
         inputs = self._prepare_inputs(inputs)
         if ignore_keys is None:
             if hasattr(self.model, "config"):
-                ignore_keys = getattr(
-                    self.model.config, "keys_to_ignore_at_inference", []
-                )
+                ignore_keys = getattr(self.model.config, "keys_to_ignore_at_inference", [])
             else:
                 ignore_keys = []
 
@@ -123,11 +108,7 @@ class UnlearnTrainer(FinetuneTrainer):
                 if has_labels or loss_without_labels:
                     if isinstance(raw_outputs, dict):
                         loss_mb = raw_outputs["loss"]
-                        logits_mb = tuple(
-                            v
-                            for k, v in raw_outputs.items()
-                            if k not in ignore_keys + ["loss"]
-                        )
+                        logits_mb = tuple(v for k, v in raw_outputs.items() if k not in ignore_keys + ["loss"])
                     else:
                         loss_mb = raw_outputs[0]
                         logits_mb = raw_outputs[1:]
@@ -137,9 +118,7 @@ class UnlearnTrainer(FinetuneTrainer):
                 else:
                     loss = None
                     if isinstance(raw_outputs, dict):
-                        logits_mb = tuple(
-                            v for k, v in raw_outputs.items() if k not in ignore_keys
-                        )
+                        logits_mb = tuple(v for k, v in raw_outputs.items() if k not in ignore_keys)
                     else:
                         logits_mb = raw_outputs
                     logits = smp_nested_concat(logits_mb)
@@ -147,17 +126,11 @@ class UnlearnTrainer(FinetuneTrainer):
                 if has_labels or loss_without_labels:
                     with self.compute_loss_context_manager():
                         ### Call compute_loss of super class since overridden compute_loss is not be applicable to eval_dataset.
-                        loss, outputs = super().compute_loss(
-                            model, inputs, return_outputs=True
-                        )
+                        loss, outputs = super().compute_loss(model, inputs, return_outputs=True)
                     loss = loss.mean().detach()
 
                     if isinstance(outputs, dict):
-                        logits = tuple(
-                            v
-                            for k, v in outputs.items()
-                            if k not in ignore_keys + ["loss"]
-                        )
+                        logits = tuple(v for k, v in outputs.items() if k not in ignore_keys + ["loss"])
                     else:
                         logits = outputs[1:]
                 else:
@@ -165,9 +138,7 @@ class UnlearnTrainer(FinetuneTrainer):
                     with self.compute_loss_context_manager():
                         outputs = model(**inputs)
                     if isinstance(outputs, dict):
-                        logits = tuple(
-                            v for k, v in outputs.items() if k not in ignore_keys
-                        )
+                        logits = tuple(v for k, v in outputs.items() if k not in ignore_keys)
                     else:
                         logits = outputs
                     # TODO: this needs to be fixed and made cleaner later.

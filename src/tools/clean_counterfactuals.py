@@ -80,21 +80,14 @@ def main():
         )
         if invalid_reason and args.repair_invalid:
             bank_row = candidate_bank.get(str(updated.get(args.mapping_key, "")), {})
-            row_candidates = list(
-                updated.get("candidate_answers") or bank_row.get("candidate_answers", [])
-            )
+            row_candidates = list(updated.get("candidate_answers") or bank_row.get("candidate_answers", []))
             row_relation_scores = list(
-                updated.get("candidate_relation_scores")
-                or bank_row.get("candidate_relation_scores", [])
+                updated.get("candidate_relation_scores") or bank_row.get("candidate_relation_scores", [])
             )
             row_shared_fact_scores = list(
-                updated.get("candidate_shared_fact_scores")
-                or bank_row.get("candidate_shared_fact_scores", [])
+                updated.get("candidate_shared_fact_scores") or bank_row.get("candidate_shared_fact_scores", [])
             )
-            row_sources = list(
-                updated.get("candidate_sources")
-                or bank_row.get("candidate_sources", [])
-            )
+            row_sources = list(updated.get("candidate_sources") or bank_row.get("candidate_sources", []))
             external_candidates = list(updated.get("external_alternates", []))
             external_scores = updated.get("external_alternate_scores")
             external_relation_scores = updated.get("external_alternate_relation_scores")
@@ -133,7 +126,10 @@ def main():
             if len(row_shared_fact_scores) < len(row_candidates):
                 shared_fact_score_pool.extend([None] * (len(row_candidates) - len(row_shared_fact_scores)))
             source_pool.extend(
-                [str(source).strip() if str(source).strip() else "candidate_bank" for source in row_sources[: len(row_candidates)]]
+                [
+                    str(source).strip() if str(source).strip() else "candidate_bank"
+                    for source in row_sources[: len(row_candidates)]
+                ]
             )
             if len(row_sources) < len(row_candidates):
                 source_pool.extend(["candidate_bank"] * (len(row_candidates) - len(row_sources)))
@@ -184,10 +180,7 @@ def main():
                 require_short_answer=args.require_short_answer,
                 max_alt_length_chars=args.max_alt_length_chars,
             )
-            if (
-                pick_meta.get("invalid_reason") is not None
-                and low_confidence_candidates
-            ):
+            if pick_meta.get("invalid_reason") is not None and low_confidence_candidates:
                 candidate_pool.extend(low_confidence_candidates)
                 score_pool.extend([None] * len(low_confidence_candidates))
                 relation_score_pool.extend([None] * len(low_confidence_candidates))
@@ -230,9 +223,7 @@ def main():
                     repaired_alternate,
                 )
                 pick_meta["candidate_pool_size"] = len(candidate_pool)
-                pick_meta["duplicate_candidates_removed"] = int(
-                    duplicate_candidates_removed
-                )
+                pick_meta["duplicate_candidates_removed"] = int(duplicate_candidates_removed)
                 updated["cf_pick_meta"] = pick_meta
                 invalid_reason = pick_meta.get("invalid_reason")
                 if invalid_reason is None:

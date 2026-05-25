@@ -47,9 +47,7 @@ def main():
     output_path = Path(args.output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as handle:
-        handle.write(
-            "label\tcheckpoint\tstep\tepoch\tforget_qa_rouge\tholdout_qa_rouge\n"
-        )
+        handle.write("label\tcheckpoint\tstep\tepoch\tforget_qa_rouge\tholdout_qa_rouge\n")
         for row in rows:
             handle.write(
                 f"{row['label']}\t{row['checkpoint']}\t"

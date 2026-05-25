@@ -124,11 +124,7 @@ def main():
             "candidates_per_row": int(args.candidates_per_row),
             "candidate_count_min": min(candidate_counts) if candidate_counts else 0,
             "candidate_count_max": max(candidate_counts) if candidate_counts else 0,
-            "candidate_count_mean": (
-                sum(candidate_counts) / float(len(candidate_counts))
-                if candidate_counts
-                else 0.0
-            ),
+            "candidate_count_mean": (sum(candidate_counts) / float(len(candidate_counts)) if candidate_counts else 0.0),
         }
         with open(args.sidecar_path, "w", encoding="utf-8") as handle:
             json.dump(stats, handle, indent=2, ensure_ascii=True)

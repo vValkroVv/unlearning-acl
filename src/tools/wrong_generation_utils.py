@@ -120,10 +120,7 @@ def dominant_ngram_count(tokens: list[str], n: int) -> int:
 def has_generation_rows(value_by_index: Any) -> bool:
     if not isinstance(value_by_index, dict):
         return False
-    return any(
-        isinstance(row, dict) and "generation" in row
-        for row in value_by_index.values()
-    )
+    return any(isinstance(row, dict) and "generation" in row for row in value_by_index.values())
 
 
 def extract_question(prompt: str) -> str:
@@ -183,9 +180,7 @@ def classify_generation(
 
     dominant_token_count = Counter(word_tokens).most_common(1)[0][1] if word_tokens else 0
     dominant_token_ratio = dominant_token_count / max(1, len(word_tokens))
-    unique_token_ratio = (
-        len(set(word_tokens)) / max(1, len(word_tokens)) if word_tokens else 0.0
-    )
+    unique_token_ratio = len(set(word_tokens)) / max(1, len(word_tokens)) if word_tokens else 0.0
     bigram_repeat = dominant_ngram_count(tokens, 2)
     trigram_repeat = dominant_ngram_count(tokens, 3)
     too_long_limit = max(
@@ -204,20 +199,11 @@ def classify_generation(
         reasons.add("char_repeat")
     if longest_token_run >= args.token_run_threshold:
         reasons.add("token_repeat")
-    if (
-        bigram_repeat >= args.bigram_repeat_threshold
-        or trigram_repeat >= args.trigram_repeat_threshold
-    ):
+    if bigram_repeat >= args.bigram_repeat_threshold or trigram_repeat >= args.trigram_repeat_threshold:
         reasons.add("ngram_repeat")
-    if (
-        len(word_tokens) >= args.low_diversity_min_words
-        and dominant_token_ratio >= args.dominant_token_ratio_threshold
-    ):
+    if len(word_tokens) >= args.low_diversity_min_words and dominant_token_ratio >= args.dominant_token_ratio_threshold:
         reasons.add("low_diversity")
-    if (
-        len(word_tokens) >= args.low_diversity_min_words
-        and unique_token_ratio <= args.unique_token_ratio_threshold
-    ):
+    if len(word_tokens) >= args.low_diversity_min_words and unique_token_ratio <= args.unique_token_ratio_threshold:
         reasons.add("low_diversity")
     if len(word_tokens) >= too_long_limit or len(text) >= args.max_chars:
         reasons.add("too_long")
@@ -278,9 +264,7 @@ def build_wrong_generation_block(
         "wrong_count": wrong_count,
         "total_count": total_count,
         "reason_counts": {
-            reason: reason_counts.get(reason, 0)
-            for reason in REASON_ORDER
-            if reason_counts.get(reason, 0) > 0
+            reason: reason_counts.get(reason, 0) for reason in REASON_ORDER if reason_counts.get(reason, 0) > 0
         },
         "value_by_index": output_by_index,
     }

@@ -90,10 +90,7 @@ class DualCF(GradDiff):
             score = torch.tensor(score, device=device, dtype=torch.float32)
         score = score.view(-1)
         if score.numel() != batch_size:
-            raise ValueError(
-                f"DualCF expected `{key}` to have {batch_size} values, got "
-                f"{score.numel()}."
-            )
+            raise ValueError(f"DualCF expected `{key}` to have {batch_size} values, got {score.numel()}.")
         return score
 
     def _optional_score_tensor(self, forget_inputs, key: str, device, batch_size: int):
@@ -138,15 +135,9 @@ class DualCF(GradDiff):
         return neg_vec, outputs, {}
 
     def _compute_routing(self, forget_inputs, batch_size: int, device):
-        difficulty = self._score_tensor(
-            forget_inputs, "difficulty_score", device=device, batch_size=batch_size
-        )
-        attribution = self._score_tensor(
-            forget_inputs, "attribution_score", device=device, batch_size=batch_size
-        )
-        rarity = self._optional_score_tensor(
-            forget_inputs, "rarity_score", device=device, batch_size=batch_size
-        )
+        difficulty = self._score_tensor(forget_inputs, "difficulty_score", device=device, batch_size=batch_size)
+        attribution = self._score_tensor(forget_inputs, "attribution_score", device=device, batch_size=batch_size)
+        rarity = self._optional_score_tensor(forget_inputs, "rarity_score", device=device, batch_size=batch_size)
         if rarity is None or self.disable_rarity_route:
             rarity = torch.zeros_like(difficulty)
         else:
@@ -171,9 +162,7 @@ class DualCF(GradDiff):
         forget_scale = 1.0 - (1.0 - self.risk_forget_scale) * risk_gate
 
         risk_batch = self._summarize_risk(risk_gate)
-        lambda_ret_batch = self.lambda_ret_lo + (
-            self.lambda_ret_hi - self.lambda_ret_lo
-        ) * risk_batch
+        lambda_ret_batch = self.lambda_ret_lo + (self.lambda_ret_hi - self.lambda_ret_lo) * risk_batch
         alpha_eff = self.alpha * lambda_ret_batch
 
         return {
@@ -215,9 +204,7 @@ class DualCF(GradDiff):
         del forget_inputs
         cf_weight_eff = routing.get("cf_weight_eff", self.cf_weight)
         per_sample_cf_loss = routing["forget_scale"] * (cf_weight_eff * cf_vec)
-        per_sample_neg_loss = routing["forget_scale"] * (
-            routing["lambda_neg"] * neg_vec
-        )
+        per_sample_neg_loss = routing["forget_scale"] * (routing["lambda_neg"] * neg_vec)
         per_sample_forget_loss = per_sample_cf_loss + per_sample_neg_loss
         return {
             "per_sample_cf_loss": per_sample_cf_loss,
@@ -271,60 +258,30 @@ class DualCF(GradDiff):
     def _build_log_payload(self, components: dict, retain_loss, loss=None, extra_logs=None):
         prefix = self.log_prefix
         alpha_eff = components["alpha_eff"]
-        alpha_eff_value = (
-            float(alpha_eff.detach().item())
-            if torch.is_tensor(alpha_eff)
-            else float(alpha_eff)
-        )
+        alpha_eff_value = float(alpha_eff.detach().item()) if torch.is_tensor(alpha_eff) else float(alpha_eff)
         payload = {
             f"{prefix}_cf_loss": float(components["cf_vec"].mean().detach().item()),
             f"{prefix}_neg_loss": float(components["neg_vec"].mean().detach().item()),
             f"{prefix}_forget_loss": float(components["forget_loss"].detach().item()),
             f"{prefix}_retain_loss": float(retain_loss.detach().item()),
             f"{prefix}_alpha_eff": alpha_eff_value,
-            f"{prefix}_lambda_ret_batch": float(
-                components["lambda_ret_batch"].detach().item()
-            ),
+            f"{prefix}_lambda_ret_batch": float(components["lambda_ret_batch"].detach().item()),
             f"{prefix}_d_mean": float(components["difficulty"].mean().detach().item()),
-            f"{prefix}_a_mean": float(
-                components["attribution"].mean().detach().item()
-            ),
+            f"{prefix}_a_mean": float(components["attribution"].mean().detach().item()),
             f"{prefix}_u_mean": float(components["rarity"].mean().detach().item()),
-            f"{prefix}_u_p50": float(
-                torch.quantile(components["rarity"], 0.50).detach().item()
-            ),
-            f"{prefix}_u_p90": float(
-                torch.quantile(components["rarity"], 0.90).detach().item()
-            ),
-            f"{prefix}_s_mean": float(
-                components["difficulty_gate"].mean().detach().item()
-            ),
-            f"{prefix}_s_p50": float(
-                torch.quantile(components["difficulty_gate"], 0.50).detach().item()
-            ),
-            f"{prefix}_s_p90": float(
-                torch.quantile(components["difficulty_gate"], 0.90).detach().item()
-            ),
+            f"{prefix}_u_p50": float(torch.quantile(components["rarity"], 0.50).detach().item()),
+            f"{prefix}_u_p90": float(torch.quantile(components["rarity"], 0.90).detach().item()),
+            f"{prefix}_s_mean": float(components["difficulty_gate"].mean().detach().item()),
+            f"{prefix}_s_p50": float(torch.quantile(components["difficulty_gate"], 0.50).detach().item()),
+            f"{prefix}_s_p90": float(torch.quantile(components["difficulty_gate"], 0.90).detach().item()),
             f"{prefix}_r_mean": float(components["risk_gate"].mean().detach().item()),
-            f"{prefix}_r_p50": float(
-                torch.quantile(components["risk_gate"], 0.50).detach().item()
-            ),
-            f"{prefix}_r_p90": float(
-                torch.quantile(components["risk_gate"], 0.90).detach().item()
-            ),
-            f"{prefix}_r_hi_frac": float(
-                (components["risk_gate"] > 0.8).float().mean().detach().item()
-            ),
+            f"{prefix}_r_p50": float(torch.quantile(components["risk_gate"], 0.50).detach().item()),
+            f"{prefix}_r_p90": float(torch.quantile(components["risk_gate"], 0.90).detach().item()),
+            f"{prefix}_r_hi_frac": float((components["risk_gate"] > 0.8).float().mean().detach().item()),
             f"{prefix}_risk_batch": float(components["risk_batch"].detach().item()),
-            f"{prefix}_lambda_neg_mean": float(
-                components["lambda_neg"].mean().detach().item()
-            ),
-            f"{prefix}_lambda_neg_base_mean": float(
-                components["lambda_neg_base"].mean().detach().item()
-            ),
-            f"{prefix}_cf_weight_eff_mean": float(
-                components["cf_weight_eff"].mean().detach().item()
-            ),
+            f"{prefix}_lambda_neg_mean": float(components["lambda_neg"].mean().detach().item()),
+            f"{prefix}_lambda_neg_base_mean": float(components["lambda_neg_base"].mean().detach().item()),
+            f"{prefix}_cf_weight_eff_mean": float(components["cf_weight_eff"].mean().detach().item()),
         }
         if loss is not None:
             payload[f"{prefix}_total_loss"] = float(loss.detach().item())

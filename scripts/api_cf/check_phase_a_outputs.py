@@ -41,10 +41,7 @@ def check_sidecar(path: Path) -> None:
             if not isinstance(value, list):
                 fail(f"{path}: line {line_no} {key} is not a list")
             if len(value) != len(alternates):
-                fail(
-                    f"{path}: line {line_no} {key} len={len(value)} "
-                    f"!= alternates len={len(alternates)}"
-                )
+                fail(f"{path}: line {line_no} {key} len={len(value)} != alternates len={len(alternates)}")
 
     print(f"[ok] sidecar rows={len(rows)} path={path}")
 

@@ -15,9 +15,7 @@ class UNDIAL(GradDiff):
             self.ref_model = self._prepare_ref_model(self.model)
 
     def _prepare_lora_for_gradient_checkpointing(self):
-        enable_input_require_grads = getattr(
-            self.model, "enable_input_require_grads", None
-        )
+        enable_input_require_grads = getattr(self.model, "enable_input_require_grads", None)
         if callable(enable_input_require_grads):
             enable_input_require_grads()
             return
@@ -32,14 +30,10 @@ class UNDIAL(GradDiff):
         def make_inputs_require_grad(_module, _inputs, output):
             output.requires_grad_(True)
 
-        self._input_require_grads_handle = input_embeddings.register_forward_hook(
-            make_inputs_require_grad
-        )
+        self._input_require_grads_handle = input_embeddings.register_forward_hook(make_inputs_require_grad)
 
     def _trainable_param_count(self):
-        return sum(
-            param.numel() for param in self.model.parameters() if param.requires_grad
-        )
+        return sum(param.numel() for param in self.model.parameters() if param.requires_grad)
 
     def _ensure_trainable_lora_adapter(self):
         if self._trainable_param_count() > 0:
@@ -60,9 +54,7 @@ class UNDIAL(GradDiff):
 
     def compute_loss(self, model, inputs, return_outputs=False):
         forget_inputs = inputs["forget"]
-        forget_loss, forget_outputs = compute_undial_loss(
-            model, self.ref_model, forget_inputs, self.beta
-        )
+        forget_loss, forget_outputs = compute_undial_loss(model, self.ref_model, forget_inputs, self.beta)
 
         retain_inputs = inputs["retain"]
         retain_inputs = {

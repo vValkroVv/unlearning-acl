@@ -46,9 +46,7 @@ def main():
     difficulty_pct = percentile_rank(difficulty_values)
     attribution_pct = percentile_rank(attribution_values)
 
-    for row, difficulty_score, attribution_score in zip(
-        rows, difficulty_pct, attribution_pct
-    ):
+    for row, difficulty_score, attribution_score in zip(rows, difficulty_pct, attribution_pct):
         row[args.difficulty_out] = float(difficulty_score)
         row[args.attribution_out] = float(attribution_score)
         row["routing_calibration"] = args.method

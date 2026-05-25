@@ -200,9 +200,7 @@ def prepare_output_root(path: Path, overwrite: bool) -> Path:
     root = path.expanduser().resolve()
     if root.exists():
         if not overwrite:
-            raise FileExistsError(
-                f"Output directory already exists: {root}. Pass --overwrite to rebuild it."
-            )
+            raise FileExistsError(f"Output directory already exists: {root}. Pass --overwrite to rebuild it.")
         for child in sorted(root.rglob("*"), reverse=True):
             if child.is_file() or child.is_symlink():
                 child.unlink()
@@ -486,9 +484,7 @@ class CosineScorer:
         if candidate.exists():
             return str(candidate.resolve())
 
-        hf_home = Path(
-            os.environ.get("HF_HOME", Path.home() / ".cache" / "huggingface")
-        ).expanduser()
+        hf_home = Path(os.environ.get("HF_HOME", Path.home() / ".cache" / "huggingface")).expanduser()
         snapshot_dir = self._candidate_snapshot_dir(self.model_ref, hf_home)
         if snapshot_dir is not None:
             return str(snapshot_dir.resolve())
@@ -575,10 +571,7 @@ def read_cos_payload(eval_dir: Path) -> dict[str, Any] | None:
 
 
 def make_group_display_label(group: GroupKey) -> str:
-    return (
-        f"{group.benchmark.upper()} | {group.model_label} | "
-        f"{group.forget_split} | lr={group.lr}"
-    )
+    return f"{group.benchmark.upper()} | {group.model_label} | {group.forget_split} | lr={group.lr}"
 
 
 def write_missing_table(path: Path, missing: list[MissingEval]) -> None:
@@ -678,9 +671,7 @@ def render_report(
         label = "FORGET" if section_name == "forget" else "HOLDOUT"
         goal = "forget this answer" if section_name == "forget" else "keep this answer"
         lines.append(f"{label} EXAMPLES")
-        lines.append(
-            f"Selected {len(selected_indices)} / {len(available_indices)} examples. Goal: {goal}."
-        )
+        lines.append(f"Selected {len(selected_indices)} / {len(available_indices)} examples. Goal: {goal}.")
         lines.append("")
 
         for position, idx in enumerate(selected_indices, start=1):
@@ -733,12 +724,12 @@ def main(argv: list[str] | None = None) -> int:
         allowed_lrs = set(args.lr)
         all_runs = [run for run in all_runs if run.lr in allowed_lrs]
         all_missing = [
-            entry
-            for entry in all_missing
-            if any(lr in str(entry.run_dir) for lr in allowed_lrs) or not allowed_lrs
+            entry for entry in all_missing if any(lr in str(entry.run_dir) for lr in allowed_lrs) or not allowed_lrs
         ]
 
-    all_runs = sorted(all_runs, key=lambda run: (run.benchmark, run.model_label, run.forget_split, run.lr, method_sort_key(run)))
+    all_runs = sorted(
+        all_runs, key=lambda run: (run.benchmark, run.model_label, run.forget_split, run.lr, method_sort_key(run))
+    )
     write_run_table(output_root / "matched_runs.tsv", all_runs)
     write_missing_table(output_root / "missing_sample_logs.tsv", all_missing)
 

@@ -39,15 +39,11 @@ class AdaptiveRMU(RMU):
 
         if self.adaptive_coeff_mode not in {"first_batch", "batch"}:
             raise ValueError(
-                "adaptive_coeff_mode must be either 'first_batch' or 'batch', "
-                f"got {self.adaptive_coeff_mode!r}"
+                f"adaptive_coeff_mode must be either 'first_batch' or 'batch', got {self.adaptive_coeff_mode!r}"
             )
 
     def _adaptive_coeff(self, activations: torch.Tensor) -> torch.Tensor:
-        if (
-            self.adaptive_coeff_mode == "first_batch"
-            and self._adaptive_coeff_cache is not None
-        ):
+        if self.adaptive_coeff_mode == "first_batch" and self._adaptive_coeff_cache is not None:
             return self._adaptive_coeff_cache.to(
                 device=activations.device,
                 dtype=activations.dtype,
@@ -84,9 +80,7 @@ class AdaptiveRMU(RMU):
             dtype=model_forget_activations.dtype,
         )
         adaptive_coeff = self._adaptive_coeff(model_forget_activations)
-        control_vec = (base_control_vec * adaptive_coeff).expand_as(
-            model_forget_activations
-        )
+        control_vec = (base_control_vec * adaptive_coeff).expand_as(model_forget_activations)
 
         forget_mask = forget_inputs["labels"] != -100
         forget_loss = self.compute_activation_loss(
@@ -111,12 +105,8 @@ class AdaptiveRMU(RMU):
                     "adaptive_rmu_forget_loss": float(forget_loss.detach().item()),
                     "adaptive_rmu_retain_loss": float(retain_loss.detach().item()),
                     "adaptive_rmu_total_loss": float(loss.detach().item()),
-                    "adaptive_rmu_activation_norm": float(
-                        model_forget_activations.detach().norm(dim=-1).mean().item()
-                    ),
-                    "adaptive_rmu_control_norm": float(
-                        control_vec.detach().norm(dim=-1).mean().item()
-                    ),
+                    "adaptive_rmu_activation_norm": float(model_forget_activations.detach().norm(dim=-1).mean().item()),
+                    "adaptive_rmu_control_norm": float(control_vec.detach().norm(dim=-1).mean().item()),
                     "adaptive_rmu_coeff": float(adaptive_coeff.detach().float().item()),
                     "adaptive_rmu_scale": float(self.adaptive_scale),
                     "adaptive_rmu_steering_coeff": float(self.steering_coeff),

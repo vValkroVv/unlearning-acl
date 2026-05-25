@@ -71,9 +71,7 @@ class QADataset(Dataset):
         elif isinstance(answer, list):
             item = {}
             for i, ans in enumerate(answer):
-                sample_item = self._process_sample(
-                    question=question, answer=ans, index=index
-                )
+                sample_item = self._process_sample(question=question, answer=ans, index=index)
                 if pop_sum is not None:
                     sample_item["pop_sum"] = pop_sum
                 item[i] = sample_item
@@ -124,18 +122,14 @@ class QAwithAlternateDataset(QADataset):
         question = self.data[idx][self.question_key]
         if isinstance(item, dict):
             return_item = {"original": item}
-            alt_item = self._process_sample(
-                question=question, answer=self.data[idx][self.alternate_key]
-            )
+            alt_item = self._process_sample(question=question, answer=self.data[idx][self.alternate_key])
             return_item["alternate"] = alt_item
             # return_item = [item, idk_item]
         elif isinstance(item, list) or isinstance(item, tuple):
             return_item = []
             for sample_item in item:
                 return_item = {"original": sample_item}
-                alt_item = self._process_sample(
-                    question=question, answer=self.data[idx][self.alternate_key]
-                )
+                alt_item = self._process_sample(question=question, answer=self.data[idx][self.alternate_key])
                 return_item["alternate"] = alt_item
                 # return_item.append([sample_item, idk_item])
         return return_item if self.return_original else return_item["alternate"]
@@ -148,8 +142,7 @@ class QAwithAlternateMetadataDataset(QAwithAlternateDataset):
         super().__init__(*args, **kwargs)
         if self.metadata_keys and not self.return_original:
             raise ValueError(
-                "QAwithAlternateMetadataDataset requires return_original=True when "
-                "metadata_keys are requested."
+                "QAwithAlternateMetadataDataset requires return_original=True when metadata_keys are requested."
             )
 
     def _coerce_metadata_value(self, key, value):
@@ -167,9 +160,7 @@ class QAwithAlternateMetadataDataset(QAwithAlternateDataset):
         row = self.data[idx]
         for key in self.metadata_keys:
             if key not in row:
-                raise KeyError(
-                    f"Metadata key `{key}` is missing from dataset row {idx}."
-                )
+                raise KeyError(f"Metadata key `{key}` is missing from dataset row {idx}.")
             item[key] = self._coerce_metadata_value(key=key, value=row[key])
         for key in self.optional_metadata_keys:
             if key in item:
@@ -197,9 +188,7 @@ class QAAnswerIndexDataset(QADataset):
             if not answer:
                 raise ValueError(f"Empty answer list at index {idx}")
             if self.answer_index >= len(answer) or self.answer_index < -len(answer):
-                raise IndexError(
-                    f"answer_index {self.answer_index} out of range for index {idx}"
-                )
+                raise IndexError(f"answer_index {self.answer_index} out of range for index {idx}")
             answer = answer[self.answer_index]
 
         if not isinstance(answer, str):
@@ -266,9 +255,7 @@ class QAMultiCFDataset(QADataset):
         if self.max_alternates > 0:
             deduped = deduped[: self.max_alternates]
         if not deduped:
-            raise ValueError(
-                f"QAMultiCFDataset expected at least one alternate for index {row['index']}."
-            )
+            raise ValueError(f"QAMultiCFDataset expected at least one alternate for index {row['index']}.")
         return deduped
 
     def _alternate_weights(self, row, alternate_count: int):
@@ -301,8 +288,7 @@ class QAMultiCFDataset(QADataset):
         item = {
             "original": self._process_sample(question=question, answer=answer, index=index),
             "alternates": [
-                self._process_sample(question=question, answer=alternate, index=index)
-                for alternate in alternates
+                self._process_sample(question=question, answer=alternate, index=index) for alternate in alternates
             ],
             "alternate_mask": [1 for _ in alternates],
             "alternate_weights": self._alternate_weights(
@@ -313,9 +299,7 @@ class QAMultiCFDataset(QADataset):
 
         for key in self.metadata_keys:
             if key not in row:
-                raise KeyError(
-                    f"Metadata key `{key}` is missing from dataset row {idx}."
-                )
+                raise KeyError(f"Metadata key `{key}` is missing from dataset row {idx}.")
             item[key] = self._coerce_metadata_value(key=key, value=row[key])
         for key in self.optional_metadata_keys:
             if key in item:
@@ -347,13 +331,9 @@ class QABoundaryCFDataset(QAwithAlternateMetadataDataset):
         item = super().__getitem__(idx)
         row = self.data[idx]
         if self.local_retain_question_key not in row:
-            raise KeyError(
-                f"BoundaryCF row {idx} is missing `{self.local_retain_question_key}`."
-            )
+            raise KeyError(f"BoundaryCF row {idx} is missing `{self.local_retain_question_key}`.")
         if self.local_retain_answer_key not in row:
-            raise KeyError(
-                f"BoundaryCF row {idx} is missing `{self.local_retain_answer_key}`."
-            )
+            raise KeyError(f"BoundaryCF row {idx} is missing `{self.local_retain_answer_key}`.")
 
         retain_index = int(row.get(self.local_retain_index_key, -1))
         item["local_retain"] = self._process_sample(

@@ -7,7 +7,7 @@ import argparse
 import math
 import sys
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, Tuple
 
 import torch
 from torch.utils.data import DataLoader
@@ -106,10 +106,7 @@ def accumulate_retain_gradient(
     move_to_device: bool,
     max_steps: int,
 ):
-    retain_grad = {
-        name: torch.zeros_like(param.detach().float(), device="cpu")
-        for name, param in selected_params
-    }
+    retain_grad = {name: torch.zeros_like(param.detach().float(), device="cpu") for name, param in selected_params}
     steps = 0
     total_steps = None
     if hasattr(dataloader, "__len__"):
@@ -138,9 +135,7 @@ def accumulate_retain_gradient(
         raise ValueError("Retain gradient accumulation saw zero steps.")
     for name in retain_grad:
         retain_grad[name] /= float(steps)
-    retain_norm = math.sqrt(
-        sum(float((grad * grad).sum().item()) for grad in retain_grad.values())
-    )
+    retain_norm = math.sqrt(sum(float((grad * grad).sum().item()) for grad in retain_grad.values()))
     return retain_grad, retain_norm, steps
 
 
@@ -282,21 +277,14 @@ def main():
     proxy_map = {}
     if args.retain_proxy_mode != "global":
         if args.retain_proxy_map in (None, "", "null", "None"):
-            raise ValueError(
-                "--retain-proxy-map is required when --retain-proxy-mode is not global"
-            )
+            raise ValueError("--retain-proxy-map is required when --retain-proxy-mode is not global")
         proxy_map = load_keyed_jsonish(args.retain_proxy_map, key_field="index")
-        log(
-            f"Loaded retain proxy map rows={len(proxy_map)} mode={args.retain_proxy_mode}"
-        )
+        log(f"Loaded retain proxy map rows={len(proxy_map)} mode={args.retain_proxy_mode}")
 
     selected_params = list(iter_selected_params(model, lora_only=args.lora_only))
     if not selected_params:
         raise ValueError("No trainable parameters matched the requested attribution setup.")
-    log(
-        "Selected trainable params "
-        f"count={len(selected_params)} sample={[name for name, _ in selected_params[:5]]}"
-    )
+    log(f"Selected trainable params count={len(selected_params)} sample={[name for name, _ in selected_params[:5]]}")
 
     log("Accumulating retain gradients")
     retain_grad, retain_norm, retain_steps = accumulate_retain_gradient(
@@ -307,10 +295,7 @@ def main():
         move_to_device=move_to_device,
         max_steps=int(args.retain_max_steps),
     )
-    log(
-        "Retain gradient accumulation finished "
-        f"steps={retain_steps} retain_norm={retain_norm:.6f}"
-    )
+    log(f"Retain gradient accumulation finished steps={retain_steps} retain_norm={retain_norm:.6f}")
 
     grad_by_index: Dict[int, Dict[str, float]] = {}
     local_grad_cache: Dict[str, Tuple[Dict[str, torch.Tensor], float, int]] = {}
@@ -350,9 +335,7 @@ def main():
             if args.retain_proxy_mode != "global":
                 proxy_row = proxy_map.get(str(row_index), {})
                 retain_indices = [
-                    idx
-                    for idx in proxy_row.get("retain_indices", [])
-                    if int(idx) in retain_position_by_index
+                    idx for idx in proxy_row.get("retain_indices", []) if int(idx) in retain_position_by_index
                 ]
                 proxy_key = str(proxy_row.get("template_key") or row_index)
                 proxy_mode = str(proxy_row.get("proxy_mode", args.retain_proxy_mode))
@@ -394,15 +377,9 @@ def main():
                 chosen_dot = local_dot
                 chosen_cosine = local_cosine
             else:
-                score_value = float(args.hybrid_rho) * local_raw + (
-                    1.0 - float(args.hybrid_rho)
-                ) * global_raw
-                chosen_dot = float(args.hybrid_rho) * local_dot + (
-                    1.0 - float(args.hybrid_rho)
-                ) * global_dot
-                chosen_cosine = float(args.hybrid_rho) * local_cosine + (
-                    1.0 - float(args.hybrid_rho)
-                ) * global_cosine
+                score_value = float(args.hybrid_rho) * local_raw + (1.0 - float(args.hybrid_rho)) * global_raw
+                chosen_dot = float(args.hybrid_rho) * local_dot + (1.0 - float(args.hybrid_rho)) * global_dot
+                chosen_cosine = float(args.hybrid_rho) * local_cosine + (1.0 - float(args.hybrid_rho)) * global_cosine
 
             grad_by_index[row_index] = {
                 "grad_align": chosen_dot,
@@ -419,9 +396,7 @@ def main():
         except Exception as exc:
             raise RuntimeError(f"Failed attribution scoring for forget index={row_index}") from exc
 
-    risk_norm = normalize_minmax(
-        [grad_by_index[int(row["index"])]["risk_raw"] for row in forget_rows]
-    )
+    risk_norm = normalize_minmax([grad_by_index[int(row["index"])]["risk_raw"] for row in forget_rows])
 
     output_rows = []
     output_iter = tqdm(
@@ -460,10 +435,7 @@ def main():
     attribution_scores = [row["attribution_score"] for row in output_rows]
     log(f"Saving {len(output_rows)} rows to {args.output_path}")
     save_jsonl(output_rows, args.output_path)
-    log(
-        "Done. "
-        f"attribution_score_range=({min(attribution_scores):.6f}, {max(attribution_scores):.6f})"
-    )
+    log(f"Done. attribution_score_range=({min(attribution_scores):.6f}, {max(attribution_scores):.6f})")
 
 
 if __name__ == "__main__":

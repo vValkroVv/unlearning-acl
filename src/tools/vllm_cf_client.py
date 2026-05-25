@@ -79,15 +79,14 @@ class VLLMCFGenerator:
     num_alternates: int = 1
 
     def __post_init__(self) -> None:
-        self.use_structured_outputs = (
-            os.environ.get("VLLM_USE_STRUCTURED_OUTPUTS", "0").strip().lower()
-            in {"1", "true", "yes"}
-        )
+        self.use_structured_outputs = os.environ.get("VLLM_USE_STRUCTURED_OUTPUTS", "0").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+        }
         candidate_limit = max(1, int(self.num_alternates))
         if candidate_limit > 1 and not self.use_structured_outputs:
-            raise ValueError(
-                "Multi-alternate vLLM generation requires VLLM_USE_STRUCTURED_OUTPUTS=1."
-            )
+            raise ValueError("Multi-alternate vLLM generation requires VLLM_USE_STRUCTURED_OUTPUTS=1.")
         self.schema = {
             "type": "object",
             "additionalProperties": False,
@@ -154,21 +153,15 @@ class VLLMCFGenerator:
         ]
         prompt_family = str(self.prompt_family or "default")
         if prompt_family == "strict_short":
-            base_rules.append(
-                "5. Prefer compact spans that can be written on one line."
-            )
+            base_rules.append("5. Prefer compact spans that can be written on one line.")
         elif prompt_family == "duet_relation_safe":
             base_rules.append(
                 "5. Preserve the same semantic relation as the gold answer and avoid paraphrasing the gold answer."
             )
         elif prompt_family == "rwku_shared_fact_safe":
-            base_rules.append(
-                "5. Change only the target answer and avoid altering unrelated shared facts."
-            )
+            base_rules.append("5. Change only the target answer and avoid altering unrelated shared facts.")
         else:
-            base_rules.append(
-                "5. Keep the answer plausible and relation-consistent when possible."
-            )
+            base_rules.append("5. Keep the answer plausible and relation-consistent when possible.")
         return "\n".join(base_rules)
 
     def build_messages(
@@ -187,8 +180,7 @@ class VLLMCFGenerator:
             )
         else:
             system += (
-                "\n6. Return only one alternative answer span.\n"
-                "7. Do not output JSON, bullets, labels, or explanation."
+                "\n6. Return only one alternative answer span.\n7. Do not output JSON, bullets, labels, or explanation."
             )
 
         user = f"Question: {question}\nGold answer: {answer}\n"
@@ -210,9 +202,7 @@ class VLLMCFGenerator:
                 )
         else:
             if self.use_structured_outputs:
-                user += (
-                    f"Generate up to {max(1, int(self.num_alternates))} short incorrect alternatives with the same answer type. "
-                )
+                user += f"Generate up to {max(1, int(self.num_alternates))} short incorrect alternatives with the same answer type. "
             else:
                 user += "Generate one plausible alternative answer of the same answer type. "
 

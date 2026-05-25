@@ -18,6 +18,7 @@ from trainer.unlearn.stat import STAT
 from trainer.unlearn.rmu import RMU
 from trainer.unlearn.adaptive_rmu import AdaptiveRMU
 from trainer.unlearn.undial import UNDIAL
+
 try:
     from trainer.unlearn.unilogit import Unilogit
 except ImportError as exc:
@@ -29,7 +30,7 @@ from trainer.unlearn.ceu import CEU
 from trainer.unlearn.satimp import SatImp
 from trainer.unlearn.wga import WGA
 from trainer.unlearn.pdu import PDU
-from trainer.unlearn.ada_wgd import AdaWGD, AdaWGDCallback
+from trainer.unlearn.ada_wgd import AdaWGD, AdaWGDCallback as AdaWGDCallback
 from trainer.unlearn.ada_pop import AdaPop
 from trainer.unlearn.pop_dynam_b_wga import PopDynamBWGA
 from trainer.unlearn.falcon import FALCON
@@ -71,8 +72,7 @@ def load_trainer_args(trainer_args: DictConfig, dataset):
         num_devices = torch.cuda.device_count()
         dataset_len = len(dataset)
         trainer_args["warmup_steps"] = int(
-            (warmup_epochs * dataset_len)
-            // (batch_size * grad_accum_steps * num_devices)
+            (warmup_epochs * dataset_len) // (batch_size * grad_accum_steps * num_devices)
         )
 
     trainer_args = TrainingArguments(**trainer_args)
@@ -93,13 +93,9 @@ def load_trainer(
     method_args = trainer_cfg.get("method_args", {})
     trainer_args = load_trainer_args(trainer_args, train_dataset)
     trainer_handler_name = trainer_cfg.get("handler")
-    assert trainer_handler_name is not None, ValueError(
-        f"{trainer_handler_name} handler not set"
-    )
+    assert trainer_handler_name is not None, ValueError(f"{trainer_handler_name} handler not set")
     trainer_cls = TRAINER_REGISTRY.get(trainer_handler_name, None)
-    assert trainer_cls is not None, NotImplementedError(
-        f"{trainer_handler_name} not implemented or not registered"
-    )
+    assert trainer_cls is not None, NotImplementedError(f"{trainer_handler_name} not implemented or not registered")
     trainer = trainer_cls(
         model=model,
         train_dataset=train_dataset,
@@ -116,9 +112,7 @@ def load_trainer(
     save_on_epochs = trainer_cfg.get("save_on_epochs", None)
     if save_on_epochs:
         trainer.add_callback(SaveOnEpochsCallback(list(save_on_epochs)))
-    logger.info(
-        f"{trainer_handler_name} Trainer loaded, output_dir: {trainer_args.output_dir}"
-    )
+    logger.info(f"{trainer_handler_name} Trainer loaded, output_dir: {trainer_args.output_dir}")
     return trainer, trainer_args
 
 

@@ -3,9 +3,7 @@ from trainer.utils import compute_satimp_loss
 
 
 class SatImp(GradDiff):
-    def __init__(
-        self, beta1=5.0, beta2=0.1, gamma=1.0, alpha=0.1, *args, **kwargs
-    ):
+    def __init__(self, beta1=5.0, beta2=0.1, gamma=1.0, alpha=0.1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.beta1 = beta1
         self.beta2 = beta2

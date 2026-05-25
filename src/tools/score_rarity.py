@@ -109,11 +109,7 @@ def _reference_splits(args) -> list[str]:
         if splits:
             return splits
     if args.reference_splits:
-        splits = [
-            split
-            for split in args.reference_splits
-            if _normalize_optional_arg(split) is not None
-        ]
+        splits = [split for split in args.reference_splits if _normalize_optional_arg(split) is not None]
         if splits:
             return splits
     if args.split in (None, "", "null", "None"):
@@ -144,9 +140,7 @@ def main():
     data_files = _normalize_optional_arg(args.data_files)
     popularity_column = str(args.popularity_column)
 
-    reference_dataset_path = (
-        _normalize_optional_arg(args.reference_dataset_path) or dataset_path
-    )
+    reference_dataset_path = _normalize_optional_arg(args.reference_dataset_path) or dataset_path
     reference_dataset_name = (
         _normalize_optional_arg(args.reference_dataset_name)
         if args.reference_dataset_name is not None
@@ -159,10 +153,7 @@ def main():
     # incompatible schemas.
     if reference_data_files_arg is not None:
         reference_data_files = reference_data_files_arg
-    elif (
-        reference_dataset_path == dataset_path
-        and reference_dataset_name == dataset_name
-    ):
+    elif reference_dataset_path == dataset_path and reference_dataset_name == dataset_name:
         reference_data_files = data_files
     else:
         reference_data_files = None
@@ -210,10 +201,7 @@ def main():
     denom = q_high_value - q_low_value
     degenerate_reference = math.isclose(denom, 0.0, rel_tol=0.0, abs_tol=1e-12)
     if degenerate_reference:
-        log(
-            "Reference quantiles collapsed; all rows will receive "
-            "rarity_score=0.0 to disable rarity routing."
-        )
+        log("Reference quantiles collapsed; all rows will receive rarity_score=0.0 to disable rarity routing.")
 
     output_rows = []
     rarity_values = []

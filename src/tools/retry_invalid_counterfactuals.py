@@ -104,9 +104,7 @@ def choose_retry_alternate(args, row: Dict[str, Any], response: Dict[str, Any]):
         relation_scores=relation_scores,
         shared_fact_scores=shared_fact_scores,
         candidate_sources=sources,
-        default_relation_score=(
-            1.0 if bool(response.get("same_relation", True)) else 0.0
-        ),
+        default_relation_score=(1.0 if bool(response.get("same_relation", True)) else 0.0),
         prompt_family=args.prompt_family,
         reject_gold_substring=args.reject_gold_substring,
         max_overlap_ratio=args.max_overlap_ratio,
@@ -188,20 +186,14 @@ def main():
                 row["cf_retry_last_relation_scores"] = list(response_relation_scores)
                 row["cf_retry_last_shared_fact_scores"] = list(response_shared_fact_scores)
                 row["cf_retry_last_sources"] = list(response_sources)
-                row["cf_retry_last_answer_type"] = str(
-                    response.get("answer_type", "unknown")
-                )
+                row["cf_retry_last_answer_type"] = str(response.get("answer_type", "unknown"))
                 row["cf_retry_pick_meta"] = pick_meta
                 if reason is None:
                     row["alternate"] = alternate
                     row["external_alternates"] = list(response_candidates)
                     row["external_alternate_scores"] = list(response_scores)
-                    row["external_alternate_relation_scores"] = list(
-                        response_relation_scores
-                    )
-                    row["external_alternate_shared_fact_scores"] = list(
-                        response_shared_fact_scores
-                    )
+                    row["external_alternate_relation_scores"] = list(response_relation_scores)
+                    row["external_alternate_shared_fact_scores"] = list(response_shared_fact_scores)
                     row["external_alternate_sources"] = list(response_sources)
                     pick_meta["selected_candidate"] = pick_meta.get(
                         "selected_candidate_text",

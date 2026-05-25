@@ -100,10 +100,7 @@ def validate_source_sidecar(
     for row in ordered:
         idx = int(row["index"])
         if idx != expected_index:
-            fail(
-                f"{source_name} sidecar indices must be contiguous from 0. "
-                f"Expected {expected_index}, got {idx}."
-            )
+            fail(f"{source_name} sidecar indices must be contiguous from 0. Expected {expected_index}, got {idx}.")
         expected_index += 1
         alternates = row.get("alternates")
         if not isinstance(alternates, list) or not alternates:
@@ -116,9 +113,7 @@ def validate_source_sidecar(
         ):
             value = row.get(key)
             if not isinstance(value, list) or len(value) != len(alternates):
-                fail(
-                    f"{source_name} sidecar index={idx} has misaligned `{key}` metadata."
-                )
+                fail(f"{source_name} sidecar index={idx} has misaligned `{key}` metadata.")
     return ordered
 
 

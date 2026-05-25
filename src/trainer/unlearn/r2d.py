@@ -21,14 +21,10 @@ def _basic_gaussian_sigma(epsilon: float, delta: float, sensitivity: float) -> f
         raise ValueError("delta must be in (0, 1)")
     if sensitivity < 0:
         raise ValueError("sensitivity must be >= 0")
-    return float(sensitivity) * math.sqrt(2.0 * math.log(1.25 / float(delta))) / float(
-        epsilon
-    )
+    return float(sensitivity) * math.sqrt(2.0 * math.log(1.25 / float(delta))) / float(epsilon)
 
 
-def calibrate_analytic_gaussian_mechanism(
-    epsilon: float, delta: float, gs: float, tol: float = 1e-12
-) -> float:
+def calibrate_analytic_gaussian_mechanism(epsilon: float, delta: float, gs: float, tol: float = 1e-12) -> float:
     """
     Analytic Gaussian mechanism calibration (Balle & Wang, ICML 2018).
     Returns sigma (stddev of Gaussian noise).
@@ -82,17 +78,35 @@ def calibrate_analytic_gaussian_mechanism(
         alpha = 1.0
     else:
         if delta > delta_thr:
-            predicate_stop_dt = lambda s: _case_a(epsilon, s) >= delta
-            f_s_to_delta = lambda s: _case_a(epsilon, s)
-            predicate_left_bs = lambda s: f_s_to_delta(s) > delta
-            f_s_to_alpha = lambda s: math.sqrt(1.0 + s / 2.0) - math.sqrt(s / 2.0)
-        else:
-            predicate_stop_dt = lambda s: _case_b(epsilon, s) <= delta
-            f_s_to_delta = lambda s: _case_b(epsilon, s)
-            predicate_left_bs = lambda s: f_s_to_delta(s) < delta
-            f_s_to_alpha = lambda s: math.sqrt(1.0 + s / 2.0) + math.sqrt(s / 2.0)
 
-        predicate_stop_bs = lambda s: abs(f_s_to_delta(s) - delta) <= tol
+            def predicate_stop_dt(s):
+                return _case_a(epsilon, s) >= delta
+
+            def f_s_to_delta(s):
+                return _case_a(epsilon, s)
+
+            def predicate_left_bs(s):
+                return f_s_to_delta(s) > delta
+
+            def f_s_to_alpha(s):
+                return math.sqrt(1.0 + s / 2.0) - math.sqrt(s / 2.0)
+        else:
+
+            def predicate_stop_dt(s):
+                return _case_b(epsilon, s) <= delta
+
+            def f_s_to_delta(s):
+                return _case_b(epsilon, s)
+
+            def predicate_left_bs(s):
+                return f_s_to_delta(s) < delta
+
+            def f_s_to_alpha(s):
+                return math.sqrt(1.0 + s / 2.0) + math.sqrt(s / 2.0)
+
+        def predicate_stop_bs(s):
+            return abs(f_s_to_delta(s) - delta) <= tol
+
         s_inf, s_sup = _doubling_trick(predicate_stop_dt, 0.0, 1.0)
         s_final = _binary_search(predicate_stop_bs, predicate_left_bs, s_inf, s_sup)
         alpha = f_s_to_alpha(s_final)
@@ -238,9 +252,7 @@ class R2D(UnlearnTrainer):
         if self.dp_epsilon is None and self.dp_delta is None:
             return 0.0
         if self.dp_epsilon is None or self.dp_delta is None:
-            raise ValueError(
-                "noise_std is null but only one of dp_epsilon/dp_delta is set; set both or neither."
-            )
+            raise ValueError("noise_std is null but only one of dp_epsilon/dp_delta is set; set both or neither.")
 
         eps = float(self.dp_epsilon)
         delta = float(self.dp_delta)
@@ -256,11 +268,7 @@ class R2D(UnlearnTrainer):
                 self.r2d_rewind_step,
             )
         ):
-            eta = (
-                float(self.r2d_eta)
-                if self.r2d_eta is not None
-                else float(getattr(self.args, "learning_rate", 0.0))
-            )
+            eta = float(self.r2d_eta) if self.r2d_eta is not None else float(getattr(self.args, "learning_rate", 0.0))
             K = int(getattr(self.state, "global_step", 0))
             try:
                 gs = _paper_sensitivity(

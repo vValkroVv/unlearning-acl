@@ -13,11 +13,7 @@ logger = logging.getLogger("data")
 def _hf_auth_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
     if "token" in kwargs and kwargs["token"] not in (None, "", "null", "None"):
         return {}
-    token = (
-        os.environ.get("HF_TOKEN")
-        or os.environ.get("HUGGINGFACE_HUB_TOKEN")
-        or os.environ.get("HF_HUB_TOKEN")
-    )
+    token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN") or os.environ.get("HF_HUB_TOKEN")
     if not token:
         return {}
     return {"token": token}
@@ -106,21 +102,15 @@ def preprocess_chat_instance(
             chat += [{"role": "assistant", "content": response}]
         date_str = template_config.get("date_string", None)
         date_info = {"date_string": date_str} if date_str is not None else {}
-        chat_ids = tokenizer.apply_chat_template(
-            chat, tokenize=True, add_generation_prompt=False, **date_info
-        )
+        chat_ids = tokenizer.apply_chat_template(chat, tokenize=True, add_generation_prompt=False, **date_info)
         # all except last response are in-context examples
         wrapped_prompt = tokenizer.apply_chat_template(
             chat[:-1], tokenize=False, add_generation_prompt=True, **date_info
         )
-        prompt_ids = tokenizer.apply_chat_template(
-            chat[:-1], tokenize=True, add_generation_prompt=True, **date_info
-        )
+        prompt_ids = tokenizer.apply_chat_template(chat[:-1], tokenize=True, add_generation_prompt=True, **date_info)
     else:
         wrapped_prompt = ""
-        system_prompt_with_special_tokens = template_config.get(
-            "system_prompt_with_special_tokens", None
-        )
+        system_prompt_with_special_tokens = template_config.get("system_prompt_with_special_tokens", None)
         if system_prompt_with_special_tokens:
             wrapped_prompt += system_prompt_with_special_tokens
         # add in-context examples
@@ -177,9 +167,7 @@ def preprocess_chat_instance(
             # we ignore loss on all indices in the labels. So, there is no way
             # to use this for next token prediction. Be careful while
             # interpreting results of such instances.
-            logger.warning(
-                "Tokenization mismatch: no valid target tokens for loss computation"
-            )
+            logger.warning("Tokenization mismatch: no valid target tokens for loss computation")
 
     item["labels"] = labels
     item["attention_mask"] = [1] * len(item["input_ids"])
@@ -211,9 +199,9 @@ def preprocess_pretraining_instance(
     Returns:
         Dict[str, torch.Tensor]: A dictionary containing 'input_ids', 'labels', and 'attention_mask' tensors for model input.
     """
-    full_seq_ids = tokenizer(
-        prefix + (" " if insert_space else "") + text_content, add_special_tokens=True
-    )["input_ids"]
+    full_seq_ids = tokenizer(prefix + (" " if insert_space else "") + text_content, add_special_tokens=True)[
+        "input_ids"
+    ]
     prefix_ids = tokenizer(prefix, add_special_tokens=True)["input_ids"]
     prefix_len = len(prefix_ids)
     full_seq_ids = full_seq_ids[: prefix_len + max_length]  # manual truncation

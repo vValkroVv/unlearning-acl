@@ -35,9 +35,7 @@ def _get_single_metric(name: str, metric_cfg, **kwargs):
     assert metric_handler_name is not None, ValueError(f"{name} handler not set")
     metric = METRICS_REGISTRY.get(metric_handler_name)
     if metric is None:
-        raise NotImplementedError(
-            f"{metric_handler_name} not implemented or not registered"
-        )
+        raise NotImplementedError(f"{metric_handler_name} not implemented or not registered")
     pre_compute_cfg = metric_cfg.get("pre_compute", {})
     pre_compute_metrics = get_metrics(pre_compute_cfg, **kwargs)
     metric.set_pre_compute_metrics(pre_compute_metrics)

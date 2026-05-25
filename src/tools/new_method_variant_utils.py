@@ -30,12 +30,8 @@ SPAN_NEW_BODY_RE = re.compile(
 MULTICF_KEY_RE = re.compile(
     r"^multicf_(?:(?P<tag>m\d+)|k(?P<k>[^_]+)_ag(?P<agg>[^_]+)_w(?P<weight>[^_]+)_t(?P<temp>[^_]+))$"
 )
-BOUNDARY_KEY_RE = re.compile(
-    r"^boundary_cf_(?:(?P<tag>b\d+)|lr(?P<local>[^_]+)_bm(?P<margin>[^_]+))$"
-)
-SIMPLE_CE_KEY_RE = re.compile(
-    r"^simple_ce(?:_cf(?P<cf>[^_]+))?(?:_ret(?P<ret>[^_]+))?(?:_gamma(?P<gamma>[^_]+))?$"
-)
+BOUNDARY_KEY_RE = re.compile(r"^boundary_cf_(?:(?P<tag>b\d+)|lr(?P<local>[^_]+)_bm(?P<margin>[^_]+))$")
+SIMPLE_CE_KEY_RE = re.compile(r"^simple_ce(?:_cf(?P<cf>[^_]+))?(?:_ret(?P<ret>[^_]+))?(?:_gamma(?P<gamma>[^_]+))?$")
 
 MULTICF_TAGS = {
     ("2", "wm", "rr", "0p7"): "m1",
@@ -171,8 +167,7 @@ def _boundary_info(*, tag: str | None, local: str, margin: str) -> MethodVariant
     method_key = f"boundary_cf_{tag}" if tag is not None else f"boundary_cf_lr{local}_bm{margin}"
     display_prefix = f"BoundaryCF {tag.upper()}" if tag is not None else "BoundaryCF"
     display_name = (
-        f"{display_prefix} (local_retain={format_numeric_token(local)} "
-        f"margin={format_numeric_token(margin)})"
+        f"{display_prefix} (local_retain={format_numeric_token(local)} margin={format_numeric_token(margin)})"
     )
     order_index = int(tag[1:]) if tag is not None and tag[1:].isdigit() else 999
     return MethodVariantInfo(
@@ -236,9 +231,7 @@ def _span_info(
     if sam_rho is not None and sam_adaptive is not None:
         parts.extend((f"sr{sam_rho}", f"sad{sam_adaptive}"))
         display_parts.append(f"sam_rho={format_numeric_token(sam_rho)}")
-        display_parts.append(
-            f"sam_adaptive={BOOL_TOKEN_DISPLAY.get(sam_adaptive, sam_adaptive)}"
-        )
+        display_parts.append(f"sam_adaptive={BOOL_TOKEN_DISPLAY.get(sam_adaptive, sam_adaptive)}")
     if proj_threshold is not None:
         parts.append(f"pct{proj_threshold}")
         display_parts.append(f"proj_threshold={format_numeric_token(proj_threshold)}")
@@ -308,9 +301,7 @@ def _general_cf_info_from_config(config: dict[str, Any] | None) -> MethodVariant
     if span_additional is None or span_cf_branch is None:
         return _general_cf_info("general_cf")
 
-    method_key = GENERAL_CF_CONFIG_MAP.get(
-        (additional_loss, routing_mode, span_additional, span_cf_branch)
-    )
+    method_key = GENERAL_CF_CONFIG_MAP.get((additional_loss, routing_mode, span_additional, span_cf_branch))
     if method_key is None:
         return _general_cf_info("general_cf")
     return _general_cf_info(method_key)
@@ -394,12 +385,9 @@ def extract_new_method_variant(
 
         tag = None
         if method_name == "span_cf" and (
-            tokens["alt_shared"] == tokens["orig_shared"]
-            and tokens["alt_unique"] == tokens["orig_unique"]
+            tokens["alt_shared"] == tokens["orig_shared"] and tokens["alt_unique"] == tokens["orig_unique"]
         ):
-            tag = SPAN_TAGS.get(
-                (tokens["mode"], tokens["alt_shared"], tokens["alt_unique"])
-            )
+            tag = SPAN_TAGS.get((tokens["mode"], tokens["alt_shared"], tokens["alt_unique"]))
         return _span_info(method_name=method_name, tag=tag, **tokens)
 
     return None

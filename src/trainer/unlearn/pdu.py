@@ -26,13 +26,9 @@ class PDU(GradDiff):
 
         self.loss_names = loss_names
         if loss_names is None:
-            self.loss_names = ["forget_loss", "retain_loss"] + [
-                f"loss_{i}" for i in range(2, len(self.preferences))
-            ]
+            self.loss_names = ["forget_loss", "retain_loss"] + [f"loss_{i}" for i in range(2, len(self.preferences))]
         if primal_dual:
-            self.add_callback(
-                DualOptimizationCallback(self, dual_update_upon, dual_warmup_epochs)
-            )
+            self.add_callback(DualOptimizationCallback(self, dual_update_upon, dual_warmup_epochs))
 
         # Sparse logging state
         self._last_log_step = -1
@@ -42,9 +38,9 @@ class PDU(GradDiff):
         self.can_update = True
 
     def final_loss_value(self, losses):
-        assert len(losses) == len(
-            self.preferences
-        ), f"Expected {len(self.preferences)} losses, but got {len(losses)} losses."
+        assert len(losses) == len(self.preferences), (
+            f"Expected {len(self.preferences)} losses, but got {len(losses)} losses."
+        )
 
         # Shift the retain_loss for the primal dual method.
         # If no primal-dual method is used, gradient-based methods will not suffer
@@ -53,17 +49,15 @@ class PDU(GradDiff):
         retain_loss = retain_loss - self.retain_loss_eps
 
         # calculate the linear scalarization
-        scaledLosses = torch.tensor(self.preferences).to(
-            losses[0].device
-        ) * torch.hstack([losses[0], retain_loss] + losses[2:])
+        scaledLosses = torch.tensor(self.preferences).to(losses[0].device) * torch.hstack(
+            [losses[0], retain_loss] + losses[2:]
+        )
         loss = scaledLosses.sum()
 
         # Update the dual parameter if primal-dual method is used, the update is done per step and
         # the warm-up period is over
         if self.primal_dual and self.can_update and self.dual_update_upon == "step":
-            self.preferences[1] = max(
-                0, self.preferences[1] + self.dual_step_size * retain_loss.item()
-            )
+            self.preferences[1] = max(0, self.preferences[1] + self.dual_step_size * retain_loss.item())
 
         # Throttle logging heavily: log only occasionally or on significant λ change
         try:
@@ -76,7 +70,9 @@ class PDU(GradDiff):
         # Significant change threshold for lambda
         lambda_now = float(self.preferences[1]) if self.primal_dual else None
         lambda_delta = (
-            abs(lambda_now - self._last_pref_value) if (self._last_pref_value is not None and lambda_now is not None) else None
+            abs(lambda_now - self._last_pref_value)
+            if (self._last_pref_value is not None and lambda_now is not None)
+            else None
         )
         significant_change = lambda_delta is not None and lambda_delta >= 0.05
 
@@ -94,9 +90,7 @@ class PDU(GradDiff):
 
     @torch.no_grad()
     def post_epoch_dual_param_update(self):
-        assert (
-            self.primal_dual
-        ), "Dual parameter update requires primal dual to be enabled"
+        assert self.primal_dual, "Dual parameter update requires primal dual to be enabled"
         # Get the training dataloader
         dataloader = self.get_train_dataloader()
 
@@ -111,16 +105,12 @@ class PDU(GradDiff):
                 "attention_mask": retain_inputs["attention_mask"],
                 "labels": retain_inputs["labels"],
             }
-            retain_loss = self.compute_retain_loss(
-                model=self.model, retain_inputs=retain_inputs
-            )
+            retain_loss = self.compute_retain_loss(model=self.model, retain_inputs=retain_inputs)
             total_dual_loss += retain_loss
             number_of_batches += 1
         retain_loss = total_dual_loss / number_of_batches - self.retain_loss_eps
 
-        self.preferences[1] = max(
-            0, self.preferences[1] + self.dual_step_size * retain_loss.item()
-        )
+        self.preferences[1] = max(0, self.preferences[1] + self.dual_step_size * retain_loss.item())
         self.log({"retain_preference": self.preferences[1]})
 
     def compute_loss(self, model, inputs, return_outputs=False):

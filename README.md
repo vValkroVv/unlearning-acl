@@ -147,9 +147,9 @@ source .venv/bin/activate
 `torch==2.4.1` with CUDA 12.4 wheels, `transformers==4.45.1`,
 `accelerate==0.34.2`, `datasets==3.0.1`, `peft==0.15.2`,
 `flash-attn==2.6.3`, `bitsandbytes==0.44.1`, `lm-eval==0.4.8`, and related
-runtime tools. `setup.py` reads `requirements.txt`, which may reflect a
-machine-specific environment snapshot; prefer the maintained setup script and
-runbooks for production work.
+runtime tools. `requirements.txt` is the clean CPU/public dependency set used
+by `setup.py`; `requirements-gpu.txt` mirrors the GPU runtime packages from
+the production setup script.
 
 Use placeholders for local storage paths:
 

@@ -7,27 +7,15 @@ from evals.metrics.base import unlearning_metric, logger
 def ks_test(model, **kwargs):
     """Compare two forget and retain model distributions with a 2-sample KS-test and report the p-value.
     Used in the TOFU benchmark as forget_quality when computed over the truth_ratio statistic."""
-    forget_tr_stats = np.array(
-        [
-            evals["score"]
-            for evals in kwargs["pre_compute"]["forget"]["value_by_index"].values()
-        ]
-    )
+    forget_tr_stats = np.array([evals["score"] for evals in kwargs["pre_compute"]["forget"]["value_by_index"].values()])
     reference_logs = kwargs.get("reference_logs", None)
     if reference_logs:
         reference_logs = reference_logs["retain_model_logs"]
-        retain_tr_stats = np.array(
-            [
-                evals["score"]
-                for evals in reference_logs["retain"]["value_by_index"].values()
-            ]
-        )
+        retain_tr_stats = np.array([evals["score"] for evals in reference_logs["retain"]["value_by_index"].values()])
         fq = ks_2samp(forget_tr_stats, retain_tr_stats)
         pvalue = fq.pvalue
     else:
-        logger.warning(
-            "retain_model_logs not provided in reference_logs, setting forget_quality to None"
-        )
+        logger.warning("retain_model_logs not provided in reference_logs, setting forget_quality to None")
         pvalue = None
     return {"agg_value": pvalue}
 

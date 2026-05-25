@@ -25,51 +25,38 @@ class SpanCF(DualCF):
         super().__init__(*args, **kwargs)
         self.span_mode = str(span_mode)
 
-        legacy_shared = (
-            float(shared_token_weight) if shared_token_weight is not None else None
-        )
-        legacy_unique = (
-            float(unique_token_weight) if unique_token_weight is not None else None
-        )
+        legacy_shared = float(shared_token_weight) if shared_token_weight is not None else None
+        legacy_unique = float(unique_token_weight) if unique_token_weight is not None else None
         self.alt_shared_token_weight = float(
             0.25
             if alt_shared_token_weight is None and legacy_shared is None
-            else (
-                legacy_shared
-                if alt_shared_token_weight is None
-                else alt_shared_token_weight
-            )
+            else (legacy_shared if alt_shared_token_weight is None else alt_shared_token_weight)
         )
         self.alt_unique_token_weight = float(
             1.0
             if alt_unique_token_weight is None and legacy_unique is None
-            else (
-                legacy_unique
-                if alt_unique_token_weight is None
-                else alt_unique_token_weight
-            )
+            else (legacy_unique if alt_unique_token_weight is None else alt_unique_token_weight)
         )
         self.orig_shared_token_weight = float(
-            self.alt_shared_token_weight
-            if orig_shared_token_weight is None
-            else orig_shared_token_weight
+            self.alt_shared_token_weight if orig_shared_token_weight is None else orig_shared_token_weight
         )
         self.orig_unique_token_weight = float(
-            self.alt_unique_token_weight
-            if orig_unique_token_weight is None
-            else orig_unique_token_weight
+            self.alt_unique_token_weight if orig_unique_token_weight is None else orig_unique_token_weight
         )
         self.shared_token_weight = self.alt_shared_token_weight
         self.unique_token_weight = self.alt_unique_token_weight
 
         if self.span_mode not in {"lcs", "set_overlap"}:
             raise ValueError("SpanCF span_mode must be `lcs` or `set_overlap`.")
-        if min(
-            self.alt_shared_token_weight,
-            self.alt_unique_token_weight,
-            self.orig_shared_token_weight,
-            self.orig_unique_token_weight,
-        ) < 0.0:
+        if (
+            min(
+                self.alt_shared_token_weight,
+                self.alt_unique_token_weight,
+                self.orig_shared_token_weight,
+                self.orig_unique_token_weight,
+            )
+            < 0.0
+        ):
             raise ValueError("SpanCF token weights must be non-negative.")
 
     def _shared_positions(self, tokens: list[int], other_tokens: list[int]) -> set[int]:
@@ -128,9 +115,7 @@ class SpanCF(DualCF):
             shared_positions = self._shared_positions(tokens, other_tokens)
             row_weights = []
             for token_idx in range(len(tokens)):
-                row_weights.append(
-                    shared_weight if token_idx in shared_positions else unique_weight
-                )
+                row_weights.append(shared_weight if token_idx in shared_positions else unique_weight)
 
             weights[batch_idx, valid_mask] = torch.tensor(
                 row_weights,
@@ -143,16 +128,8 @@ class SpanCF(DualCF):
             unique_fractions.append(float(token_count - shared_count) / float(token_count))
 
         return weights, {
-            "shared_fraction_mean": (
-                sum(shared_fractions) / float(len(shared_fractions))
-                if shared_fractions
-                else 0.0
-            ),
-            "unique_fraction_mean": (
-                sum(unique_fractions) / float(len(unique_fractions))
-                if unique_fractions
-                else 0.0
-            ),
+            "shared_fraction_mean": (sum(shared_fractions) / float(len(shared_fractions)) if shared_fractions else 0.0),
+            "unique_fraction_mean": (sum(unique_fractions) / float(len(unique_fractions)) if unique_fractions else 0.0),
         }
 
     def _compute_cf_vec(self, model, original_inputs, alternate_inputs):

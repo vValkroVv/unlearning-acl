@@ -52,9 +52,7 @@ class LoKU(GradDiff):
     def _resolve_lora_targets_and_rank(self):
         peft_config = getattr(self.model, "peft_config", None)
         if peft_config is None:
-            raise ValueError(
-                "LoKU with FILA requires a LoRA/PEFT model, but no peft_config was found."
-            )
+            raise ValueError("LoKU with FILA requires a LoRA/PEFT model, but no peft_config was found.")
 
         if not isinstance(peft_config, dict) or not peft_config:
             raise ValueError("Invalid peft_config structure on model.")
@@ -85,9 +83,7 @@ class LoKU(GradDiff):
     def _apply_fila_or_raise(self):
         importance_file = str(self.importance_file)
         if not os.path.exists(importance_file):
-            raise FileNotFoundError(
-                f"[LoKU] importance_file does not exist: {importance_file}"
-            )
+            raise FileNotFoundError(f"[LoKU] importance_file does not exist: {importance_file}")
 
         target_modules, lora_rank = self._resolve_lora_targets_and_rank()
         logger.info(
@@ -144,9 +140,7 @@ class LoKU(GradDiff):
         if hasattr(model_to_save, "unload") and callable(model_to_save.unload):
             base_model = model_to_save.unload()
         else:
-            raise ValueError(
-                "[LoKU] FILA base save requires a PEFT model with `unload()` support."
-            )
+            raise ValueError("[LoKU] FILA base save requires a PEFT model with `unload()` support.")
 
         base_model.save_pretrained(base_dir)
         if self.tokenizer is not None:

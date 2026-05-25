@@ -73,13 +73,7 @@ def load_epoch_fallbacks(run_dir: Path) -> tuple[tuple[float, ...], float | None
 
     save_on_epochs_raw = trainer_cfg.get("save_on_epochs") or []
     save_on_epochs = tuple(
-        sorted(
-            {
-                float(epoch)
-                for epoch in save_on_epochs_raw
-                if parse_optional_float(epoch) is not None
-            }
-        )
+        sorted({float(epoch) for epoch in save_on_epochs_raw if parse_optional_float(epoch) is not None})
     )
 
     trainer_args = trainer_cfg.get("args")
@@ -117,11 +111,7 @@ def infer_step_epoch(run_dir: Path, label: str) -> tuple[int | None, float | Non
 def apply_config_epoch_fallbacks(run_dir: Path, rows: list[dict[str, Any]]) -> None:
     save_on_epochs, final_epoch = load_epoch_fallbacks(run_dir)
 
-    checkpoint_rows = [
-        row
-        for row in rows
-        if parse_checkpoint_step(str(row.get("label", ""))) is not None
-    ]
+    checkpoint_rows = [row for row in rows if parse_checkpoint_step(str(row.get("label", ""))) is not None]
     checkpoint_rows.sort(
         key=lambda row: (
             parse_checkpoint_step(str(row.get("label", ""))) or 0,

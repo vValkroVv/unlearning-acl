@@ -113,8 +113,7 @@ def parse_args() -> argparse.Namespace:
         "--average-seeds",
         action="store_true",
         help=(
-            "Average rows for runs that share the same canonical run name after stripping a trailing "
-            "_seed<INT> suffix."
+            "Average rows for runs that share the same canonical run name after stripping a trailing _seed<INT> suffix."
         ),
     )
     return parser.parse_args()
@@ -134,9 +133,7 @@ def prepare_output_root(output_root: Path, overwrite: bool) -> Path:
     root = output_root.expanduser().resolve()
     if root.exists():
         if not overwrite:
-            raise FileExistsError(
-                f"Output directory already exists: {root}. Pass --overwrite to rebuild it."
-            )
+            raise FileExistsError(f"Output directory already exists: {root}. Pass --overwrite to rebuild it.")
         shutil.rmtree(root)
     root.mkdir(parents=True, exist_ok=True)
     return root
@@ -326,11 +323,7 @@ def resolve_simple_reference(value: Any, context: dict[str, Any]) -> Any:
 
 def dedupe_representative_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     base_row = next((row for row in rows if row.get("label") == "base_model_orig"), None)
-    trajectory_rows = [
-        row
-        for row in rows
-        if row.get("label") not in {"base_model_orig", "base_model_run"}
-    ]
+    trajectory_rows = [row for row in rows if row.get("label") not in {"base_model_orig", "base_model_run"}]
 
     representatives: list[dict[str, Any]] = []
     for row in trajectory_rows:
@@ -386,8 +379,7 @@ def build_metric_values_by_slot(rows: list[dict[str, Any]], metric_name: str) ->
     slot_rows, _ = build_epoch_slots(rows)
     representative_rows = dedupe_representative_rows(rows)
     return {
-        slot_row["slot"]: source_row.get(metric_name)
-        for slot_row, source_row in zip(slot_rows, representative_rows)
+        slot_row["slot"]: source_row.get(metric_name) for slot_row, source_row in zip(slot_rows, representative_rows)
     }
 
 
@@ -411,12 +403,7 @@ def average_scalar_values(values: list[Any]) -> Any:
 
 
 def collect_metric_keys(rows: list[dict[str, Any]]) -> list[str]:
-    metric_keys = {
-        key
-        for row in rows
-        for key, value in row.items()
-        if key not in META_COLUMNS and value is not None
-    }
+    metric_keys = {key for row in rows for key, value in row.items() if key not in META_COLUMNS and value is not None}
     ordered = [metric for metric in PREFERRED_METRIC_ORDER if metric in metric_keys]
     utility_metric_keys = sorted(
         (metric for metric in metric_keys if UTILITY_COLUMN_RE.fullmatch(metric)),
@@ -585,9 +572,7 @@ def collect_utility_rows_from_json(run_dir: Path) -> list[dict[str, Any]]:
         if row["label"] == "base_model_orig":
             base_utility = utility_avg
         output_row["utility_delta_vs_base"] = (
-            utility_avg - base_utility
-            if utility_avg is not None and base_utility is not None
-            else None
+            utility_avg - base_utility if utility_avg is not None and base_utility is not None else None
         )
         rows.append(output_row)
 
@@ -639,10 +624,7 @@ def collect_merged_rows(run_dir: Path) -> list[dict[str, Any]]:
             key=lambda row: checkpoint_sort_key(str(row["label"]), row.get("step")),
         )
 
-    merged_by_label = {
-        str(row["label"]): dict(row)
-        for row in merged_rows
-    }
+    merged_by_label = {str(row["label"]): dict(row) for row in merged_rows}
     for row in wrong_generation_rows:
         label = str(row["label"])
         merged = merged_by_label.setdefault(
@@ -703,9 +685,7 @@ def build_params_payload(
                 else None
             ),
             "model_subfolder": (
-                model.get("model_args", {}).get("subfolder")
-                if isinstance(model.get("model_args"), dict)
-                else None
+                model.get("model_args", {}).get("subfolder") if isinstance(model.get("model_args"), dict) else None
             ),
             "tokenizer_pretrained_model_name_or_path": (
                 model.get("tokenizer_args", {}).get("pretrained_model_name_or_path")
@@ -726,9 +706,7 @@ def build_params_payload(
         "source_files": {
             "config_yaml": str(run_dir / ".hydra" / "config.yaml"),
             "overrides_yaml": (
-                str(run_dir / ".hydra" / "overrides.yaml")
-                if (run_dir / ".hydra" / "overrides.yaml").exists()
-                else None
+                str(run_dir / ".hydra" / "overrides.yaml") if (run_dir / ".hydra" / "overrides.yaml").exists() else None
             ),
             "merged_summary_tsv": (
                 str(run_dir / "checkpoint_evals_merged" / "summary.tsv")
@@ -829,9 +807,7 @@ def build_epoch_reference_rows(run_groups: list[dict[str, Any]]) -> tuple[list[d
             for slot_row in build_epoch_slots(run["merged_rows"])[0]:
                 slot_name = str(slot_row["slot"])
                 current_row = slot_map.get(slot_name)
-                if current_row is None or (
-                    current_row.get("label") != "final" and slot_row.get("label") == "final"
-                ):
+                if current_row is None or (current_row.get("label") != "final" and slot_row.get("label") == "final"):
                     slot_map[slot_name] = slot_row
 
     slot_names = sorted(slot_map, key=float)

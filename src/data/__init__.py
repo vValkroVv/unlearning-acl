@@ -31,14 +31,10 @@ def _register_collator(collator_class):
 
 def _load_single_dataset(dataset_name, dataset_cfg: DictConfig, **kwargs):
     dataset_handler_name = dataset_cfg.get("handler")
-    assert dataset_handler_name is not None, ValueError(
-        f"{dataset_name} handler not set"
-    )
+    assert dataset_handler_name is not None, ValueError(f"{dataset_name} handler not set")
     dataset_handler = DATASET_REGISTRY.get(dataset_handler_name)
     if dataset_handler is None:
-        raise NotImplementedError(
-            f"{dataset_handler_name} not implemented or not registered"
-        )
+        raise NotImplementedError(f"{dataset_handler_name} not implemented or not registered")
     dataset_args = dataset_cfg.args
     return dataset_handler(**dataset_args, **kwargs)
 
@@ -74,14 +70,10 @@ def get_data(data_cfg: DictConfig, mode="train", **kwargs):
 
 def _get_single_collator(collator_name: str, collator_cfg: DictConfig, **kwargs):
     collator_handler_name = collator_cfg.get("handler")
-    assert collator_handler_name is not None, ValueError(
-        f"{collator_name} handler not set"
-    )
+    assert collator_handler_name is not None, ValueError(f"{collator_name} handler not set")
     collator_handler = COLLATOR_REGISTRY.get(collator_handler_name)
     if collator_handler is None:
-        raise NotImplementedError(
-            f"{collator_handler_name} not implemented or not registered"
-        )
+        raise NotImplementedError(f"{collator_handler_name} not implemented or not registered")
     collator_args = collator_cfg.args
     return collator_handler(**collator_args, **kwargs)
 
@@ -89,9 +81,7 @@ def _get_single_collator(collator_name: str, collator_cfg: DictConfig, **kwargs)
 def get_collators(collator_cfgs, **kwargs):
     collators = {}
     for collator_name, collator_cfg in collator_cfgs.items():
-        collators[collator_name] = _get_single_collator(
-            collator_name, collator_cfg, **kwargs
-        )
+        collators[collator_name] = _get_single_collator(collator_name, collator_cfg, **kwargs)
     if len(collators) == 1:
         # return a single collator
         return list(collators.values())[0]

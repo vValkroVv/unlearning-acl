@@ -207,9 +207,7 @@ class FALCON(GradDiff):
             V = torch.pca_lowrank(Xf, q=k, center=False)[2]
 
         V = V.to(device=ref_samples.device, dtype=ref_samples.dtype)
-        r = torch.randn(
-            (num_samples, d), device=ref_samples.device, dtype=ref_samples.dtype
-        )
+        r = torch.randn((num_samples, d), device=ref_samples.device, dtype=ref_samples.dtype)
 
         proj = (r @ V) @ V.transpose(0, 1)
         pov = r - self.pov_alpha * proj
@@ -226,9 +224,7 @@ class FALCON(GradDiff):
 
         return F.normalize(pov, dim=-1)
 
-    def _forget_infonce(
-        self, anchor: torch.Tensor, positives: torch.Tensor, negatives: torch.Tensor
-    ) -> torch.Tensor:
+    def _forget_infonce(self, anchor: torch.Tensor, positives: torch.Tensor, negatives: torch.Tensor) -> torch.Tensor:
         a = F.normalize(anchor, dim=-1)
         p = F.normalize(positives, dim=-1)
         n = F.normalize(negatives, dim=-1)
@@ -260,13 +256,9 @@ class FALCON(GradDiff):
         labels = torch.arange(n, device=a.device)
         return F.cross_entropy(logits.float(), labels)
 
-    def _generate_steering_vector_official(
-        self, model, hidden_states: torch.Tensor
-    ) -> torch.Tensor:
+    def _generate_steering_vector_official(self, model, hidden_states: torch.Tensor) -> torch.Tensor:
         if hidden_states.dim() != 3:
-            raise ValueError(
-                f"[FALCON] Expected hidden_states with shape (B, L, D), got {tuple(hidden_states.shape)}"
-            )
+            raise ValueError(f"[FALCON] Expected hidden_states with shape (B, L, D), got {tuple(hidden_states.shape)}")
 
         _ = model  # kept for parity with official signature
         _, _, d_model = hidden_states.shape
@@ -293,9 +285,7 @@ class FALCON(GradDiff):
             key_directions = vh[:k].to(device=device, dtype=dtype)
 
             s0 = s_vals[0].clamp_min(1e-12)
-            weights = (
-                torch.sigmoid((s_vals[:k] / s0).to(device=device, dtype=dtype)) * (-1000.0)
-            )
+            weights = torch.sigmoid((s_vals[:k] / s0).to(device=device, dtype=dtype)) * (-1000.0)
 
             projection = torch.eye(d_model, dtype=dtype, device=device)
             weighted_dirs = key_directions.transpose(0, 1) * weights.unsqueeze(0)
@@ -334,9 +324,7 @@ class FALCON(GradDiff):
         neg_sim = torch.einsum("bld,blnd->bln", anchor, negatives)  # (B, L, 1)
 
         logits = torch.cat([pos_sim, neg_sim], dim=-1) / self.temperature  # (B, L, 2)
-        labels = torch.zeros(
-            logits.size(0), logits.size(1), dtype=torch.long, device=device
-        )
+        labels = torch.zeros(logits.size(0), logits.size(1), dtype=torch.long, device=device)
         return F.cross_entropy(logits.reshape(-1, logits.size(-1)).float(), labels.reshape(-1))
 
     def _resolve_grad_conflict_official(
@@ -379,9 +367,7 @@ class FALCON(GradDiff):
 
     def training_step(self, model: torch.nn.Module, inputs) -> torch.Tensor:
         if self.is_deepspeed_enabled:
-            raise NotImplementedError(
-                "[FALCON] DeepSpeed path is not implemented for manual gradient projection."
-            )
+            raise NotImplementedError("[FALCON] DeepSpeed path is not implemented for manual gradient projection.")
         if getattr(self.accelerator, "num_processes", 1) > 1:
             raise NotImplementedError(
                 "[FALCON] Multi-process training is not implemented for manual gradient projection."
@@ -396,22 +382,16 @@ class FALCON(GradDiff):
         retain_inputs = self._as_model_inputs(inputs["retain"])
 
         with self.compute_loss_context_manager():
-            upd_f_acts, _ = self._forward_with_cache(
-                model, forget_inputs, module=self.model_module, no_grad=False
-            )
+            upd_f_acts, _ = self._forward_with_cache(model, forget_inputs, module=self.model_module, no_grad=False)
             with self._frozen_forward_context() as frozen_model:
                 ref_f_acts, _ = self._forward_with_cache(
                     frozen_model, forget_inputs, module=self.ref_module, no_grad=True
                 )
 
             if self.official_mode:
-                steer_vec = self._generate_steering_vector_official(
-                    model, upd_f_acts.detach()
-                )
+                steer_vec = self._generate_steering_vector_official(model, upd_f_acts.detach())
                 steer_scaled = (
-                    steer_vec.expand_as(upd_f_acts).to(
-                        device=upd_f_acts.device, dtype=upd_f_acts.dtype
-                    )
+                    steer_vec.expand_as(upd_f_acts).to(device=upd_f_acts.device, dtype=upd_f_acts.dtype)
                     * self.steering_coeff
                 )
                 forget_loss = self._contrastive_loss_official(
@@ -429,9 +409,7 @@ class FALCON(GradDiff):
                 povs = self._compute_povs(ref_f, num_samples=upd_f.shape[0])
                 forget_loss = self._forget_infonce(anchor=upd_f, positives=povs, negatives=ref_f)
 
-            upd_r_acts, _ = self._forward_with_cache(
-                model, retain_inputs, module=self.model_module, no_grad=False
-            )
+            upd_r_acts, _ = self._forward_with_cache(model, retain_inputs, module=self.model_module, no_grad=False)
             with self._frozen_forward_context() as frozen_model:
                 ref_r_acts, _ = self._forward_with_cache(
                     frozen_model, retain_inputs, module=self.ref_module, no_grad=True
@@ -487,9 +465,7 @@ class FALCON(GradDiff):
 
             eps = 1e-12
             cos = dot / (torch.sqrt(nf + eps) * torch.sqrt(nr + eps) + eps)
-            conflict = bool(
-                cos.detach().item() < self.conflict_cos_threshold and nr.detach().item() > 0.0
-            )
+            conflict = bool(cos.detach().item() < self.conflict_cos_threshold and nr.detach().item() > 0.0)
             proj_coeff = (dot / (nr + eps)) if conflict else None
 
         grad_acc_steps = max(1, int(self.args.gradient_accumulation_steps))

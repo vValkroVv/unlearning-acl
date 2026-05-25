@@ -196,12 +196,8 @@ def merge_row(
         "structured_outputs": True,
         "merged_model_count": len(source_rows),
         "merged_backends": merged_backends,
-        "merged_models": [
-            clean_text(row.get("generator_model") or row.get("model")) for row in source_rows
-        ],
-        "merged_reasoning_efforts": [
-            clean_text(row.get("generator_reasoning_effort")) for row in source_rows
-        ],
+        "merged_models": [clean_text(row.get("generator_model") or row.get("model")) for row in source_rows],
+        "merged_reasoning_efforts": [clean_text(row.get("generator_reasoning_effort")) for row in source_rows],
     }
 
 
@@ -276,8 +272,7 @@ def main() -> None:
         "question_key": require_common_meta(metas, "question_key"),
         "answer_key": require_common_meta(metas, "answer_key"),
         "answer_index": require_common_meta(metas, "answer_index"),
-        "num_alternates": args.max_alternates
-        or sum(int(meta.get("num_alternates") or 0) for meta in metas),
+        "num_alternates": args.max_alternates or sum(int(meta.get("num_alternates") or 0) for meta in metas),
         "batch_size": None,
         "max_examples": len(merged_rows),
         "candidate_bank": None,

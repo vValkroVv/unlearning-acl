@@ -27,14 +27,10 @@ def classifier_prob(model, **kwargs):
     device = kwargs.get("device", "cuda")
 
     tokenizer = AutoTokenizer.from_pretrained(**classifier_tokenization_args)
-    classifier = AutoModelForSequenceClassification.from_pretrained(
-        **classifier_model_args
-    ).to(device)
+    classifier = AutoModelForSequenceClassification.from_pretrained(**classifier_model_args).to(device)
 
     data = kwargs["pre_compute"]["text"]["value_by_index"]
-    data_list = [
-        {"text": entry[text_key], "index": int(key)} for key, entry in data.items()
-    ]
+    data_list = [{"text": entry[text_key], "index": int(key)} for key, entry in data.items()]
 
     # Create DataLoader
     dataloader = DataLoader(data_list, batch_size=batch_size, shuffle=False)
@@ -65,12 +61,6 @@ def classifier_prob(model, **kwargs):
         for idx, prob, text in zip(batch_indices, scores, batch_texts):
             # Add the prediction to the original data
             scores_by_index[idx] = {"score": prob, text_key: text}
-    class_scores = np.array(
-        [
-            evals["score"]
-            for evals in scores_by_index.values()
-            if evals["score"] is not None
-        ]
-    )
+    class_scores = np.array([evals["score"] for evals in scores_by_index.values() if evals["score"] is not None])
     class_scores = aggregate_to_1D(class_scores)
     return {"agg_value": np.mean(class_scores), "value_by_index": scores_by_index}

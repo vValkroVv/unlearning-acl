@@ -60,9 +60,7 @@ def parse_index(value: Any, fallback: int, path: Path, line_no: int, key: str) -
     try:
         return int(raw_index)
     except (TypeError, ValueError) as exc:
-        raise ValueError(
-            f"{path}:{line_no}: index key {key!r} must be integer-like, got {raw_index!r}"
-        ) from exc
+        raise ValueError(f"{path}:{line_no}: index key {key!r} must be integer-like, got {raw_index!r}") from exc
 
 
 def select_alternate_key(row: dict[str, Any], requested_key: str | None) -> str | None:
@@ -78,8 +76,7 @@ def select_alternate_key(row: dict[str, Any], requested_key: str | None) -> str 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Build AltPO-compatible JSONL artifacts from AltPO sub_answer files "
-            "or existing counterfactual artifacts."
+            "Build AltPO-compatible JSONL artifacts from AltPO sub_answer files or existing counterfactual artifacts."
         )
     )
     parser.add_argument("--input-path", required=True, type=Path)
@@ -113,19 +110,13 @@ def main() -> None:
     with args.output_path.open("w", encoding="utf-8") as output_handle:
         for line_no, row in read_jsonl(args.input_path):
             if args.question_key not in row:
-                raise KeyError(
-                    f"{args.input_path}:{line_no}: missing question key {args.question_key!r}"
-                )
+                raise KeyError(f"{args.input_path}:{line_no}: missing question key {args.question_key!r}")
             if args.answer_key not in row:
-                raise KeyError(
-                    f"{args.input_path}:{line_no}: missing answer key {args.answer_key!r}"
-                )
+                raise KeyError(f"{args.input_path}:{line_no}: missing answer key {args.answer_key!r}")
 
             alt_key = select_alternate_key(row, args.alternate_key)
             if alt_key is None:
-                raise KeyError(
-                    f"{args.input_path}:{line_no}: missing alternate source; pass --alternate-key"
-                )
+                raise KeyError(f"{args.input_path}:{line_no}: missing alternate source; pass --alternate-key")
             if alt_key not in row:
                 raise KeyError(f"{args.input_path}:{line_no}: missing alternate key {alt_key!r}")
 
@@ -152,9 +143,7 @@ def main() -> None:
                     dropped += 1
                     continue
 
-                if args.reject_gold_substring and (
-                    norm_answer in norm_alt or norm_alt in norm_answer
-                ):
+                if args.reject_gold_substring and (norm_answer in norm_alt or norm_alt in norm_answer):
                     dropped += 1
                     continue
 
@@ -167,9 +156,7 @@ def main() -> None:
                         dropped += 1
                         continue
 
-                output_index = (
-                    base_index * 100 + alt_pos if args.flatten_list_alternates else base_index
-                )
+                output_index = base_index * 100 + alt_pos if args.flatten_list_alternates else base_index
                 if output_index in seen_indices:
                     dropped += 1
                     continue

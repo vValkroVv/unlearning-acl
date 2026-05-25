@@ -34,9 +34,7 @@ class UnlearningMetric:
         """Load the collators from config"""
         if self.collators:
             return self.collators
-        collators = get_collators(
-            tokenizer=kwargs.get("tokenizer", None), collator_cfgs=collator_cfgs
-        )
+        collators = get_collators(tokenizer=kwargs.get("tokenizer", None), collator_cfgs=collator_cfgs)
         return collators
 
     def set_pre_compute_metrics(self, metrics: Dict[str, Callable]):
@@ -83,20 +81,14 @@ class UnlearningMetric:
             access_name = pre_metric_cfg.get("access_key", pre_metric_name)
             _results = {}
             if pre_metric_name in cache:
-                logger.info(
-                    f"Skipping {metric_name}'s precompute {pre_metric_name}, already evaluated."
-                )
+                logger.info(f"Skipping {metric_name}'s precompute {pre_metric_name}, already evaluated.")
                 _results = cache[pre_metric_name]
             else:
                 pre_metric = self.pre_compute_metrics.get(pre_metric_name, None)
-                assert pre_metric is not None, ValueError(
-                    f"No pre_compute metric of name {pre_metric_name}"
-                )
+                assert pre_metric is not None, ValueError(f"No pre_compute metric of name {pre_metric_name}")
                 pre_metric_kwargs = kwargs.copy()
                 pre_metric_kwargs.update(**pre_metric_cfg)
-                _results = pre_metric.evaluate(
-                    model, pre_metric_name, cache=cache, **pre_metric_kwargs
-                )
+                _results = pre_metric.evaluate(model, pre_metric_name, cache=cache, **pre_metric_kwargs)
             pre_metric_results.update({access_name: _results})
         if pre_metric_results:
             kwargs.update({"pre_compute": pre_metric_results})
@@ -109,9 +101,7 @@ class UnlearningMetric:
             if path is None:
                 continue
             include_cfgs = reference_log_cfg.get("include", None)
-            assert path is not None, ValueError(
-                "path not specified for {reference_log_name} in {metric_name}"
-            )
+            assert path is not None, ValueError("path not specified for {reference_log_name} in {metric_name}")
             _logs = self.load_logs_from_file(path)
             reference_logs[reference_log_name] = {}
             for key, include_cfg in include_cfgs.items():
@@ -132,9 +122,7 @@ class UnlearningMetric:
         if metric_name in cache:
             logger.info(f"Skipping {metric_name}, already evaluated.")
 
-        metric_kwargs = self.prepare_kwargs_evaluate_metric(
-            model, metric_name, cache, **kwargs
-        )
+        metric_kwargs = self.prepare_kwargs_evaluate_metric(model, metric_name, cache, **kwargs)
         results = self.evaluate_metric(model, metric_name, **metric_kwargs)
         cache.update({metric_name: results})
         return results

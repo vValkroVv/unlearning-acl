@@ -89,8 +89,7 @@ def model_validate(model_cls: type[BaseModel], payload: Any) -> BaseModel:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Generate a verified multi-candidate DualCF sidecar JSONL using either "
-            "the OpenAI API or Codex CLI."
+            "Generate a verified multi-candidate DualCF sidecar JSONL using either the OpenAI API or Codex CLI."
         )
     )
     parser.add_argument("--backend", choices=("openai_api", "codex_cli"), required=True)
@@ -279,7 +278,6 @@ def build_codex_batch_schema() -> dict[str, Any]:
                         },
                         "answer_type": {"type": "string"},
                     },
-                    "required": ["index", "alternates", "answer_type"],
                     "required": [
                         "index",
                         "alternates",
@@ -317,7 +315,7 @@ def build_codex_batch_prompt(
     return (
         "You are generating verified multi-alternate counterfactual sidecar rows for DualCF v3.\n\n"
         "Return JSON only matching the provided schema.\n"
-        "The top-level object must be {\"results\": [...]}.\n"
+        'The top-level object must be {"results": [...]}.\n'
         "results must contain exactly one item per input example.\n"
         "Preserve the input index exactly.\n"
         f"Return exactly {num_alternates} short wrong alternatives when possible.\n"
@@ -333,8 +331,7 @@ def build_codex_batch_prompt(
         "- shared_fact_scores: shared/public fact preservation in [0,1]\n"
         "- candidate_sources: provenance strings aligned to alternates\n"
         "- answer_type: short label like year/date/person/place/number/string/unknown\n\n"
-        "Batch:\n"
-        + json.dumps(batch_payload, ensure_ascii=False, indent=2)
+        "Batch:\n" + json.dumps(batch_payload, ensure_ascii=False, indent=2)
     )
 
 
@@ -589,15 +586,11 @@ def generate_openai_sidecar(
                     break
                 except Exception as exc:
                     last_error = exc
-                    log(
-                        f"row {row_no}/{len(rows)} index={idx} openai attempt={attempt} failed: {exc}"
-                    )
+                    log(f"row {row_no}/{len(rows)} index={idx} openai attempt={attempt} failed: {exc}")
                     time.sleep(min(2.0 * attempt, 10.0))
 
             if normalized is None:
-                raise RuntimeError(
-                    f"OpenAI sidecar generation failed for index={idx}: {last_error}"
-                ) from last_error
+                raise RuntimeError(f"OpenAI sidecar generation failed for index={idx}: {last_error}") from last_error
 
             fout.write(
                 json.dumps(
@@ -630,10 +623,7 @@ def codex_login_status() -> str:
     )
     status_text = (proc.stdout or proc.stderr or "").strip()
     if proc.returncode != 0:
-        raise RuntimeError(
-            "Unable to read Codex CLI login status. "
-            f"stdout={proc.stdout!r} stderr={proc.stderr!r}"
-        )
+        raise RuntimeError(f"Unable to read Codex CLI login status. stdout={proc.stdout!r} stderr={proc.stderr!r}")
     return status_text
 
 
@@ -680,17 +670,12 @@ def run_codex_batch(
 
     if proc.returncode != 0:
         combined = f"{proc.stdout or ''}\n{proc.stderr or ''}"
-        if (
-            "refresh token was already used" in combined
-            or "Please log out and sign in again" in combined
-        ):
+        if "refresh token was already used" in combined or "Please log out and sign in again" in combined:
             raise RuntimeError(
                 "Codex CLI authentication is stale. Run `codex logout` and "
                 "`codex login` again, then rerun with --resume."
             )
-        raise RuntimeError(
-            f"codex exec failed with code {proc.returncode}; see {stdout_path} and {stderr_path}"
-        )
+        raise RuntimeError(f"codex exec failed with code {proc.returncode}; see {stdout_path} and {stderr_path}")
 
     if not result_path.exists():
         raise RuntimeError(f"Codex did not write {result_path}")
@@ -776,9 +761,7 @@ def generate_codex_sidecar(
                     break
                 except Exception as exc:
                     last_error = exc
-                    log(
-                        f"batch {batch_id} size={len(batch)} codex attempt={attempt} failed: {exc}"
-                    )
+                    log(f"batch {batch_id} size={len(batch)} codex attempt={attempt} failed: {exc}")
                     time.sleep(min(2.0 * attempt, 10.0))
 
             if payload is None:
@@ -788,16 +771,12 @@ def generate_codex_sidecar(
 
             results = payload.get("results")
             if not isinstance(results, list):
-                raise RuntimeError(
-                    f"Codex result for batch={batch_id} has no `results` list: {payload}"
-                )
+                raise RuntimeError(f"Codex result for batch={batch_id} has no `results` list: {payload}")
 
             by_index: dict[int, dict[str, Any]] = {}
             for item in results:
                 if not isinstance(item, dict) or "index" not in item:
-                    raise RuntimeError(
-                        f"Codex batch={batch_id} returned malformed item: {item!r}"
-                    )
+                    raise RuntimeError(f"Codex batch={batch_id} returned malformed item: {item!r}")
                 by_index[int(item["index"])] = item
 
             expected_indices = {int(row["index"]) for row in batch}
@@ -880,10 +859,7 @@ def main() -> None:
     rows = load_rows(args)
     candidate_bank = load_candidate_bank(args.candidate_bank)
     done_indices = load_existing_indices(output_path) if args.resume else set()
-    log(
-        f"backend={args.backend} rows={len(rows)} already_done={len(done_indices)} "
-        f"output={output_path}"
-    )
+    log(f"backend={args.backend} rows={len(rows)} already_done={len(done_indices)} output={output_path}")
 
     codex_status: Optional[str] = None
     written = 0

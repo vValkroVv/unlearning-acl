@@ -1,6 +1,5 @@
-import math
 import logging
-from typing import Dict, Any, Optional
+from typing import Optional
 
 import torch
 
@@ -34,7 +33,7 @@ class AdaWGD(GradDiff):
         alpha0: float = 0.5,  # starting alpha; adapted within [0, gamma]
         alpha_const: Optional[float] = None,  # if set, use constant alpha instead of adapting
         # Forget-side beta control
-        beta_const: Optional[float] = None,   # if set, use constant per-sample beta instead of dynamic from pop_sum
+        beta_const: Optional[float] = None,  # if set, use constant per-sample beta instead of dynamic from pop_sum
         eps: float = 0.1,  # target relative tolerance on retain drift
         tau: float = 0.05,  # dead-zone half-width around eps
         # Online EMA smoothing for signals
@@ -45,20 +44,20 @@ class AdaWGD(GradDiff):
         eta_small: float = 0.05,
         # Sensitivities
         dF_tol: float = 0.02,  # |relative forget change| below this is "flat"
-        k_dist: float = 1.0,   # scale factor for distance beyond tolerance
-        k_flat: float = 1.0,   # extra scale when both signals are flat
-        mcap: float = 3.0,     # cap on distance multiplier
+        k_dist: float = 1.0,  # scale factor for distance beyond tolerance
+        k_flat: float = 1.0,  # extra scale when both signals are flat
+        mcap: float = 3.0,  # cap on distance multiplier
         # Popularity modulation of Δα (epoch-wise) — can be disabled or tuned
         pop_delta_alpha_enable: bool = True,
-        pop_inc_amp: float = 0.5,   # in [0,1]; s_inc = (1 - pop_inc_amp) + pop_inc_amp * z
-        pop_dec_amp: float = 0.5,   # in [0,1]; s_dec = 1 - pop_dec_amp * z
+        pop_inc_amp: float = 0.5,  # in [0,1]; s_inc = (1 - pop_inc_amp) + pop_inc_amp * z
+        pop_dec_amp: float = 0.5,  # in [0,1]; s_dec = 1 - pop_dec_amp * z
         # Step logging interval for richer training logs (in steps)
         step_log_interval: int = 50,
         # Popularity-coupled retain scaling (optional)
         retain_pop_mode: str = "none",  # one of: "none", "inv_beta"
-        retain_pop_gain: float = 1.0,   # strength for scaling with mean beta
-        retain_pop_min: float = 0.3,    # lower clamp for scaling factor
-        retain_pop_max: float = 1.0,    # upper clamp for scaling factor
+        retain_pop_gain: float = 1.0,  # strength for scaling with mean beta
+        retain_pop_min: float = 0.3,  # lower clamp for scaling factor
+        retain_pop_max: float = 1.0,  # upper clamp for scaling factor
         *args,
         **kwargs,
     ):
@@ -147,7 +146,9 @@ class AdaWGD(GradDiff):
 
         # Forget inputs
         finputs_full = inputs["forget"]
-        forget_inputs = {k: finputs_full[k] for k in ("input_ids", "attention_mask", "labels", "pop_sum") if k in finputs_full}
+        forget_inputs = {
+            k: finputs_full[k] for k in ("input_ids", "attention_mask", "labels", "pop_sum") if k in finputs_full
+        }
         # Training-time repetition penalty disabled for AdaWGD; handle repetition at inference
         forget_loss, forget_outputs = compute_wga_loss_dynamic_beta(
             model=model,
@@ -190,11 +191,13 @@ class AdaWGD(GradDiff):
 
         # Light logging of effective alpha and batch popularity when enabled
         if self.retain_pop_mode != "none" and pop_beta_mean is not None:
-            self.log({
-                "ada_alpha_eff": float(alpha_eff),
-                "ada_beta_mean_forget": float(pop_beta_mean) if pop_beta_mean is not None else 0.0,
-            })
-        
+            self.log(
+                {
+                    "ada_alpha_eff": float(alpha_eff),
+                    "ada_beta_mean_forget": float(pop_beta_mean) if pop_beta_mean is not None else 0.0,
+                }
+            )
+
         # Rich step-level logging at a configurable interval to the Trainer logs.
         try:
             self._step_count = getattr(self, "_step_count", 0) + 1
@@ -209,9 +212,15 @@ class AdaWGD(GradDiff):
                     "ada_step_alpha_eff": float(alpha_eff),
                     "ada_step_gamma_k": float(self.gamma_k),
                     "ada_step_beta_mean": float(pop_beta_mean) if pop_beta_mean is not None else 0.0,
-                    "ada_step_beta_mean_ema": float(self._beta_mean_ema) if getattr(self, "_beta_mean_ema", None) is not None else 0.0,
-                    "ada_step_ret_ema": float(self._retain_ema) if getattr(self, "_retain_ema", None) is not None else 0.0,
-                    "ada_step_forget_strength_ema": float(self._forget_strength_ema) if getattr(self, "_forget_strength_ema", None) is not None else 0.0,
+                    "ada_step_beta_mean_ema": float(self._beta_mean_ema)
+                    if getattr(self, "_beta_mean_ema", None) is not None
+                    else 0.0,
+                    "ada_step_ret_ema": float(self._retain_ema)
+                    if getattr(self, "_retain_ema", None) is not None
+                    else 0.0,
+                    "ada_step_forget_strength_ema": float(self._forget_strength_ema)
+                    if getattr(self, "_forget_strength_ema", None) is not None
+                    else 0.0,
                 }
                 self.log(step_payload)
                 # Extra stdout log so AdaWGD.log captures step-wise summaries.
@@ -250,7 +259,9 @@ class AdaWGD(GradDiff):
             if self._forget_strength_ema is None:
                 self._forget_strength_ema = f_strength
             else:
-                self._forget_strength_ema = self.forget_ema_decay * self._forget_strength_ema + (1.0 - self.forget_ema_decay) * f_strength
+                self._forget_strength_ema = (
+                    self.forget_ema_decay * self._forget_strength_ema + (1.0 - self.forget_ema_decay) * f_strength
+                )
             if pop_beta_mean is not None:
                 if self._beta_mean_ema is None:
                     self._beta_mean_ema = pop_beta_mean
@@ -268,17 +279,23 @@ class AdaWGD(GradDiff):
             Rk = float(self._retain_ema) if self._retain_ema is not None else 0.0
             if not hasattr(self, "_ret_baseline") or self._ret_baseline is None:
                 self._ret_baseline = Rk
-            delta_rel = max(0.0, (Rk - (self._ret_baseline or 1e-8)) / max((self._ret_baseline or 1e-8), 1e-8)) if (self._ret_baseline or 0.0) > 0 else 0.0
-            self.log({
-                "ada_lambda": float(self.lambda_k),
-                "ada_alpha_k": float(self.alpha_k),
-                "ada_gamma_k": float(self.gamma_k),
-                "ada_delta_k": float(delta_rel),
-                "ada_ret_ema": float(Rk),
-                "ada_ret_ref": float(self._ret_baseline or 0.0),
-                "ada_dF": float(0.0),
-                "ada_alpha_delta": float(0.0),
-            })
+            delta_rel = (
+                max(0.0, (Rk - (self._ret_baseline or 1e-8)) / max((self._ret_baseline or 1e-8), 1e-8))
+                if (self._ret_baseline or 0.0) > 0
+                else 0.0
+            )
+            self.log(
+                {
+                    "ada_lambda": float(self.lambda_k),
+                    "ada_alpha_k": float(self.alpha_k),
+                    "ada_gamma_k": float(self.gamma_k),
+                    "ada_delta_k": float(delta_rel),
+                    "ada_ret_ema": float(Rk),
+                    "ada_ret_ref": float(self._ret_baseline or 0.0),
+                    "ada_dF": float(0.0),
+                    "ada_alpha_delta": float(0.0),
+                }
+            )
             self._logger.info(
                 "[AdaWGD][epoch end] alpha=%.4f lambda=%.4f gamma=%.4f delta=%.4f ret_ema=%.4f ret_ref=%.4f beta_ema=%.4f",
                 float(self.alpha_k),

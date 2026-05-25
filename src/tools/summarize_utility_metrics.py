@@ -106,9 +106,7 @@ def main() -> None:
         if row["label"] == "base_model_orig":
             base_utility = utility_avg
         output_row["utility_delta_vs_base"] = (
-            utility_avg - base_utility
-            if utility_avg is not None and base_utility is not None
-            else None
+            utility_avg - base_utility if utility_avg is not None and base_utility is not None else None
         )
 
         rows.append(output_row)

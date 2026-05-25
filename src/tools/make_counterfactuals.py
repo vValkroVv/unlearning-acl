@@ -7,7 +7,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import torch
 from tqdm.auto import tqdm
@@ -149,9 +149,7 @@ def load_mapping(path: str, key_field: str, alternate_field: str) -> Dict[str, D
                 continue
             row = json.loads(line)
             if key_field not in row or alternate_field not in row:
-                raise KeyError(
-                    f"JSONL row must contain `{key_field}` and `{alternate_field}`."
-                )
+                raise KeyError(f"JSONL row must contain `{key_field}` and `{alternate_field}`.")
             mapping[str(row[key_field])] = row
     return mapping
 
@@ -264,11 +262,7 @@ def build_hf_generator(args):
                 for candidate in decoded.splitlines():
                     cleaned = clean_counterfactual_text(candidate)
                     candidate_norm = " ".join(cleaned.strip().lower().split())
-                    if (
-                        cleaned
-                        and candidate_norm != answer_norm
-                        and candidate_norm not in seen
-                    ):
+                    if cleaned and candidate_norm != answer_norm and candidate_norm not in seen:
                         seen.add(candidate_norm)
                         generated_candidates.append(cleaned)
                     if len(generated_candidates) >= max(1, int(args.num_alternates)):
@@ -375,9 +369,7 @@ def select_best_alternate(
         source_pool.append("primary")
     for idx, candidate in enumerate(external_candidates):
         candidate_pool.append(candidate)
-        score_pool.append(
-            external_scores[idx] if external_scores is not None and idx < len(external_scores) else None
-        )
+        score_pool.append(external_scores[idx] if external_scores is not None and idx < len(external_scores) else None)
         relation_score_pool.append(
             external_relation_scores[idx]
             if external_relation_scores is not None and idx < len(external_relation_scores)
@@ -389,9 +381,7 @@ def select_best_alternate(
             else None
         )
         source_pool.append(
-            external_sources[idx]
-            if external_sources is not None and idx < len(external_sources)
-            else "external"
+            external_sources[idx] if external_sources is not None and idx < len(external_sources) else "external"
         )
     for candidate in row_candidates:
         candidate_pool.append(candidate)
@@ -609,9 +599,7 @@ def main():
                 elif mapping is not None:
                     join_value = str(row[args.mapping_key])
                     if join_value not in mapping:
-                        raise KeyError(
-                            f"No alternate found for {args.mapping_key}={join_value} in mapping."
-                        )
+                        raise KeyError(f"No alternate found for {args.mapping_key}={join_value} in mapping.")
                     mapping_row = dict(mapping[join_value])
                     mapped_value = mapping_row[args.mapping_alternate_key]
                     if isinstance(mapped_value, list) and not args.allow_list_alternates:
@@ -708,8 +696,7 @@ def main():
                 rows.append(updated)
             except Exception as exc:
                 raise RuntimeError(
-                    f"Failed processing row_no={row_no} index={row_index} "
-                    f"question_key={args.question_key}"
+                    f"Failed processing row_no={row_no} index={row_index} question_key={args.question_key}"
                 ) from exc
         else:
             pending_vllm_rows.append(
@@ -773,11 +760,7 @@ def main():
                         expected_length=len(response_candidates),
                         default_value="vllm_generated",
                     )
-                    default_relation_score = (
-                        1.0
-                        if bool(response.get("same_relation", True))
-                        else 0.0
-                    )
+                    default_relation_score = 1.0 if bool(response.get("same_relation", True)) else 0.0
                     best_alt, invalid_reason, repaired, best_meta = select_best_alternate(
                         args=args,
                         question=question,
@@ -834,8 +817,7 @@ def main():
                     rows.append(updated)
                 except Exception as exc:
                     raise RuntimeError(
-                        f"Failed processing vLLM row_no={row_no} index={row_index} "
-                        f"question_key={args.question_key}"
+                        f"Failed processing vLLM row_no={row_no} index={row_index} question_key={args.question_key}"
                     ) from exc
 
     log(f"Saving {len(rows)} rows to {args.output_path}")

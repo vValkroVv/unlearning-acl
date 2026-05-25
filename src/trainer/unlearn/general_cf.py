@@ -142,13 +142,9 @@ class GeneralCF(GradDiff):
         self.lambda_additional_const = self._optional_float(lambda_additional_const)
         self.lambda_retain_const = self._optional_float(lambda_retain_const)
         self.constant_artifact_paths = self._parse_artifact_paths(constant_artifact_paths)
-        self.constant_current_artifact_path = self._parse_artifact_paths(
-            constant_current_artifact_path
-        )
+        self.constant_current_artifact_path = self._parse_artifact_paths(constant_current_artifact_path)
         self.constant_batch_size = (
-            None
-            if constant_batch_size in {None, "", "null", "None"}
-            else int(constant_batch_size)
+            None if constant_batch_size in {None, "", "null", "None"} else int(constant_batch_size)
         )
         self.log_prefix = str(getattr(self, "LOG_PREFIX", "generalcf"))
         self._constant_lambda_cache = None
@@ -161,12 +157,15 @@ class GeneralCF(GradDiff):
             raise ValueError("GeneralCF requires 0 < alpha_eff_topk_frac <= 1.")
         if self.span_mode not in {"lcs", "set_overlap"}:
             raise ValueError("GeneralCF span_mode must be `lcs` or `set_overlap`.")
-        if min(
-            self.alt_shared_token_weight,
-            self.alt_unique_token_weight,
-            self.orig_shared_token_weight,
-            self.orig_unique_token_weight,
-        ) < 0.0:
+        if (
+            min(
+                self.alt_shared_token_weight,
+                self.alt_unique_token_weight,
+                self.orig_shared_token_weight,
+                self.orig_unique_token_weight,
+            )
+            < 0.0
+        ):
             raise ValueError("GeneralCF token weights must be non-negative.")
         if self.cf_branch_scale < 0.0 or self.additional_branch_scale < 0.0:
             raise ValueError("GeneralCF branch scales must be non-negative.")
@@ -194,18 +193,12 @@ class GeneralCF(GradDiff):
         if value in {None, "", "null", "None"}:
             return []
         if isinstance(value, (list, tuple)):
-            return [
-                str(item)
-                for item in value
-                if str(item) not in {"", "null", "None"}
-            ]
+            return [str(item) for item in value if str(item) not in {"", "null", "None"}]
         text = str(value)
         for sep in ("::", "|", ";", ","):
             if sep in text:
                 return [
-                    part
-                    for part in (item.strip() for item in text.split(sep))
-                    if part and part not in {"null", "None"}
+                    part for part in (item.strip() for item in text.split(sep)) if part and part not in {"null", "None"}
                 ]
         return [text]
 
@@ -224,10 +217,7 @@ class GeneralCF(GradDiff):
             "EMPTY": "EMPTY",
         }
         if normalized not in aliases:
-            raise ValueError(
-                "GeneralCF additional_loss must be one of EMPTY, CE, NPO, NPO-SAM. "
-                f"Got {value!r}."
-            )
+            raise ValueError(f"GeneralCF additional_loss must be one of EMPTY, CE, NPO, NPO-SAM. Got {value!r}.")
         return aliases[normalized]
 
     @staticmethod
@@ -245,8 +235,7 @@ class GeneralCF(GradDiff):
         }
         if normalized not in aliases:
             raise ValueError(
-                "GeneralCF routing_mode must be one of full, d_only, a_only, "
-                f"constant, constant_split. Got {value!r}."
+                f"GeneralCF routing_mode must be one of full, d_only, a_only, constant, constant_split. Got {value!r}."
             )
         return aliases[normalized]
 
@@ -271,10 +260,7 @@ class GeneralCF(GradDiff):
             score = torch.tensor(score, device=device, dtype=torch.float32)
         score = score.view(-1)
         if score.numel() != batch_size:
-            raise ValueError(
-                f"GeneralCF expected `{key}` to have {batch_size} values, got "
-                f"{score.numel()}."
-            )
+            raise ValueError(f"GeneralCF expected `{key}` to have {batch_size} values, got {score.numel()}.")
         return score
 
     def _optional_score_tensor(self, forget_inputs, key: str, device, batch_size: int):
@@ -336,15 +322,9 @@ class GeneralCF(GradDiff):
         }
 
     def _compute_routing_full(self, forget_inputs, batch_size: int, device):
-        difficulty = self._score_tensor(
-            forget_inputs, "difficulty_score", device=device, batch_size=batch_size
-        )
-        attribution = self._score_tensor(
-            forget_inputs, "attribution_score", device=device, batch_size=batch_size
-        )
-        rarity = self._optional_score_tensor(
-            forget_inputs, "rarity_score", device=device, batch_size=batch_size
-        )
+        difficulty = self._score_tensor(forget_inputs, "difficulty_score", device=device, batch_size=batch_size)
+        attribution = self._score_tensor(forget_inputs, "attribution_score", device=device, batch_size=batch_size)
+        rarity = self._optional_score_tensor(forget_inputs, "rarity_score", device=device, batch_size=batch_size)
         if rarity is None or self.disable_rarity_route:
             rarity = torch.zeros_like(difficulty)
         else:
@@ -356,9 +336,7 @@ class GeneralCF(GradDiff):
             rarity=rarity,
         )
         risk_batch = self._summarize_risk(routing["risk_gate"])
-        lambda_ret_batch = self.lambda_ret_lo + (
-            self.lambda_ret_hi - self.lambda_ret_lo
-        ) * risk_batch
+        lambda_ret_batch = self.lambda_ret_lo + (self.lambda_ret_hi - self.lambda_ret_lo) * risk_batch
         alpha_eff = self.alpha * lambda_ret_batch
         routing.update(
             {
@@ -387,9 +365,7 @@ class GeneralCF(GradDiff):
         for raw_path in paths:
             path = Path(str(raw_path)).expanduser()
             if not path.exists():
-                raise FileNotFoundError(
-                    f"GeneralCF constant routing artifact not found: {path}"
-                )
+                raise FileNotFoundError(f"GeneralCF constant routing artifact not found: {path}")
             with path.open("r", encoding="utf-8") as handle:
                 for line in handle:
                     line = line.strip()
@@ -399,9 +375,7 @@ class GeneralCF(GradDiff):
 
     def _estimate_constant_lambdas_from_rows(self, rows: Sequence[dict]) -> dict:
         if not rows:
-            raise ValueError(
-                "GeneralCF constant routing could not load any rows from the reference artifact."
-            )
+            raise ValueError("GeneralCF constant routing could not load any rows from the reference artifact.")
 
         difficulty = torch.tensor(
             [float(row["difficulty_score"]) for row in rows],
@@ -427,9 +401,7 @@ class GeneralCF(GradDiff):
         lambda_cf_samples = routed["forget_scale"] * routed["cf_weight_eff"]
         lambda_additional_samples = routed["forget_scale"] * routed["lambda_neg"]
 
-        batch_size = int(
-            self.constant_batch_size or self.args.per_device_train_batch_size or 1
-        )
+        batch_size = int(self.constant_batch_size or self.args.per_device_train_batch_size or 1)
         weighted_alpha_total = 0.0
         weighted_ret_total = 0.0
         total_rows = 0
@@ -440,9 +412,7 @@ class GeneralCF(GradDiff):
             chunk_size = max(end - start, 1)
 
             risk_batch = self._summarize_risk(chunk)
-            lambda_ret_batch = self.lambda_ret_lo + (
-                self.lambda_ret_hi - self.lambda_ret_lo
-            ) * risk_batch
+            lambda_ret_batch = self.lambda_ret_lo + (self.lambda_ret_hi - self.lambda_ret_lo) * risk_batch
             alpha_eff_batch = self.alpha * lambda_ret_batch
 
             weighted_ret_total += float(lambda_ret_batch.detach().item()) * chunk_size
@@ -451,9 +421,7 @@ class GeneralCF(GradDiff):
 
         return {
             "lambda_cf": float(lambda_cf_samples.mean().detach().item()),
-            "lambda_additional": float(
-                lambda_additional_samples.mean().detach().item()
-            ),
+            "lambda_additional": float(lambda_additional_samples.mean().detach().item()),
             "lambda_ret": float(weighted_alpha_total / max(total_rows, 1)),
             "lambda_ret_batch": float(weighted_ret_total / max(total_rows, 1)),
             "num_rows": len(rows),
@@ -497,27 +465,15 @@ class GeneralCF(GradDiff):
             total_rows += int(stats["num_rows"])
 
         if not per_file:
-            raise ValueError(
-                "GeneralCF constant routing could not load any rows from the reference artifacts."
-            )
+            raise ValueError("GeneralCF constant routing could not load any rows from the reference artifacts.")
 
         num_files = len(per_file)
         constants = {
             "lambda_cf": float(sum(item["lambda_cf"] for item in per_file) / num_files),
-            "lambda_additional": float(
-                sum(item["lambda_additional"] for item in per_file) / num_files
-            ),
-            "lambda_ret": float(
-                sum(item["lambda_ret"] for item in per_file) / num_files
-            ),
-            "lambda_ret_batch": float(
-                sum(item["lambda_ret_batch"] for item in per_file) / num_files
-            ),
-            "source": (
-                "artifact_single_split_mean"
-                if num_files == 1
-                else "artifact_equal_split_mean"
-            ),
+            "lambda_additional": float(sum(item["lambda_additional"] for item in per_file) / num_files),
+            "lambda_ret": float(sum(item["lambda_ret"] for item in per_file) / num_files),
+            "lambda_ret_batch": float(sum(item["lambda_ret_batch"] for item in per_file) / num_files),
+            "source": ("artifact_single_split_mean" if num_files == 1 else "artifact_equal_split_mean"),
             "num_files": num_files,
             "num_rows": total_rows,
             "per_file": per_file,
@@ -526,15 +482,9 @@ class GeneralCF(GradDiff):
         return constants
 
     def _compute_routing_constant(self, forget_inputs, batch_size: int, device):
-        difficulty = self._score_tensor(
-            forget_inputs, "difficulty_score", device=device, batch_size=batch_size
-        )
-        attribution = self._score_tensor(
-            forget_inputs, "attribution_score", device=device, batch_size=batch_size
-        )
-        rarity = self._optional_score_tensor(
-            forget_inputs, "rarity_score", device=device, batch_size=batch_size
-        )
+        difficulty = self._score_tensor(forget_inputs, "difficulty_score", device=device, batch_size=batch_size)
+        attribution = self._score_tensor(forget_inputs, "attribution_score", device=device, batch_size=batch_size)
+        rarity = self._optional_score_tensor(forget_inputs, "rarity_score", device=device, batch_size=batch_size)
         if rarity is None or self.disable_rarity_route:
             rarity = torch.zeros_like(difficulty)
         else:
@@ -544,9 +494,7 @@ class GeneralCF(GradDiff):
         lambda_cf = float(constants["lambda_cf"])
         lambda_additional = float(constants["lambda_additional"])
         lambda_ret = float(constants["lambda_ret"])
-        lambda_ret_batch = float(
-            constants.get("lambda_ret_batch", lambda_ret / max(float(self.alpha), 1e-8))
-        )
+        lambda_ret_batch = float(constants.get("lambda_ret_batch", lambda_ret / max(float(self.alpha), 1e-8)))
         return {
             "difficulty": difficulty,
             "attribution": attribution,
@@ -650,9 +598,7 @@ class GeneralCF(GradDiff):
             shared_positions = self._shared_positions(tokens, other_tokens)
             row_weights = []
             for token_idx in range(len(tokens)):
-                row_weights.append(
-                    shared_weight if token_idx in shared_positions else unique_weight
-                )
+                row_weights.append(shared_weight if token_idx in shared_positions else unique_weight)
 
             weights[batch_idx, valid_mask] = torch.tensor(
                 row_weights,
@@ -662,21 +608,11 @@ class GeneralCF(GradDiff):
             shared_count = len(shared_positions)
             token_count = max(len(tokens), 1)
             shared_fractions.append(float(shared_count) / float(token_count))
-            unique_fractions.append(
-                float(token_count - shared_count) / float(token_count)
-            )
+            unique_fractions.append(float(token_count - shared_count) / float(token_count))
 
         return weights, {
-            "shared_fraction_mean": (
-                sum(shared_fractions) / float(len(shared_fractions))
-                if shared_fractions
-                else 0.0
-            ),
-            "unique_fraction_mean": (
-                sum(unique_fractions) / float(len(unique_fractions))
-                if unique_fractions
-                else 0.0
-            ),
+            "shared_fraction_mean": (sum(shared_fractions) / float(len(shared_fractions)) if shared_fractions else 0.0),
+            "unique_fraction_mean": (sum(unique_fractions) / float(len(unique_fractions)) if unique_fractions else 0.0),
         }
 
     def _compute_cf_term(self, model, forget_inputs, original_inputs):
@@ -760,9 +696,7 @@ class GeneralCF(GradDiff):
     ) -> dict:
         cf_weight_eff = routing.get("cf_weight_eff", self.cf_weight)
         per_sample_cf_loss = routing["forget_scale"] * (cf_weight_eff * cf_vec)
-        per_sample_additional_loss = routing["forget_scale"] * (
-            routing["lambda_neg"] * additional_vec
-        )
+        per_sample_additional_loss = routing["forget_scale"] * (routing["lambda_neg"] * additional_vec)
         per_sample_forget_loss = per_sample_cf_loss + per_sample_additional_loss
         return {
             "per_sample_cf_loss": per_sample_cf_loss,
@@ -814,61 +748,31 @@ class GeneralCF(GradDiff):
         )
 
         extra_logs = {
-            f"{self.log_prefix}_routing_mode_full": (
-                1.0 if self.routing_mode == "full" else 0.0
-            ),
-            f"{self.log_prefix}_routing_mode_d_only": (
-                1.0 if self.routing_mode == "d_only" else 0.0
-            ),
-            f"{self.log_prefix}_routing_mode_a_only": (
-                1.0 if self.routing_mode == "a_only" else 0.0
-            ),
-            f"{self.log_prefix}_routing_mode_constant": (
-                1.0 if self.routing_mode == "constant" else 0.0
-            ),
-            f"{self.log_prefix}_routing_mode_constant_split": (
-                1.0 if self.routing_mode == "constant_split" else 0.0
-            ),
-            f"{self.log_prefix}_additional_empty": (
-                1.0 if self.additional_loss == "EMPTY" else 0.0
-            ),
-            f"{self.log_prefix}_additional_ce": (
-                1.0 if self.additional_loss == "CE" else 0.0
-            ),
-            f"{self.log_prefix}_additional_npo": (
-                1.0 if self.additional_loss == "NPO" else 0.0
-            ),
-            f"{self.log_prefix}_additional_npo_sam": (
-                1.0 if self.additional_loss == "NPO_SAM" else 0.0
-            ),
-            f"{self.log_prefix}_span_additional": (
-                1.0 if self.span_additional else 0.0
-            ),
-            f"{self.log_prefix}_span_cf_branch": (
-                1.0 if self.span_cf_branch else 0.0
-            ),
+            f"{self.log_prefix}_routing_mode_full": (1.0 if self.routing_mode == "full" else 0.0),
+            f"{self.log_prefix}_routing_mode_d_only": (1.0 if self.routing_mode == "d_only" else 0.0),
+            f"{self.log_prefix}_routing_mode_a_only": (1.0 if self.routing_mode == "a_only" else 0.0),
+            f"{self.log_prefix}_routing_mode_constant": (1.0 if self.routing_mode == "constant" else 0.0),
+            f"{self.log_prefix}_routing_mode_constant_split": (1.0 if self.routing_mode == "constant_split" else 0.0),
+            f"{self.log_prefix}_additional_empty": (1.0 if self.additional_loss == "EMPTY" else 0.0),
+            f"{self.log_prefix}_additional_ce": (1.0 if self.additional_loss == "CE" else 0.0),
+            f"{self.log_prefix}_additional_npo": (1.0 if self.additional_loss == "NPO" else 0.0),
+            f"{self.log_prefix}_additional_npo_sam": (1.0 if self.additional_loss == "NPO_SAM" else 0.0),
+            f"{self.log_prefix}_span_additional": (1.0 if self.span_additional else 0.0),
+            f"{self.log_prefix}_span_cf_branch": (1.0 if self.span_cf_branch else 0.0),
         }
         extra_logs.update(cf_logs)
         if additional_logs:
             extra_logs.update(
                 {
-                    f"{self.log_prefix}_additional_shared_token_frac": additional_logs[
-                        "shared_fraction_mean"
-                    ],
-                    f"{self.log_prefix}_additional_unique_token_frac": additional_logs[
-                        "unique_fraction_mean"
-                    ],
+                    f"{self.log_prefix}_additional_shared_token_frac": additional_logs["shared_fraction_mean"],
+                    f"{self.log_prefix}_additional_unique_token_frac": additional_logs["unique_fraction_mean"],
                 }
             )
         if routing.get("constant_routing"):
             extra_logs.update(
                 {
-                    f"{self.log_prefix}_constant_num_rows": float(
-                        routing.get("constant_num_rows", 0.0)
-                    ),
-                    f"{self.log_prefix}_constant_num_files": float(
-                        routing.get("constant_num_files", 0.0)
-                    ),
+                    f"{self.log_prefix}_constant_num_rows": float(routing.get("constant_num_rows", 0.0)),
+                    f"{self.log_prefix}_constant_num_files": float(routing.get("constant_num_files", 0.0)),
                 }
             )
 
@@ -887,68 +791,32 @@ class GeneralCF(GradDiff):
     def _build_log_payload(self, components: dict, retain_loss, loss=None, extra_logs=None):
         prefix = self.log_prefix
         alpha_eff = components["alpha_eff"]
-        alpha_eff_value = (
-            float(alpha_eff.detach().item())
-            if torch.is_tensor(alpha_eff)
-            else float(alpha_eff)
-        )
+        alpha_eff_value = float(alpha_eff.detach().item()) if torch.is_tensor(alpha_eff) else float(alpha_eff)
         payload = {
             f"{prefix}_cf_loss": float(components["cf_vec"].mean().detach().item()),
-            f"{prefix}_additional_loss": float(
-                components["additional_vec"].mean().detach().item()
-            ),
-            f"{prefix}_neg_loss": float(
-                components["additional_vec"].mean().detach().item()
-            ),
+            f"{prefix}_additional_loss": float(components["additional_vec"].mean().detach().item()),
+            f"{prefix}_neg_loss": float(components["additional_vec"].mean().detach().item()),
             f"{prefix}_forget_loss": float(components["forget_loss"].detach().item()),
             f"{prefix}_retain_loss": float(retain_loss.detach().item()),
             f"{prefix}_alpha_eff": alpha_eff_value,
-            f"{prefix}_lambda_ret_batch": float(
-                components["lambda_ret_batch"].detach().item()
-            ),
+            f"{prefix}_lambda_ret_batch": float(components["lambda_ret_batch"].detach().item()),
             f"{prefix}_d_mean": float(components["difficulty"].mean().detach().item()),
-            f"{prefix}_a_mean": float(
-                components["attribution"].mean().detach().item()
-            ),
+            f"{prefix}_a_mean": float(components["attribution"].mean().detach().item()),
             f"{prefix}_u_mean": float(components["rarity"].mean().detach().item()),
-            f"{prefix}_u_p50": float(
-                torch.quantile(components["rarity"], 0.50).detach().item()
-            ),
-            f"{prefix}_u_p90": float(
-                torch.quantile(components["rarity"], 0.90).detach().item()
-            ),
-            f"{prefix}_s_mean": float(
-                components["difficulty_gate"].mean().detach().item()
-            ),
-            f"{prefix}_s_p50": float(
-                torch.quantile(components["difficulty_gate"], 0.50).detach().item()
-            ),
-            f"{prefix}_s_p90": float(
-                torch.quantile(components["difficulty_gate"], 0.90).detach().item()
-            ),
+            f"{prefix}_u_p50": float(torch.quantile(components["rarity"], 0.50).detach().item()),
+            f"{prefix}_u_p90": float(torch.quantile(components["rarity"], 0.90).detach().item()),
+            f"{prefix}_s_mean": float(components["difficulty_gate"].mean().detach().item()),
+            f"{prefix}_s_p50": float(torch.quantile(components["difficulty_gate"], 0.50).detach().item()),
+            f"{prefix}_s_p90": float(torch.quantile(components["difficulty_gate"], 0.90).detach().item()),
             f"{prefix}_r_mean": float(components["risk_gate"].mean().detach().item()),
-            f"{prefix}_r_p50": float(
-                torch.quantile(components["risk_gate"], 0.50).detach().item()
-            ),
-            f"{prefix}_r_p90": float(
-                torch.quantile(components["risk_gate"], 0.90).detach().item()
-            ),
+            f"{prefix}_r_p50": float(torch.quantile(components["risk_gate"], 0.50).detach().item()),
+            f"{prefix}_r_p90": float(torch.quantile(components["risk_gate"], 0.90).detach().item()),
             f"{prefix}_risk_batch": float(components["risk_batch"].detach().item()),
-            f"{prefix}_lambda_additional_mean": float(
-                components["lambda_neg"].mean().detach().item()
-            ),
-            f"{prefix}_lambda_neg_mean": float(
-                components["lambda_neg"].mean().detach().item()
-            ),
-            f"{prefix}_lambda_neg_base_mean": float(
-                components["lambda_neg_base"].mean().detach().item()
-            ),
-            f"{prefix}_lambda_cf_mean": float(
-                components["cf_weight_eff"].mean().detach().item()
-            ),
-            f"{prefix}_cf_weight_eff_mean": float(
-                components["cf_weight_eff"].mean().detach().item()
-            ),
+            f"{prefix}_lambda_additional_mean": float(components["lambda_neg"].mean().detach().item()),
+            f"{prefix}_lambda_neg_mean": float(components["lambda_neg"].mean().detach().item()),
+            f"{prefix}_lambda_neg_base_mean": float(components["lambda_neg_base"].mean().detach().item()),
+            f"{prefix}_lambda_cf_mean": float(components["cf_weight_eff"].mean().detach().item()),
+            f"{prefix}_cf_weight_eff_mean": float(components["cf_weight_eff"].mean().detach().item()),
         }
         if loss is not None:
             payload[f"{prefix}_total_loss"] = float(loss.detach().item())
@@ -964,15 +832,11 @@ class GeneralCF(GradDiff):
         if logged_cf_loss is not None:
             payload[f"{prefix}_cf_loss"] = float(logged_cf_loss.detach().item())
         if logged_additional_loss is not None:
-            payload[f"{prefix}_additional_loss"] = float(
-                logged_additional_loss.detach().item()
-            )
+            payload[f"{prefix}_additional_loss"] = float(logged_additional_loss.detach().item())
         if logged_neg_loss is not None:
             payload[f"{prefix}_neg_loss"] = float(logged_neg_loss.detach().item())
         if logged_forget_loss is not None:
-            payload[f"{prefix}_forget_loss"] = float(
-                logged_forget_loss.detach().item()
-            )
+            payload[f"{prefix}_forget_loss"] = float(logged_forget_loss.detach().item())
         return payload
 
     def _maybe_log(self, components: dict, retain_loss, loss=None, extra_logs=None):
@@ -1120,13 +984,10 @@ class GeneralCF(GradDiff):
             return super().training_step(model, inputs)
 
         if self.is_deepspeed_enabled:
-            raise NotImplementedError(
-                "[GeneralCF] DeepSpeed is not supported in the NPO-SAM manual-grad path."
-            )
+            raise NotImplementedError("[GeneralCF] DeepSpeed is not supported in the NPO-SAM manual-grad path.")
         if getattr(self.accelerator, "num_processes", 1) > 1:
             raise NotImplementedError(
-                "[GeneralCF] Multi-process training is not supported in the NPO-SAM "
-                "manual-grad path."
+                "[GeneralCF] Multi-process training is not supported in the NPO-SAM manual-grad path."
             )
 
         model.train()
@@ -1176,9 +1037,7 @@ class GeneralCF(GradDiff):
             self._clear_grads_set_to_none(params)
             with self.compute_loss_context_manager():
                 additional_loss_2_base = self._compute_additional_loss_only(model, inputs)
-                additional_loss_2 = (
-                    self.additional_branch_scale * additional_loss_2_base
-                )
+                additional_loss_2 = self.additional_branch_scale * additional_loss_2_base
             additional_grads_2 = torch.autograd.grad(
                 additional_loss_2,
                 params,
@@ -1202,15 +1061,11 @@ class GeneralCF(GradDiff):
 
         retain_weight = self._manual_retain_weight(components=components)
         retain_weight_value = (
-            float(retain_weight.detach().item())
-            if torch.is_tensor(retain_weight)
-            else float(retain_weight)
+            float(retain_weight.detach().item()) if torch.is_tensor(retain_weight) else float(retain_weight)
         )
 
         combined_grads = []
-        for grad_cf, grad_add, grad_retain in zip(
-            cf_grads, additional_grads_2, retain_grads
-        ):
+        for grad_cf, grad_add, grad_retain in zip(cf_grads, additional_grads_2, retain_grads):
             grad = None
             if grad_cf is not None:
                 grad = self.gamma * grad_cf
@@ -1248,24 +1103,14 @@ class GeneralCF(GradDiff):
         extra_logs = {
             f"{self.log_prefix}_cf_loss_base": float(cf_loss_base.detach().item()),
             f"{self.log_prefix}_cf_loss_scaled": float(cf_loss.detach().item()),
-            f"{self.log_prefix}_additional_loss_1_base": float(
-                additional_loss_1_base.detach().item()
-            ),
-            f"{self.log_prefix}_additional_loss_1_scaled": float(
-                additional_loss_1.detach().item()
-            ),
-            f"{self.log_prefix}_additional_loss_2_base": float(
-                additional_loss_2_base.detach().item()
-            ),
-            f"{self.log_prefix}_additional_loss_2_scaled": float(
-                additional_loss_2.detach().item()
-            ),
+            f"{self.log_prefix}_additional_loss_1_base": float(additional_loss_1_base.detach().item()),
+            f"{self.log_prefix}_additional_loss_1_scaled": float(additional_loss_1.detach().item()),
+            f"{self.log_prefix}_additional_loss_2_base": float(additional_loss_2_base.detach().item()),
+            f"{self.log_prefix}_additional_loss_2_scaled": float(additional_loss_2.detach().item()),
             f"{self.log_prefix}_retain_loss": float(retain_loss.detach().item()),
             f"{self.log_prefix}_retain_weight": retain_weight_value,
             f"{self.log_prefix}_cf_branch_scale": float(self.cf_branch_scale),
-            f"{self.log_prefix}_additional_branch_scale": float(
-                self.additional_branch_scale
-            ),
+            f"{self.log_prefix}_additional_branch_scale": float(self.additional_branch_scale),
             f"{self.log_prefix}_grad_norm": float(grad_norm.detach().item()),
             f"{self.log_prefix}_rho": float(self.sam_rho),
             f"{self.log_prefix}_adaptive": 1.0 if self.sam_adaptive else 0.0,

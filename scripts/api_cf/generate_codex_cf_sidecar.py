@@ -326,7 +326,7 @@ def build_codex_batch_prompt(
     return (
         "You are generating verified multi-alternate counterfactual sidecar rows for DualCF v3.\n\n"
         "Return JSON only matching the provided schema.\n"
-        "The top-level object must be {\"results\": [...]}.\n"
+        'The top-level object must be {"results": [...]}.\n'
         "results must contain exactly one item per input example.\n"
         "Preserve the input index exactly.\n"
         f"Return exactly {num_alternates} short wrong alternatives when possible.\n"
@@ -342,8 +342,7 @@ def build_codex_batch_prompt(
         "- shared_fact_scores: shared/public fact preservation in [0,1]\n"
         "- candidate_sources: provenance strings aligned to alternates\n"
         "- answer_type: short label like year/date/person/place/number/string/unknown\n\n"
-        "Batch:\n"
-        + json.dumps(batch_payload, ensure_ascii=False, indent=2)
+        "Batch:\n" + json.dumps(batch_payload, ensure_ascii=False, indent=2)
     )
 
 
@@ -477,10 +476,7 @@ def codex_login_status() -> str:
     )
     status_text = (proc.stdout or proc.stderr or "").strip()
     if proc.returncode != 0:
-        raise RuntimeError(
-            "Unable to read Codex CLI login status. "
-            f"stdout={proc.stdout!r} stderr={proc.stderr!r}"
-        )
+        raise RuntimeError(f"Unable to read Codex CLI login status. stdout={proc.stdout!r} stderr={proc.stderr!r}")
     return status_text
 
 
@@ -529,10 +525,7 @@ def run_codex_batch(
 
     if proc.returncode != 0:
         combined = f"{proc.stdout or ''}\n{proc.stderr or ''}"
-        if (
-            "refresh token was already used" in combined
-            or "Please log out and sign in again" in combined
-        ):
+        if "refresh token was already used" in combined or "Please log out and sign in again" in combined:
             raise RuntimeError(
                 "Codex CLI authentication is stale. Run `codex logout` and "
                 "`codex login` again, then rerun with --resume."
@@ -544,9 +537,7 @@ def run_codex_batch(
             )
         if '"code":"model_not_found"' in combined or "model_not_found" in combined:
             raise RuntimeError(f"Codex model `{args.model}` was not found.")
-        raise RuntimeError(
-            f"codex exec failed with code {proc.returncode}; see {stdout_path} and {stderr_path}"
-        )
+        raise RuntimeError(f"codex exec failed with code {proc.returncode}; see {stdout_path} and {stderr_path}")
 
     if not result_path.exists():
         raise RuntimeError(f"Codex did not write {result_path}")
@@ -641,9 +632,7 @@ def generate_codex_sidecar(
                 time.sleep(min(2.0 * attempt, 10.0))
 
         if payload is None:
-            raise RuntimeError(
-                f"Codex sidecar generation failed for batch={batch_id}: {last_error}"
-            ) from last_error
+            raise RuntimeError(f"Codex sidecar generation failed for batch={batch_id}: {last_error}") from last_error
 
         results = payload.get("results")
         if not isinstance(results, list):

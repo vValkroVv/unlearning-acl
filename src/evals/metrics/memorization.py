@@ -27,16 +27,8 @@ def probability(model, **kwargs):
     dataloader = DataLoader(data, batch_size=batch_size, collate_fn=collator)
 
     fun_args = {}
-    scores_by_index = run_batchwise_evals(
-        model, dataloader, evaluate_probability, fun_args, "Calculating loss"
-    )
-    prob_values = np.array(
-        [
-            evals["prob"]
-            for evals in scores_by_index.values()
-            if evals["prob"] is not None
-        ]
-    )
+    scores_by_index = run_batchwise_evals(model, dataloader, evaluate_probability, fun_args, "Calculating loss")
+    prob_values = np.array([evals["prob"] for evals in scores_by_index.values() if evals["prob"] is not None])
     prob_values = aggregate_to_1D(prob_values)
     return {"agg_value": np.mean(prob_values), "value_by_index": scores_by_index}
 
@@ -56,15 +48,10 @@ def probability_w_options(model, **kwargs):
     filtered_indices = [
         idx
         for idx in correct_indices
-        if correct_answer_results[idx] is not None
-        and wrong_answer_results[idx] is not None
+        if correct_answer_results[idx] is not None and wrong_answer_results[idx] is not None
     ]
-    correct = np.array(
-        [correct_answer_results[idx]["prob"] for idx in filtered_indices]
-    )
-    all_wrong = np.array(
-        [wrong_answer_results[idx]["prob"] for idx in filtered_indices]
-    )
+    correct = np.array([correct_answer_results[idx]["prob"] for idx in filtered_indices])
+    all_wrong = np.array([wrong_answer_results[idx]["prob"] for idx in filtered_indices])
     wrong = np.sum(all_wrong, axis=tuple(range(1, all_wrong.ndim)))
     probs = correct / (correct + wrong + 1e-10)
 
@@ -91,11 +78,7 @@ def rouge(model, **kwargs):
         "Calculating text similarity",
     )
     rouge_values = np.array(
-        [
-            evals[kwargs["rouge_type"]]
-            for evals in scores_by_index.values()
-            if evals[kwargs["rouge_type"]] is not None
-        ]
+        [evals[kwargs["rouge_type"]] for evals in scores_by_index.values() if evals[kwargs["rouge_type"]] is not None]
     )
     rouge_values = aggregate_to_1D(rouge_values)
     return {
@@ -137,15 +120,10 @@ def truth_ratio(model, **kwargs):
     filtered_indices = [
         idx
         for idx in correct_indices
-        if correct_answer_results[idx] is not None
-        and wrong_answer_results[idx] is not None
+        if correct_answer_results[idx] is not None and wrong_answer_results[idx] is not None
     ]
-    correct_avg_losses = [
-        correct_answer_results[idx]["avg_loss"] for idx in filtered_indices
-    ]
-    wrong_avg_losses = [
-        wrong_answer_results[idx]["avg_loss"] for idx in filtered_indices
-    ]
+    correct_avg_losses = [correct_answer_results[idx]["avg_loss"] for idx in filtered_indices]
+    wrong_avg_losses = [wrong_answer_results[idx]["avg_loss"] for idx in filtered_indices]
 
     correct_avg_losses = aggregate_to_1D(np.array(correct_avg_losses))
     wrong_avg_losses = aggregate_to_1D(np.array(wrong_avg_losses))
@@ -154,9 +132,7 @@ def truth_ratio(model, **kwargs):
     wrong_prob = np.exp(-wrong_avg_losses)
 
     truth_ratios = wrong_prob / (correct_prob + 1e-10)
-    value_by_index = dict(
-        zip(correct_indices, [{"score": val} for val in truth_ratios])
-    )
+    value_by_index = dict(zip(correct_indices, [{"score": val} for val in truth_ratios]))
     truth_ratio_stats = np.array([evals["score"] for evals in value_by_index.values()])
     forget_tr_avg = aggregator(truth_ratio_stats)
     return {"agg_value": forget_tr_avg, "value_by_index": value_by_index}
@@ -170,9 +146,7 @@ def exact_memorization(model, **kwargs):
     dataloader = DataLoader(data, batch_size=batch_size, collate_fn=collator)
 
     def _exact_memorization(model, batch):
-        log_probs_batch, labels_batch = tokenwise_vocab_logprobs(
-            model, batch, grad=False, return_labels=True
-        )
+        log_probs_batch, labels_batch = tokenwise_vocab_logprobs(model, batch, grad=False, return_labels=True)
         em_batch = []
         for log_probs, labels in zip(log_probs_batch, labels_batch):
             valid_len = len(labels)
@@ -193,16 +167,8 @@ def exact_memorization(model, **kwargs):
         return em_batch
 
     fun_args = {}
-    scores_by_index = run_batchwise_evals(
-        model, dataloader, _exact_memorization, fun_args, "Calculating EM"
-    )
-    em_values = np.array(
-        [
-            evals["score"]
-            for evals in scores_by_index.values()
-            if evals["score"] is not None
-        ]
-    )
+    scores_by_index = run_batchwise_evals(model, dataloader, _exact_memorization, fun_args, "Calculating EM")
+    em_values = np.array([evals["score"] for evals in scores_by_index.values() if evals["score"] is not None])
     em_values = aggregate_to_1D(em_values)
     return {"agg_value": np.mean(em_values), "value_by_index": scores_by_index}
 
@@ -215,9 +181,7 @@ def extraction_strength(model, **kwargs):
     dataloader = DataLoader(data, batch_size=batch_size, collate_fn=collator)
 
     def _extraction_strength(model, batch):
-        log_probs_batch, labels_batch = tokenwise_vocab_logprobs(
-            model, batch, grad=False, return_labels=True
-        )
+        log_probs_batch, labels_batch = tokenwise_vocab_logprobs(model, batch, grad=False, return_labels=True)
         es_batch = []
         for log_probs, labels in zip(log_probs_batch, labels_batch):
             valid_len = len(labels)
@@ -243,15 +207,7 @@ def extraction_strength(model, **kwargs):
         return es_batch
 
     fun_args = {}
-    scores_by_index = run_batchwise_evals(
-        model, dataloader, _extraction_strength, fun_args, "Calculating ES"
-    )
-    es_values = np.array(
-        [
-            evals["score"]
-            for evals in scores_by_index.values()
-            if evals["score"] is not None
-        ]
-    )
+    scores_by_index = run_batchwise_evals(model, dataloader, _extraction_strength, fun_args, "Calculating ES")
+    es_values = np.array([evals["score"] for evals in scores_by_index.values() if evals["score"] is not None])
     es_values = aggregate_to_1D(es_values)
     return {"agg_value": np.mean(es_values), "value_by_index": scores_by_index}

@@ -183,6 +183,7 @@ def main() -> None:
         def _iter(items: Iterable[Path], desc: str):
             return tqdm(list(items), desc=desc, unit="file")
     except Exception:
+
         def _iter(items: Iterable[Path], desc: str):
             print(f"[cos_sim] {desc}")
             return items
@@ -190,7 +191,9 @@ def main() -> None:
     paths = collect_eval_paths(args.path_to_saves)
     if not paths:
         print(f"[cos_sim] No DUET_EVAL.json files found under {args.path_to_saves}")
-        print("[cos_sim] Expected to find files like evals/DUET_EVAL.json and checkpoint_evals/checkpoint-*/DUET_EVAL.json")
+        print(
+            "[cos_sim] Expected to find files like evals/DUET_EVAL.json and checkpoint_evals/checkpoint-*/DUET_EVAL.json"
+        )
         return
 
     print(f"[cos_sim] Found {len(paths)} DUET_EVAL.json files under {args.path_to_saves}")

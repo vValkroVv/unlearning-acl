@@ -19,14 +19,10 @@ class ForgetRetainDataset(Dataset):
     def __len__(self):
         """Ensures the sampled dataset matches the anchor dataset's length."""
         if self.anchor == "forget":
-            assert self.forget is not None, ValueError(
-                "forget dataset can't be None when anchor=forget"
-            )
+            assert self.forget is not None, ValueError("forget dataset can't be None when anchor=forget")
             return len(self.forget)
         elif self.anchor == "retain":
-            assert self.retain is not None, ValueError(
-                "retain dataset can't be None when anchor=retain"
-            )
+            assert self.retain is not None, ValueError("retain dataset can't be None when anchor=retain")
             return len(self.retain)
         else:
             raise NotImplementedError(f"{self.anchor} can be only forget or retain")

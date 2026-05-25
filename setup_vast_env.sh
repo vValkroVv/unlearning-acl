@@ -3,6 +3,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export REPO_ROOT
 cd "${REPO_ROOT}"
 
 VENV_DIR="${REPO_ROOT}/.venv"
@@ -53,11 +54,12 @@ pip check
 
 echo "[check] import sweep under src/"
 python - <<'PY'
+import importlib
 import os
 import sys
-import importlib
+from pathlib import Path
 
-src = "/workspace/unlearning/src"
+src = str(Path(os.environ["REPO_ROOT"]) / "src")
 sys.path.insert(0, src)
 mods = []
 for root, _, files in os.walk(src):

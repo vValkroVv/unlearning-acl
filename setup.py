@@ -1,21 +1,29 @@
-from setuptools import setup, find_packages
+from pathlib import Path
 
-# Read dependencies from requirements.txt
-with open("requirements.txt") as f:
-    requirements = f.read().splitlines()
+from setuptools import find_packages, setup
+
+
+def read_requirements(path: str) -> list[str]:
+    requirements = []
+    for raw_line in Path(path).read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if line and not line.startswith("#"):
+            requirements.append(line)
+    return requirements
+
 
 setup(
     name="open-unlearning",
     version="0.1.0",
     author="Vineeth Dorna, Anmol Mekala",
     author_email="vineethdorna@gmail.com, m.anmolreddy@gmail.com",
-    description="A library for machine unlearning in LLMs.",
-    long_description=open("README.md").read(),
+    description="DualCF extensions for selective factual unlearning, built on OpenUnlearning.",
+    long_description=Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
-    url="https://github.com/locuslab/open-unlearning",
+    url="https://github.com/vValkroVv/unlearning-acl",
     license="MIT",
     packages=find_packages(),
-    install_requires=requirements,  # Uses requirements.txt
+    install_requires=read_requirements("requirements.txt"),
     extras_require={
         "lm-eval": [
             "lm-eval==0.4.8",
