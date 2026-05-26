@@ -1,6 +1,6 @@
 <div align="center">
 
-# DualCF: Target-Aware Counterfactual Preference Unlearning
+# Auditable Counterfactual Targets for Selective Factual Unlearning
 
 **Selective factual erasure by validating the replacement target before unlearning.**
 
@@ -12,23 +12,24 @@
 
 </div>
 
-DualCF is a target-aware unlearning method for factual QA: it builds validated
-counterfactual targets, then trains with a routed objective that learns the
-target, rejects the original answer, and protects retained behavior.
+## Abstract
 
-Selective factual unlearning should remove a target answer without destroying
-nearby facts or general utility. In target-guided unlearning, the replacement
-answer is part of the training signal; a copied, wrong-type, or brittle
-replacement gives the optimizer a bad endpoint. DualCF separates this into two
-auditable stages: counterfactual artifact construction and routed
-counterfactual optimization.
-
-On DUET Rare, holding the optimizer fixed while improving only the
-counterfactual artifact moves the forget score from `32.8` to `0.7` while
-preserving high holdout and utility (`H=96.5`, `U=56.9`). Against the current
-19-baseline comparison on DUET and RWKU, DualCF gives a stronger selective
-trade-off than destructive deletion methods that lower forgetting by collapsing
-holdout or utility.
+LLM unlearning methods that train toward a replacement answer depend critically
+on the quality of that replacement. If the replacement is copied from the
+original, wrong for the relation, or too brittle for a rare fact, the model is
+optimized toward an invalid endpoint - a failure the loss cannot detect. We
+propose Auditable Counterfactual Targets for Selective Factual Unlearning,
+which validates and repairs replacement targets before training, then optimizes
+toward them with a routed objective combining targeted forgetting,
+original-answer rejection, and preservation of unrelated knowledge. On
+rare-fact unlearning, improving only the replacement target while keeping the
+loss fixed drops the forget score from 32.8% to 0.7%, without harming locality
+or utility. Against 19 baselines on two factual QA benchmarks, Auditable
+Counterfactual Targets for Selective Factual Unlearning achieves the strongest
+selective trade-off: low forget scores with preserved locality and utility.
+These results establish that replacement target quality shapes unlearning
+outcomes as much as loss design, and that targets should be validated and
+reported as a first-class method component.
 
 <p align="center">
   <img src="assets/dualcf_artifact_construction.png" width="48%" alt="DualCF counterfactual artifact construction" />
@@ -405,7 +406,7 @@ DualCF manuscript:
   title  = {Target-Aware Counterfactual Preference Unlearning for Selective Factual Erasure},
   author = {Kropotin, Valerii},
   year   = {2026},
-  note   = {Diploma thesis manuscript}
+  note   = {Manuscript}
 }
 ```
 
